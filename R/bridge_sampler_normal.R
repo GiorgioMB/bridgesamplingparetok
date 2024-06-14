@@ -175,8 +175,8 @@
 
   if (repetitions == 1) {
     out <- list(logml = logml, niter = niter, method = "normal", q11 = q11,
-              q12 = q12, q21 = q21[[1]], q22 = q22[[1]], pareto_k_l1 = pareto_k_l1,
-              pareto_k_l2 = pareto_k_l2)
+              q12 = q12, q21 = q21[[1]], q22 = q22[[1]], pareto_k_numi = pareto_k_l1,
+              pareto_k_deni = pareto_k_l2)
     class(out) <- "bridge"
   } else if (repetitions > 1) {
     out <- list(logml = logml, niter = niter, method = "normal", repetitions = repetitions,
