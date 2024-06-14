@@ -231,7 +231,10 @@
   if (!requireNamespace("parallel", quietly = TRUE)) {
     stop("The parallel package is required but not installed.")
   }
-  
+  if (is.list(numi) && all(sapply(numi, is.numeric))) {
+    cat('Oopsie ')
+    numi_vector <- unlist(numi)  # Convert list to vector
+  }
   ## Set num_samples based on the number of rows in numi
   num_samples <- length(numi)
   
