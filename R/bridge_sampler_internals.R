@@ -231,11 +231,7 @@
   if (!requireNamespace("parallel", quietly = TRUE)) {
     stop("The parallel package is required but not installed.")
   }
-  if (is.null(dim(l1))) {
-    cat("Dimensions of l1: ", length(l1), "\n")
-  } else {
-    cat("Dimensions of l1: ", dim(l1), "\n")
-  }
+
   ## Set num_samples based on the number of rows in l1
   num_samples <- length(l1)
   
