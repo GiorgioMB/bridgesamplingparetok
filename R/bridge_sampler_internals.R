@@ -240,7 +240,7 @@
   results <- mclapply(list(numi_numeric, deni_numeric), .compute_diagnostic, mc.cores = 2)
 
   ## Name the results for clarity
-  names(results) <- c("numi_result", "deni_result")
+  names(results) <- c("numi", "deni")
   
   ## Return the results
   return(results)
