@@ -288,9 +288,9 @@
   }
 
   if (i >= maxiter) {
-    return(list(logml = NA, niter = i-1, r_vals = r_vals, numi = numi, deni = deni))
+    return(list(logml = NA, niter = i-1, r_vals = r_vals, numi = numi, deni = deni, l1 = l1, l2 = l2))
   }
 
-  return(list(logml = logml, niter = i-1, r_vals = rvals, numi = numi, deni = deni))
+  return(list(logml = logml, niter = i-1, r_vals = rvals, numi = numi, deni = deni, l1 = l1, l2 = l2))
 
 }
