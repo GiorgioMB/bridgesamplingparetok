@@ -223,6 +223,53 @@
   out
 }
 
+.pareto_k_diagnostic <- function(l1, l2) {
+  ## Check if the necessary libraries are present
+  if (!requireNamespace("evir", quietly = TRUE)) {
+    stop("The evir package is required but not installed.")
+  }
+  if (!requireNamespace("parallel", quietly = TRUE)) {
+    stop("The parallel package is required but not installed.")
+  }
+  
+  ## Set num_samples based on the number of rows in l1
+  num_samples <- length(l1)
+  
+  ## Function to compute the diagnostic for a given set of weights
+  compute_diagnostic <- function(weights) {
+    weights <- exp(weights)
+    
+    ## Calculate M
+    M <- min(0.2 * num_samples, 3 * sqrt(num_samples))
+    M <- floor(M)  ## Following the paper
+    
+    ## Get the M largest weights
+    largest_weights <- sort(weights, decreasing = TRUE)[1:M]
+    
+    ## Load the evir package
+    library(evir)
+    
+    ## Fit the tail of a Generalized Pareto Distribution
+    fit <- gpd(largest_weights, threshold = min(largest_weights))
+    
+    ## Extract the shape parameter (k)
+    k <- fit$par.ests["xi"]
+    
+    ## Return a boolean indicating if k < 0.7
+    return(k < 0.7)
+  }
+  
+  ## Load the parallel package
+  library(parallel)
+  
+  ## Run the diagnostic in parallel for l1 and l2
+  results <- mclapply(list(l1, l2), compute_diagnostic, mc.cores = 2)
+  
+  ## Return the named vector of booleans
+  names(results) <- c("l1", "l2")
+  return(results)
+}
+
 .run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L,
                                   method, maxiter, silent,
                                   criterion, neff) {
@@ -288,9 +335,10 @@
   }
 
   if (i >= maxiter) {
-    return(list(logml = NA, niter = i-1, r_vals = r_vals, numi = numi, deni = deni, l1 = l1, l2 = l2))
+    pareto_k <- .pareto_k_diagnostic(l1, l2)
+    return(list(logml = NA, niter = i-1, r_vals = r_vals, numi = numi, deni = deni, pareto_k = pareto_k))
   }
 
-  return(list(logml = logml, niter = i-1, r_vals = rvals, numi = numi, deni = deni, l1 = l1, l2 = l2))
+  return(list(logml = logml, niter = i-1, r_vals = rvals, numi = numi, deni = deni, pareto_k = pareto_k))
 
 }
