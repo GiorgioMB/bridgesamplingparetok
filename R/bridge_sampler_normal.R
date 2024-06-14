@@ -161,6 +161,7 @@
 
     logml[i] <- tmp$logml
     niter[i] <- tmp$niter
+    cat("Dimensions of l1: ", paste(dim(tmp$pareto_k), collapse = " x "), "\n")
     pareto_k_values[i, ] <- tmp$pareto_k
     if (niter[i] == maxiter)
       warning("logml could not be estimated within maxiter, returning NA.", call. = FALSE)
