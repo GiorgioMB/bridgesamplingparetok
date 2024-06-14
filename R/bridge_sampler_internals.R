@@ -231,55 +231,46 @@
   if (!requireNamespace("parallel", quietly = TRUE)) {
     stop("The parallel package is required but not installed.")
   }
-  cat("Class of numi:", class(numi), "\n")
-  cat("Class of deni:", class(deni), "\n")
-  
-  # Print type of numi and deni
-  cat("Type of numi:", typeof(numi), "\n")
-  cat("Type of deni:", typeof(deni), "\n")
-  
-  # Print structure of numi and deni
-  cat("Structure of numi:\n")
-  str(numi)
-  cat("Structure of deni:\n")
-  str(deni)
-  ## Set num_samples based on the number of rows in numi
-  num_samples <- length(numi)
-  
-  ## Function to compute the diagnostic for a given set of weights
-  compute_diagnostic <- function(weights) {
-    
-    ## Calculate M
-    M <- min(0.2 * num_samples, 3 * sqrt(num_samples))
-    M <- floor(M)  ## Following the paper
-    cat('M Calculated')
-    ## Get the M largest weights
-    largest_weights <- sort(weights, decreasing = TRUE)[1:M]
-    
-    ## Load the evir package
-    library(evir)
-    cat('weights sorted')
-    ## Fit the tail of a Generalized Pareto Distribution
-    fit <- gpd(largest_weights, threshold = min(largest_weights))
-    cat('pareto fitted')
-    ## Extract the shape parameter (k)
-    k <- fit$par.ests["xi"]
-    
-    ## Return a boolean indicating if k < 0.7
-    return(k)
-  }
-  
-  ## Load the parallel package (not used for parallel processing here, but required if using any functionality from it)
   library(parallel)
+  ## Convert brob objects to numeric
+  numi_numeric <- as.numeric(numi@x) * ifelse(numi@positive, 1, -1)
+  deni_numeric <- as.numeric(deni@x) * ifelse(deni@positive, 1, -1)
+
+  ## Run diagnostic calculations in parallel for both numi and deni
+  results <- mclapply(list(numi_numeric, deni_numeric), .compute_diagnostic, mc.cores = 2)
+
+  ## Name the results for clarity
+  names(results) <- c("numi_result", "deni_result")
   
-  ## Run the diagnostic sequentially for numi and deni
-  results <- lapply(list(numi, deni), compute_diagnostic)
-  
-  ## Return the named vector of booleans
-  names(results) <- c("numi", "deni")
+  ## Return the results
   return(results)
 }
 
+.compute_diagnostic <- function(weights) {
+  num_samples <- length(weights)
+  
+  ## Calculate M
+  M <- min(0.2 * num_samples, 3 * sqrt(num_samples))
+  M <- floor(M)  ## Following the paper
+  
+  ## Get the M largest weights
+  largest_weights <- sort(weights, decreasing = TRUE)[1:M]
+  
+  ## Load the evir package
+  library(evir)
+  
+  ## Fit the tail of a Generalized Pareto Distribution
+  if (length(largest_weights) > 0 && all(is.finite(largest_weights))) {
+    fit <- gpd(largest_weights, threshold = min(largest_weights))
+    ## Extract the shape parameter (k)
+    k <- fit$par.ests["xi"]
+    ## Return the shape parameter k
+    return(k)
+  } else {
+    warning("Insufficient or inappropriate data for GPD fitting.")
+    return(NA)
+  }
+}
 
 .run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L,
                                   method, maxiter, silent,
