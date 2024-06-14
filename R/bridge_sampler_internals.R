@@ -266,7 +266,7 @@
   results <- mclapply(list(l1, l2), compute_diagnostic, mc.cores = 2)
   
   ## Return the named vector of booleans
-  names(results) <- c("l1", "l2")
+  names(results) <- c("numi", "deni")
   return(results)
 }
 
@@ -335,11 +335,11 @@
   }
 
   if (i >= maxiter) {
-    pareto_k <- .pareto_k_diagnostic(l1, l2)
+    pareto_k <- .pareto_k_diagnostic(numi, deni)
     return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k))
   }
   
-  pareto_k <- .pareto_k_diagnostic(l1, l2)
+  pareto_k <- .pareto_k_diagnostic(numi, deni)
   return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k))
 
 }
