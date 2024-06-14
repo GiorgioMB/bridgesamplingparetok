@@ -1,4 +1,3 @@
-
 .bridge.sampler.normal <- function(
   samples_4_fit, # matrix with already transformed samples for fitting the
                  # proposal (rows are samples), colnames are "trans_x" where
@@ -162,7 +161,7 @@
     logml[i] <- tmp$logml
     niter[i] <- tmp$niter
     if("pareto_k" %in% names(tmp)) {
-      print("pareto_k is present in tmp")
+      print(tmp$pareto_k)
     } else {
       print("pareto_k is not found in tmp")
     }
