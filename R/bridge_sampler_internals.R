@@ -237,7 +237,6 @@
   
   ## Function to compute the diagnostic for a given set of weights
   compute_diagnostic <- function(weights) {
-    weights <- exp(weights)
     
     ## Calculate M
     M <- min(0.2 * num_samples, 3 * sqrt(num_samples))
