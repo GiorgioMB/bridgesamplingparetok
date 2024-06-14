@@ -231,10 +231,18 @@
   if (!requireNamespace("parallel", quietly = TRUE)) {
     stop("The parallel package is required but not installed.")
   }
-  if (is.list(numi) && all(sapply(numi, is.numeric))) {
-    cat('Oopsie ')
-    numi_vector <- unlist(numi)  # Convert list to vector
-  }
+  cat("Class of numi:", class(numi), "\n")
+  cat("Class of deni:", class(deni), "\n")
+  
+  # Print type of numi and deni
+  cat("Type of numi:", typeof(numi), "\n")
+  cat("Type of deni:", typeof(deni), "\n")
+  
+  # Print structure of numi and deni
+  cat("Structure of numi:\n")
+  str(numi)
+  cat("Structure of deni:\n")
+  str(deni)
   ## Set num_samples based on the number of rows in numi
   num_samples <- length(numi)
   
