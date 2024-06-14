@@ -137,8 +137,8 @@
   }
   logml <- numeric(repetitions)
   niter <- numeric(repetitions)
-  pareto_k_values <- matrix(NA, nrow = repetitions, ncol = 2)
-  colnames(pareto_k_values) <- c("l1", "l2")
+  pareto_k_l1 <- logical(repetitions)
+  pareto_k_l2 <- logical(repetitions)
 
   # run iterative updating scheme to compute log of marginal likelihood
   for (i in seq_len(repetitions)) {
@@ -162,20 +162,25 @@
     niter[i] <- tmp$niter
     if("pareto_k" %in% names(tmp)) {
       print(tmp$pareto_k)
-    } else {
-      print("pareto_k is not found in tmp")
+      pareto_k_l1[i] <- tmp$pareto_k$l1
+      pareto_k_l2[i] <- tmp$pareto_k$l2
+    } else {print("pareto_k is not found in tmp")
+      pareto_k_l1[i] <- NA
+      pareto_k_l2[i] <- NA
     }
-    pareto_k_values[i, ] <- tmp$pareto_k
+      
     if (niter[i] == maxiter)
       warning("logml could not be estimated within maxiter, returning NA.", call. = FALSE)
   }
 
   if (repetitions == 1) {
     out <- list(logml = logml, niter = niter, method = "normal", q11 = q11,
-                q12 = q12, q21 = q21[[1]], q22 = q22[[1]])
+              q12 = q12, q21 = q21[[1]], q22 = q22[[1]], pareto_k_l1 = pareto_k_l1,
+              pareto_k_l2 = pareto_k_l2)
     class(out) <- "bridge"
   } else if (repetitions > 1) {
-    out <- list(logml = logml, niter = niter, method = "normal", repetitions = repetitions)
+    out <- list(logml = logml, niter = niter, method = "normal", repetitions = repetitions,
+              pareto_k_l1 = pareto_k_l1, pareto_k_l2 = pareto_k_l2)
     class(out) <- "bridge_list"
   }
 
