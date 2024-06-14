@@ -138,6 +138,9 @@
   }
   logml <- numeric(repetitions)
   niter <- numeric(repetitions)
+  pareto_k_values <- matrix(NA, nrow = repetitions, ncol = 2)
+  colnames(pareto_k_values) <- c("l1", "l2")
+
   # run iterative updating scheme to compute log of marginal likelihood
   for (i in seq_len(repetitions)) {
     tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
@@ -158,6 +161,7 @@
 
     logml[i] <- tmp$logml
     niter[i] <- tmp$niter
+    pareto_k_values[i, ] <- tmp$pareto_k
     if (niter[i] == maxiter)
       warning("logml could not be estimated within maxiter, returning NA.", call. = FALSE)
   }
