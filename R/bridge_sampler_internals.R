@@ -255,7 +255,7 @@
     k <- fit$par.ests["xi"]
     
     ## Return a boolean indicating if k < 0.7
-    return(k < 0.7)
+    return(k)
   }
   
   ## Load the parallel package
