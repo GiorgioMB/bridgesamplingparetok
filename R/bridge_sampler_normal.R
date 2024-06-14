@@ -162,8 +162,8 @@
     niter[i] <- tmp$niter
     if("pareto_k" %in% names(tmp)) {
       print(tmp$pareto_k)
-      pareto_k_l1[i] <- tmp$pareto_k$l1
-      pareto_k_l2[i] <- tmp$pareto_k$l2
+      pareto_k_l1[i] <- tmp$pareto_k$numi
+      pareto_k_l2[i] <- tmp$pareto_k$deni
     } else {print("pareto_k is not found in tmp")
       pareto_k_l1[i] <- NA
       pareto_k_l2[i] <- NA
