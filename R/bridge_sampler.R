@@ -288,117 +288,101 @@ bridge_sampler.stanfitold <- function(samples = NULL, stanfit_model = samples,
 
 }
 
-
-bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_splits = 2,
+bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
                                    repetitions = 1, method = "normal", cores = 1,
                                    use_neff = TRUE, maxiter = 1000, silent = FALSE,
-                                   verbose = FALSE, ...) {
-    if (n_splits %% 2 != 0) {
-        stop("n_splits must be an even number.")
+                                   verbose = FALSE, n_splits = 2, ...) {
+  if (!(.Platform$OS.type == "unix") & (cores != 1)) {
+    warning("cores > 1 only possible on Unix/MacOs. Uses 'core = 1' instead.", call. = FALSE)
+    cores <- 1L
+  }
+
+  if (!requireNamespace("rstan")) stop("package rstan required")
+  if (!requireNamespace("combinat")) stop("package combinat required for permutations")
+
+  ex <- rstan::extract(samples, permuted = FALSE)
+  skeleton <- .create_skeleton(samples@sim$pars_oi, samples@par_dims[samples@sim$pars_oi])
+  upars <- apply(ex, 1:2, FUN = function(theta) {
+    rstan::unconstrain_pars(stanfit_model, .rstan_relist(theta, skeleton))
+  })
+
+  if (length(dim(upars)) == 2) { # for one parameter models
+    dim(upars) <- c(1, dim(upars))
+  }
+
+  nr <- dim(upars)[2]
+  split_indices <- split(seq_len(nr), sort(rep(seq_len(n_splits), length = nr)))
+  permutations <- combinat::permn(seq_len(n_splits))
+
+  results <- list()
+
+  for (perm in permutations) {
+    current_indices <- unlist(split_indices[perm], use.names = FALSE)
+    samples_4_fit <- apply(upars[, current_indices, , drop = FALSE], 1, rbind)
+
+    remaining_indices <- setdiff(seq_len(nr), current_indices)
+    samples_4_iter_stan <- upars[, remaining_indices, , drop = FALSE]
+    samples_4_iter_tmp <- vector("list", dim(upars)[3])
+    for (i in seq_along(samples_4_iter_tmp)) {
+      samples_4_iter_tmp[[i]] <- coda::as.mcmc(t(samples_4_iter_stan[,,i]))
     }
-    # cores > 1 only for unix:
-    if (!(.Platform$OS.type == "unix") & (cores != 1)) {
-        warning("cores > 1 only possible on Unix/MacOS. Uses 'core = 1' instead.", call. = FALSE)
-        cores <- 1L
+    samples_4_iter_tmp <- coda::as.mcmc.list(samples_4_iter_tmp)
+
+    if (use_neff) {
+      neff <- tryCatch(median(coda::effectiveSize(samples_4_iter_tmp)), error = function(e) {
+        warning("effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
+        return(NULL)
+      })
+    } else {
+      neff <- NULL
     }
 
-    if (!requireNamespace("rstan")) stop("package rstan required")
-    ex <- rstan::extract(samples, permuted = FALSE)
-    skeleton <- .create_skeleton(samples@sim$pars_oi, samples@par_dims[samples@sim$pars_oi])
-    upars <- apply(ex, 1:2, FUN = function(theta) {
-        rstan::unconstrain_pars(stanfit_model, .rstan_relist(theta, skeleton))
-    })
+    samples_4_iter <- apply(samples_4_iter_stan, 1, rbind)
+    parameters <- paste0("x", seq_len(dim(upars)[1]))
+    transTypes <- rep("unbounded", length(parameters))
+    names(transTypes) <- parameters
+    lb <- rep(-Inf, length(parameters))
+    ub <- rep(Inf, length(parameters))
+    names(lb) <- names(ub) <- parameters
+    colnames(samples_4_iter) <- paste0("trans_", parameters)
+    colnames(samples_4_fit) <- paste0("trans_", parameters)
+    print(dim(samples_4_iter))
 
-    if (length(dim(upars)) == 2) { # for one parameter models
-        dim(upars) <- c(1, dim(upars))
+    if (cores == 1) {
+      bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
+                               args = list(samples_4_fit = samples_4_fit,
+                                           samples_4_iter = samples_4_iter,
+                                           neff = neff,
+                                           log_posterior = .stan_log_posterior,
+                                           data = list(stanfit = stanfit_model),
+                                           lb = lb, ub = ub,
+                                           param_types = rep("real", ncol(samples_4_fit)),
+                                           transTypes = transTypes,
+                                           repetitions = repetitions, cores = cores,
+                                           packages = "rstan", maxiter = maxiter, silent = silent,
+                                           verbose = verbose,
+                                           r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
+    } else {
+      bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
+                               args = list(samples_4_fit = samples_4_fit,
+                                           samples_4_iter = samples_4_iter,
+                                           neff = neff,
+                                           log_posterior = .stan_log_posterior,
+                                           data = list(stanfit = stanfit_model),
+                                           lb = lb, ub = ub,
+                                           param_types = rep("real", ncol(samples_4_fit)),
+                                           transTypes = transTypes,
+                                           repetitions = repetitions, varlist = "stanfit",
+                                           envir = sys.frame(sys.nframe()),
+                                           cores = cores, packages = "rstan", maxiter = maxiter,
+                                           silent = silent, verbose = verbose,
+                                           r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
     }
-    print("is blocks problematic?")
-    # Split upars into n_splits blocks
-    blocks <- lapply(split(upars, cut(seq_len(dim(upars)[2]), breaks = n_splits, labels = FALSE)), matrix, nrow = dim(upars)[1])
-    print("No")
-    lapply(blocks, function(x) {
-        cat("Dimensions of block:", dim(x), "\n")
-        cat("Structure of block:", class(x), "\n\n")
-    })
-    print(dim(blocks))
-    print(upars)
-    # Generate all combinations of blocks into two groups
-    combinations <- combn(n_splits, n_splits / 2)
-    results_list <- vector("list", ncol(combinations))
 
-    for (i in seq_len(ncol(combinations))) {
-        fit_indices <- combinations[, i]
-        iter_indices <- setdiff(seq_len(n_splits), fit_indices)
-        print("Indices are not the problem")
-        samples_4_fit <- do.call(cbind, lapply(fit_indices, function(i) blocks[[i]]))
-        samples_4_iter <- do.call(cbind, lapply(iter_indices, function(i) blocks[[i]]))
-        samples_4_iter_stan <- do.call(cbind, lapply(iter_indices, function(i) blocks[[i]]))
-        # Convert each split part into an MCMC object using coda
-        samples_4_iter_tmp <- vector("list", dim(samples_4_iter_stan)[3])
-        for (j in seq_along(samples_4_iter_tmp)) {
-            samples_4_iter_tmp[[j]] <- coda::as.mcmc(t(samples_4_iter_stan[,,j]))
-        }
-        samples_4_iter <- coda::as.mcmc.list(samples_4_iter_tmp)
-        if (use_neff) {
-            neff <- tryCatch({
-                median(coda::effectiveSize(samples_4_iter))
-            }, error = function(e) {
-                warning("Effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
-                length(samples_4_iter)
-            })
-        } else {
-            neff <- NULL
-        }
-        print("ESS calculation is not the problem")
-        # Parameter names and types for bridge sampling
-        parameters <- paste0("x", seq_len(dim(samples_4_fit)[2]))
-        transTypes <- rep("unbounded", length(parameters))
-        names(transTypes) <- parameters
-        lb <- rep(-Inf, length(parameters))
-        ub <- rep(Inf, length(parameters))
-        names(lb) <- names(ub) <- parameters
-        print(dim(samples_4_iter))
-        print(dim(samples_4_fit))
-        print(dim(parameters))
-        colnames(samples_4_iter) <- paste0("trans_", parameters)
-        colnames(samples_4_fit) <- paste0("trans_", parameters)
-        print(paste("Dimensions of samples_4_fit:", paste(dim(samples_4_fit), collapse = " x ")))
-        print(paste("Dimensions of samples_4_iter:", paste(dim(samples_4_iter), collapse = " x ")))
-        print(paste("Names of columns:", paste(colnames(samples_4_iter)), collapse = "x"))
-        # run bridge sampling
-        if (cores == 1) {
-          bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
-                                   args = list(samples_4_fit = samples_4_fit,
-                                               samples_4_iter = samples_4_iter,
-                                               neff = neff,
-                                               log_posterior = .stan_log_posterior,
-                                               data = list(stanfit = stanfit_model),
-                                               lb = lb, ub = ub,
-                                               param_types = rep("real", ncol(samples_4_fit)),
-                                               transTypes = transTypes,
-                                               repetitions = repetitions, cores = cores,
-                                               packages = "rstan", maxiter = maxiter, silent = silent,
-                                               verbose = verbose,
-                                               r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
-        } else {
-          bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
-                                   args = list(samples_4_fit = samples_4_fit,
-                                               samples_4_iter = samples_4_iter,
-                                               neff = neff,
-                                               log_posterior = .stan_log_posterior,
-                                               data = list(stanfit = stanfit_model),
-                                               lb = lb, ub = ub,
-                                               param_types = rep("real", ncol(samples_4_fit)),
-                                               transTypes = transTypes,
-                                               repetitions = repetitions, varlist = "stanfit",
-                                               envir = sys.frame(sys.nframe()),
-                                               cores = cores, packages = "rstan", maxiter = maxiter,
-                                               silent = silent, verbose = verbose,
-                                               r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
-        }
-        results_list[[i]] <- bridge_output
-    }
-    return(results_list)
+    results[[paste0("perm_", paste(perm, collapse = "_"))]] <- bridge_output
+  }
+
+  return(results)
 }
 
 #' @rdname bridge_sampler
