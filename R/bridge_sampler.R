@@ -227,10 +227,10 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_sp
     for (i in seq_len(ncol(combinations))) {
         fit_indices <- combinations[, i]
         iter_indices <- setdiff(seq_len(n_splits), fit_indices)
-
+        print("Indices are not the problem")
         samples_4_fit <- do.call(cbind, lapply(fit_indices, function(i) blocks[[i]]))
         samples_4_iter <- do.call(cbind, lapply(iter_indices, function(i) blocks[[i]]))
-
+        print("Samples splitting is not the problem")
         # Effective sample size
         if (use_neff) {
             neff <- tryCatch({
@@ -242,7 +242,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_sp
         } else {
             neff <- NULL
         }
-
+        print("ESS calculation is not the problem")
         # Parameter names and types for bridge sampling
         parameters <- paste0("x", seq_len(dim(samples_4_fit)[1]))
         transTypes <- rep("unbounded", length(parameters))
@@ -250,7 +250,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_sp
         lb <- rep(-Inf, length(parameters))
         ub <- rep(Inf, length(parameters))
         names(lb) <- names(ub) <- parameters
-
+                                                
         colnames(samples_4_iter) <- paste0("trans_", parameters)
         colnames(samples_4_fit) <- paste0("trans_", parameters)
         print(paste("Dimensions of samples_4_fit:", paste(dim(samples_4_fit), collapse = " x ")))
