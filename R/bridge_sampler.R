@@ -197,6 +197,9 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_sp
                                    method = "normal", cores = 1,
                                    use_neff = TRUE, maxiter = 1000, silent = FALSE,
                                    verbose = FALSE, ...) {
+    if (n_splits %% 2 != 0) {
+        stop("n_splits must be an even number.")
+    }
     # cores > 1 only for unix:
     if (!(.Platform$OS.type == "unix") & (cores != 1)) {
         warning("cores > 1 only possible on Unix/MacOS. Uses 'core = 1' instead.", call. = FALSE)
