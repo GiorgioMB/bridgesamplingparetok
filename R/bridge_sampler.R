@@ -310,7 +310,9 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
   if (length(dim(upars)) == 2) { # for one parameter models
     dim(upars) <- c(1, dim(upars))
   }
-
+  if (num_splits %% 2 != 0) {
+  stop("Error: num_splits is not divisible by 2")
+   }
   nr <- dim(upars)[2]
   result <- list()
   # Generate permutations
