@@ -316,7 +316,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_sp
     # Split upars into n_splits blocks
     blocks <- split(upars, cut(seq_len(dim(upars)[2]), breaks = n_splits, labels = FALSE))
     print("No")
-    print(blocks)
+    print(dim(blocks))
     print(upars)
     # Generate all combinations of blocks into two groups
     combinations <- combn(n_splits, n_splits / 2)
