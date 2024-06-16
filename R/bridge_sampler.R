@@ -244,7 +244,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_sp
         }
         print("ESS calculation is not the problem")
         # Parameter names and types for bridge sampling
-        parameters <- paste0("x", seq_len(dim(samples_4_fit)[1]))
+        parameters <- paste0("x", seq_len(dim(samples_4_fit)[2]))
         transTypes <- rep("unbounded", length(parameters))
         names(transTypes) <- parameters
         lb <- rep(-Inf, length(parameters))
