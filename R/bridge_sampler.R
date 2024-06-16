@@ -194,7 +194,7 @@ bridge_sampler <- function(samples, n_splits, ...) {
 #' @rdname bridge_sampler
 #' @export
 
-bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
+bridge_sampler.stanfitold <- function(samples = NULL, stanfit_model = samples,
                                    repetitions = 1, method = "normal", cores = 1,
                                    use_neff = TRUE, maxiter = 1000, silent = FALSE,
                                    verbose = FALSE, ...) {
@@ -289,7 +289,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
 }
 
 
-bridge_sampler.stanfitwrong <- function(samples = NULL, stanfit_model = samples, n_splits = 2,
+bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_splits = 2,
                                    repetitions = 1, method = "normal", cores = 1,
                                    use_neff = TRUE, maxiter = 1000, silent = FALSE,
                                    verbose = FALSE, ...) {
@@ -328,8 +328,13 @@ bridge_sampler.stanfitwrong <- function(samples = NULL, stanfit_model = samples,
         print("Indices are not the problem")
         samples_4_fit <- do.call(cbind, lapply(fit_indices, function(i) blocks[[i]]))
         samples_4_iter <- do.call(cbind, lapply(iter_indices, function(i) blocks[[i]]))
-        print("Samples splitting is not the problem")
-        # Effective sample size
+        samples_4_iter_stan <- do.call(cbind, lapply(iter_indices, function(i) blocks[[i]]))
+        # Convert each split part into an MCMC object using coda
+        samples_4_iter_tmp <- vector("list", dim(samples_4_iter_stan)[3])
+        for (j in seq_along(samples_4_iter_tmp)) {
+            samples_4_iter_tmp[[j]] <- coda::as.mcmc(t(samples_4_iter_stan[,,j]))
+        }
+        samples_4_iter <- coda::as.mcmc.list(samples_4_iter_tmp)
         if (use_neff) {
             neff <- tryCatch({
                 median(coda::effectiveSize(samples_4_iter))
