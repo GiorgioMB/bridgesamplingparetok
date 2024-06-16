@@ -347,6 +347,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
     colnames(samples_4_iter) <- paste0("trans_", parameters)
     colnames(samples_4_fit) <- paste0("trans_", parameters)
     print(dim(samples_4_iter))
+    print(dim(samples_4_fit))
 
     if (cores == 1) {
       bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
