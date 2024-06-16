@@ -314,7 +314,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_sp
     }
     print("is blocks problematic?")
     # Split upars into n_splits blocks
-    blocks <- split(upars, cut(seq_len(dim(upars)[2]), breaks = n_splits, labels = FALSE))
+    blocks <- lapply(split(upars, cut(seq_len(dim(upars)[2]), breaks = n_splits, labels = FALSE)), matrix, nrow = dim(upars)[1])
     print("No")
     lapply(blocks, function(x) {
         cat("Dimensions of block:", dim(x), "\n")
