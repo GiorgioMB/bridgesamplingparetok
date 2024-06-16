@@ -9,7 +9,46 @@
   ((th - md + pi) %% (2*pi)) - pi + md
 }
 
-
+.generate_permutations <- function(mat, k) {
+  # Function to split a vector into k chunks
+  split_chunks <- function(vec, k) {
+    n <- length(vec)
+    chunk_size <- ceiling(n / k)
+    split(vec, ceiling(seq_along(vec) / chunk_size))
+  }
+  
+  # Function to find all permutations of a list
+  all_permutations <- function(lst) {
+    perm <- permn(seq_along(lst))
+    lapply(perm, function(p) lst[p])
+  }
+  
+  n <- nrow(mat)
+  m <- ncol(mat)
+  
+  indices <- 1:m
+  
+  # Split indices into k chunks
+  chunks <- split_chunks(indices, k)
+  
+  # Get all permutations of the chunks
+  permutations <- all_permutations(chunks)
+  
+  # Merge each permutation into two vectors of size ceiling(m/2) and floor(m/2)
+  result <- list()
+  
+  for (perm in permutations) {
+    combined <- unlist(perm)
+    if (length(combined) == m) {
+      split_point <- ceiling(m / 2)
+      vec1 <- combined[1:split_point]
+      vec2 <- combined[(split_point + 1):m]
+      result <- append(result, list(list(vec1, vec2)))
+    }
+  }
+  
+  return(result)
+}
 
 #### for matrix method ######
 
