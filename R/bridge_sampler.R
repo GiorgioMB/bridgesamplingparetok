@@ -218,7 +218,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_sp
     }
     print("is blocks problematic?")
     # Split upars into n_splits blocks
-    blocks <- split(upars, cut(seq_len(dim(upars)[2]), breaks = n_splits, labels = FALSE))
+    blocks <- split(upars, cut(seq_len(dim(upars)[1]), breaks = n_splits, labels = FALSE))
     print("No")
     # Generate all combinations of blocks into two groups
     combinations <- combn(n_splits, n_splits / 2)
@@ -250,7 +250,9 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_sp
         lb <- rep(-Inf, length(parameters))
         ub <- rep(Inf, length(parameters))
         names(lb) <- names(ub) <- parameters
-                                                
+        print(dim(samples_4_iter))
+        print(dim(samples_4_fit))
+        print(length(parameters))
         colnames(samples_4_iter) <- paste0("trans_", parameters)
         colnames(samples_4_fit) <- paste0("trans_", parameters)
         print(paste("Dimensions of samples_4_fit:", paste(dim(samples_4_fit), collapse = " x ")))
