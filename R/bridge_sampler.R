@@ -252,7 +252,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_sp
         names(lb) <- names(ub) <- parameters
         print(dim(samples_4_iter))
         print(dim(samples_4_fit))
-        print(length(parameters))
+        print(dim(parameters))
         colnames(samples_4_iter) <- paste0("trans_", parameters)
         colnames(samples_4_fit) <- paste0("trans_", parameters)
         print(paste("Dimensions of samples_4_fit:", paste(dim(samples_4_fit), collapse = " x ")))
