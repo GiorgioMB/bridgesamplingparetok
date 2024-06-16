@@ -288,7 +288,7 @@ bridge_sampler.stanfitold <- function(samples = NULL, stanfit_model = samples,
 
 }
 
-bridge_sampler.stanfitold <- function(samples = NULL, stanfit_model = samples,
+bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
                                    repetitions = 1, method = "normal", cores = 1,
                                    use_neff = TRUE, maxiter = 1000, silent = FALSE,
                                    verbose = FALSE, n_splits = 2, ...) {
@@ -323,6 +323,8 @@ bridge_sampler.stanfitold <- function(samples = NULL, stanfit_model = samples,
     remaining_indices <- setdiff(seq_len(nr), current_indices)
     samples_4_iter_stan <- upars[, remaining_indices, , drop = FALSE]
     samples_4_iter_tmp <- vector("list", dim(upars)[3])
+    print(dim(samples_4_fit))
+    print(dim(samples_4_iter_stan))
     for (i in seq_along(samples_4_iter_tmp)) {
       samples_4_iter_tmp[[i]] <- coda::as.mcmc(t(samples_4_iter_stan[,,i]))
     }
