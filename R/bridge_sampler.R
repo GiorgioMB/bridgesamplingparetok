@@ -288,7 +288,7 @@ bridge_sampler.stanfitold <- function(samples = NULL, stanfit_model = samples,
 
 }
 
-bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
+bridge_sampler.stanfitold <- function(samples = NULL, stanfit_model = samples,
                                    repetitions = 1, method = "normal", cores = 1,
                                    use_neff = TRUE, maxiter = 1000, silent = FALSE,
                                    verbose = FALSE, n_splits = 2, ...) {
@@ -318,7 +318,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
 
   for (perm in permutations) {
     current_indices <- unlist(split_indices[perm], use.names = FALSE)
-    samples_4_fit <- apply(upars[, current_indices, , drop = FALSE], 1, rbind)
+    samples_4_fit <- apply(upars[, current_indices, , drop = FALSE], 1, rbind, drop = FALSE)
 
     remaining_indices <- setdiff(seq_len(nr), current_indices)
     samples_4_iter_stan <- upars[, remaining_indices, , drop = FALSE]
