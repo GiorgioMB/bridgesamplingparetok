@@ -289,19 +289,20 @@ bridge_sampler.stanfitold <- function(samples = NULL, stanfit_model = samples,
 }
 
 bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
-                                   repetitions = 1, method = "normal", cores = 1,
-                                   use_neff = TRUE, maxiter = 1000, silent = FALSE,
-                                   verbose = FALSE, n_splits = 2, ...) {
+                                      repetitions = 1, method = "normal", cores = 1,
+                                      use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
+                                      verbose = FALSE, ...) {
+  # cores > 1 only for unix:
   if (!(.Platform$OS.type == "unix") & (cores != 1)) {
     warning("cores > 1 only possible on Unix/MacOs. Uses 'core = 1' instead.", call. = FALSE)
     cores <- 1L
   }
 
+  # convert samples into matrix
   if (!requireNamespace("rstan")) stop("package rstan required")
-  if (!requireNamespace("combinat")) stop("package combinat required for permutations")
-
   ex <- rstan::extract(samples, permuted = FALSE)
-  skeleton <- .create_skeleton(samples@sim$pars_oi, samples@par_dims[samples@sim$pars_oi])
+  skeleton <- .create_skeleton(samples@sim$pars_oi,
+                               samples@par_dims[samples@sim$pars_oi])
   upars <- apply(ex, 1:2, FUN = function(theta) {
     rstan::unconstrain_pars(stanfit_model, .rstan_relist(theta, skeleton))
   })
@@ -311,22 +312,18 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
   }
 
   nr <- dim(upars)[2]
-  split_indices <- split(seq_len(nr), sort(rep(seq_len(n_splits), length = nr)))
-  permutations <- combinat::permn(seq_len(n_splits))
-
-  results <- list()
+  result <- list()
+  # Generate permutations
+  permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits)
 
   for (perm in permutations) {
-    current_indices <- unlist(split_indices[perm], use.names = FALSE)
-    samples_4_fit <- apply(upars[, current_indices, , drop = FALSE], 1, rbind, drop = FALSE)
+    samples4fit_index <- perm[[1]]
+    samples_4_fit <- apply(upars[, samples4fit_index, , drop = FALSE], 1, rbind)
 
-    remaining_indices <- setdiff(seq_len(nr), current_indices)
-    samples_4_iter_stan <- upars[, remaining_indices, , drop = FALSE]
+    samples_4_iter_stan <- upars[, perm[[2]], , drop = FALSE]
     samples_4_iter_tmp <- vector("list", dim(upars)[3])
-    print(dim(samples_4_fit))
-    print(dim(samples_4_iter_stan))
     for (i in seq_along(samples_4_iter_tmp)) {
-      samples_4_iter_tmp[[i]] <- coda::as.mcmc(t(samples_4_iter_stan[,,i]))
+      samples_4_iter_tmp[[i]] <- coda::as.mcmc(t(samples_4_iter_stan[, , i]))
     }
     samples_4_iter_tmp <- coda::as.mcmc.list(samples_4_iter_tmp)
 
@@ -340,17 +337,21 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
     }
 
     samples_4_iter <- apply(samples_4_iter_stan, 1, rbind)
-    parameters <- paste0("x", seq_len(dim(upars)[1]))
+
+    parameters <- paste0("x", (seq_len(dim(upars)[1])))
+
     transTypes <- rep("unbounded", length(parameters))
     names(transTypes) <- parameters
+
+    # prepare lb and ub
     lb <- rep(-Inf, length(parameters))
     ub <- rep(Inf, length(parameters))
     names(lb) <- names(ub) <- parameters
+
     colnames(samples_4_iter) <- paste0("trans_", parameters)
     colnames(samples_4_fit) <- paste0("trans_", parameters)
     print(dim(samples_4_iter))
-    print(dim(samples_4_fit))
-
+    # run bridge sampling
     if (cores == 1) {
       bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                                args = list(samples_4_fit = samples_4_fit,
@@ -381,11 +382,10 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
                                            silent = silent, verbose = verbose,
                                            r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
     }
-
-    results[[paste0("perm_", paste(perm, collapse = "_"))]] <- bridge_output
+    result <- append(result, list(bridge_output))
   }
 
-  return(results)
+  return(result)
 }
 
 #' @rdname bridge_sampler
