@@ -216,10 +216,10 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_sp
     if (length(dim(upars)) == 2) { # for one parameter models
         dim(upars) <- c(1, dim(upars))
     }
-
+    print("is blocks problematic?")
     # Split upars into n_splits blocks
     blocks <- split(upars, cut(seq_len(dim(upars)[2]), breaks = n_splits, labels = FALSE))
-
+    print("No")
     # Generate all combinations of blocks into two groups
     combinations <- combn(n_splits, n_splits / 2)
     results_list <- vector("list", ncol(combinations))
