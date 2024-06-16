@@ -10,6 +10,7 @@
 }
 
 .generate_permutations <- function(mat, k) {
+  library(combinat)
   # Function to split a vector into k chunks
   split_chunks <- function(vec, k) {
     n <- length(vec)
