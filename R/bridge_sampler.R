@@ -193,8 +193,8 @@ bridge_sampler <- function(samples, n_splits, ...) {
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, n_splits = 2,
-                                   method = "normal", cores = 1,
+bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
+                                   repetitions = 1, method = "normal", cores = 1,
                                    use_neff = TRUE, maxiter = 1000, silent = FALSE,
                                    verbose = FALSE, ...) {
     if (n_splits %% 2 != 0) {
