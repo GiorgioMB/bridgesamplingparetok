@@ -394,7 +394,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
 ##Permutations added
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., data = NULL,
+bridge_sampler.mcmc.listold <- function(samples = NULL, log_posterior = NULL, ..., data = NULL,
                                      lb = NULL, ub = NULL, repetitions = 1,
                                      param_types = rep("real", ncol(samples[[1]])),
                                      method = "normal", cores = 1, use_neff = TRUE,
@@ -403,6 +403,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., 
                                      verbose = FALSE) {
   # split samples in two parts
   nr <- nrow(samples[[1]])
+  print(nr)
   samples4fit_index <- seq_len(nr) %in% seq_len(round(nr/2))
   samples_4_fit_tmp <- samples[samples4fit_index,,drop=FALSE]
   samples_4_fit_tmp <- do.call("rbind", samples_4_fit_tmp)
@@ -462,7 +463,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., 
 
 }
 
-bridge_sampler.mcmc.listwrong <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
+bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
                                      lb = NULL, ub = NULL, repetitions = 1,
                                      param_types = rep("real", ncol(samples[[1]])),
                                      method = "normal", cores = 1, use_neff = TRUE,
@@ -471,6 +472,7 @@ bridge_sampler.mcmc.listwrong <- function(samples = NULL, log_posterior = NULL, 
                                      verbose = FALSE) {
   # split samples in two parts
   nr <- nrow(samples[[1]])
+  print(nr)
   if (num_splits %% 2 != 0) {
   stop("Error: num_splits is not divisible by 2")
   }
@@ -494,7 +496,7 @@ bridge_sampler.mcmc.listwrong <- function(samples = NULL, log_posterior = NULL, 
     tmp <- .transform2Real(samples_4_fit_tmp, lb, ub)
     samples_4_fit <- tmp$theta_t
     transTypes <- tmp$transTypes
-    samples_4_iter_tmp <- lapply(samples[!samples4fit_index,,drop=FALSE],
+    samples_4_iter_tmp <- lapply(samples[perm[[2]],,drop=FALSE],
                                  function(x) .transform2Real(x, lb = lb, ub = ub)$theta_t)
     # compute effective sample size
     if (use_neff) {
