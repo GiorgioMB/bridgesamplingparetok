@@ -188,7 +188,6 @@
 #'@importFrom stats qnorm pnorm dnorm median cov var
 #'@export
 bridge_sampler <- function(samples, num_splits, ...) {
-   print(paste("Num_splits in bridge_sampler:", num_splits))  # Debugging line
    UseMethod("bridge_sampler", samples)
 }
 
@@ -252,7 +251,6 @@ bridge_sampler.stanfitold <- function(samples = NULL, stanfit_model = samples,
 
   colnames(samples_4_iter) <- paste0("trans_", parameters)
   colnames(samples_4_fit) <- paste0("trans_", parameters)
-  print(dim(samples_4_iter))
   # run bridge sampling
   if (cores == 1) {
     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
@@ -354,7 +352,6 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
 
     colnames(samples_4_iter) <- paste0("trans_", parameters)
     colnames(samples_4_fit) <- paste0("trans_", parameters)
-    print(dim(samples_4_iter))
     # run bridge sampling
     if (cores == 1) {
       bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
@@ -404,7 +401,6 @@ bridge_sampler.mcmc.listold <- function(samples = NULL, log_posterior = NULL, ..
                                      verbose = FALSE) {
   # split samples in two parts
   nr <- nrow(samples[[1]])
-  print(nr)
   samples4fit_index <- seq_len(nr) %in% seq_len(round(nr/2))
   samples_4_fit_tmp <- samples[samples4fit_index,,drop=FALSE]
   samples_4_fit_tmp <- do.call("rbind", samples_4_fit_tmp)
@@ -439,10 +435,6 @@ bridge_sampler.mcmc.listold <- function(samples = NULL, log_posterior = NULL, ..
 
   # convert to matrix
   samples_4_iter <- do.call("rbind", samples_4_iter_tmp)
-  print("Dimensionality of samples_4_fit")
-  print(dim(samples_4_fit))
-  print("Dimensionality of samples_4_iter")
-  print(dim(samples_4_iter))
   # run bridge sampling
   out <- do.call(what = paste0(".bridge.sampler.", method),
                  args = list(samples_4_fit = samples_4_fit,
@@ -475,9 +467,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
   if (num_splits %% 2 != 0) {
   stop("Error: num_splits is not divisible by 2")
   }
-  print(num_splits)
   permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits)
-  print(dim(permutations))
   result <- list()
   for (perm in permutations) {
     samples4fit_index <- perm[[1]] 
@@ -647,9 +637,7 @@ bridge_sampler.stanreg <-
   function(samples, repetitions = 1, method = "normal", cores = 1, num_splits = 2,
            use_neff = TRUE, maxiter = 1000, silent = FALSE,
            verbose = FALSE, ...) {
-    print("Using STANREG!!")
-    print("Num splits?")
-    print(num_splits)
+    
     df <- eval(samples$call$diagnostic_file)
     if (is.null(df))
       stop("the 'diagnostic_file' option must be specified in the call to ",
