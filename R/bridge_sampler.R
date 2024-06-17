@@ -188,6 +188,7 @@
 #'@importFrom stats qnorm pnorm dnorm median cov var
 #'@export
 bridge_sampler <- function(samples, num_splits, ...) {
+   print(paste("Num_splits in bridge_sampler:", num_splits))  # Debugging line
    UseMethod("bridge_sampler", samples)
 }
 
@@ -646,7 +647,6 @@ bridge_sampler.stanreg <-
   function(samples, repetitions = 1, method = "normal", cores = 1, num_splits = 2,
            use_neff = TRUE, maxiter = 1000, silent = FALSE,
            verbose = FALSE, ...) {
-    print("It is I, stanreg")
     df <- eval(samples$call$diagnostic_file)
     if (is.null(df))
       stop("the 'diagnostic_file' option must be specified in the call to ",
@@ -677,7 +677,7 @@ bridge_sampler.stanreg <-
       bridge_output <- bridge_sampler(samples = samples, log_posterior = .stan_log_posterior,
                                       data = list(stanfit = sf), lb = lb, ub = ub,
                                       repetitions = repetitions, method = method, cores = cores,
-                                      use_neff = use_neff, packages = "rstan", num_splits = num_splits,
+                                      use_neff = use_neff, packages = "rstan",
                                       maxiter = maxiter, silent = silent,
                                       verbose = verbose)
     } else {
