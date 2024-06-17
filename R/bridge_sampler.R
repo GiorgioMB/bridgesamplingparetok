@@ -198,7 +198,7 @@ bridge_sampler <- function(samples, num_splits, ...) {
 bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
                                       repetitions = 1, method = "normal", cores = 1,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
-                                      verbose = FALSE, ...) {
+                                      total_perms = 1, verbose = FALSE, ...) {
   # cores > 1 only for unix:
   if (!(.Platform$OS.type == "unix") & (cores != 1)) {
     warning("cores > 1 only possible on Unix/MacOs. Uses 'core = 1' instead.", call. = FALSE)
@@ -223,7 +223,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
   nr <- dim(upars)[2]
   result <- list()
   # Generate permutations
-  permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits)
+  permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits, total_perms)
 
   for (perm in permutations) {
     samples4fit_index <- perm[[1]]
@@ -299,7 +299,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
 ##Permutations added
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_splits = 2, ..., data = NULL,
+bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_splits = 2, total_perms = 1, ..., data = NULL,
                                      lb = NULL, ub = NULL, repetitions = 1,
                                      param_types = rep("real", ncol(samples[[1]])),
                                      method = "normal", cores = 1, use_neff = TRUE,
@@ -311,7 +311,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
   if (num_splits %% 2 != 0) {
   stop("Error: num_splits is not divisible by 2")
   }
-  permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits)
+  permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits, total_perms)
   result <- list()
   for (perm in permutations) {
     samples4fit_index <- perm[[1]] 
@@ -368,8 +368,8 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
 #' @export
 ##I don't think I can add anything here tbh
 bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
-                                data = NULL, lb = NULL, ub = NULL,
-                                repetitions = 1, method = "normal",
+                                data = NULL, lb = NULL, ub = NULL, total_perms = 1,
+                                num_splits = 2, repetitions = 1, method = "normal",
                                 cores = 1, use_neff = TRUE,
                                 packages = NULL, varlist = NULL,
                                 envir = .GlobalEnv, rcppFile = NULL,
@@ -378,7 +378,7 @@ bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
                                 silent = FALSE, verbose = FALSE) {
   samples <- as.matrix(samples)
   bridge_output <- bridge_sampler(samples = samples,
-                                  log_posterior = log_posterior,
+                                  log_posterior = log_posterior, num_splits = num_splits, total_perms = total_perms,
                                   ...,
                                   data = data, lb = lb, ub = ub,
                                   repetitions = repetitions,
@@ -395,7 +395,7 @@ bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
 #' @export
 #' @rdname bridge_sampler
 ##Permutations added
-bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num_splits = 2,
+bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num_splits = 2, total_perms = 1,
                                 data = NULL, lb = NULL, ub = NULL,
                                 repetitions = 1, method = "normal",
                                 cores = 1, use_neff = TRUE,
@@ -433,12 +433,13 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
 
   # split samples for proposal/iterative scheme
   nr <- nrow(samples)
-  permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits)
+  permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits, total_perms)
   result <- list()
   for (perm in permutations) {
-    samples4fit_index <- perm[[1]]
+     samples4fit_index <- perm[[1]]
      samples_4_fit <- theta_t[samples4fit_index, ,drop = FALSE]
-     samples_4_iter <- theta_t[!samples4fit_index, , drop = FALSE]
+     samples4iter_index <- perm[[2]]
+     samples_4_iter <- theta_t[samples4iter_index, , drop = FALSE]
    
      # compute effective sample size
      if (use_neff) {
@@ -479,7 +480,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
 ##Nothing can be added here afaik
 bridge_sampler.stanreg <-
   function(samples, repetitions = 1, method = "normal", cores = 1, num_splits = 2,
-           use_neff = TRUE, maxiter = 1000, silent = FALSE,
+           use_neff = TRUE, maxiter = 1000, silent = FALSE, total_perms = 1,
            verbose = FALSE, ...) {
     
     df <- eval(samples$call$diagnostic_file)
@@ -512,7 +513,7 @@ bridge_sampler.stanreg <-
       bridge_output <- bridge_sampler(samples = samples, log_posterior = .stan_log_posterior,
                                       data = list(stanfit = sf), lb = lb, ub = ub,
                                       repetitions = repetitions, method = method, cores = cores,
-                                      use_neff = use_neff, packages = "rstan",
+                                      use_neff = use_neff, packages = "rstan", total_perms = total_perms,
                                       maxiter = maxiter, silent = silent, num_splits = num_splits,
                                       verbose = verbose)
     } else {
@@ -521,7 +522,7 @@ bridge_sampler.stanreg <-
                                       data = list(stanfit = sf), lb = lb, ub = ub,
                                       repetitions = repetitions, varlist = "stanfit",
                                       envir = sys.frame(sys.nframe()), method = method,
-                                      cores = cores, use_neff = use_neff,
+                                      cores = cores, use_neff = use_neff, total_perms = total_perms,
                                       packages = "rstan", maxiter = maxiter, num_splits = num_splits,
                                       silent = silent, verbose = verbose)
     }
@@ -532,7 +533,7 @@ bridge_sampler.stanreg <-
 #' @export
 ##Nothing can be added here afaik
 bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
-                                 lb = NULL, ub = NULL, repetitions = 1,
+                                 total_perms = 1, lb = NULL, ub = NULL, repetitions = 1,
                                  method = "normal", cores = 1, use_neff = TRUE,
                                  packages = NULL, varlist = NULL,
                                  envir = .GlobalEnv, rcppFile = NULL,
@@ -545,12 +546,11 @@ bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data
   samples <- samples[,cn != "deviance", drop = FALSE]
 
   # run bridge sampling
-  out <- bridge_sampler(samples = samples, log_posterior = log_posterior, ...,
-                        data = data, lb = lb, ub = ub, repetitions = repetitions,
-                        method = method, cores = cores, use_neff = use_neff,
-                        packages = packages, varlist = varlist, envir = envir,
-                        rcppFile = rcppFile, maxiter = maxiter, silent = silent,
-                        verbose = verbose)
+  out <- bridge_sampler(samples = samples, log_posterior = log_posterior, num_splts = num_splits,
+                        total_perms = total_perms, ..., data = data, lb = lb, ub = ub, 
+                        repetitions = repetitions, method = method, cores = cores, 
+                        use_neff = use_neff, packages = packages, varlist = varlist, envir = envir,
+                        rcppFile = rcppFile, maxiter = maxiter, silent = silent, verbose = verbose)
 
   return(out)
 
@@ -560,7 +560,7 @@ bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data
 #' @export
 ##Nothing can be added here afaik
 bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
-                                   lb = NULL, ub = NULL, repetitions = 1,
+                                   total_perms = 1, lb = NULL, ub = NULL, repetitions = 1,
                                    method = "normal", cores = 1, use_neff = TRUE,
                                    packages = NULL, varlist = NULL,
                                    envir = .GlobalEnv, rcppFile = NULL,
@@ -571,7 +571,8 @@ bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., da
   samples <- coda::as.mcmc.list(samples)
 
   # run bridge sampling
-  out <- bridge_sampler(samples = samples, log_posterior = log_posterior, ...,
+  out <- bridge_sampler(samples = samples, log_posterior = log_posterior, num_splits = num_splits, 
+                        total_perms = total_perms, ...,
                         data = data, lb = lb, ub = ub, repetitions = repetitions,
                         method = method, cores = cores, use_neff = use_neff,
                         packages = packages, varlist = varlist, envir = envir,
@@ -584,9 +585,8 @@ bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., da
 
 #' @rdname bridge_sampler
 #' @export
-##Nothing can/should be added here 
 bridge_sampler.MCMC_refClass <- function(samples,
-                                  repetitions = 1, num_splits = 2,
+                                  repetitions = 1, num_splits = 2, total_perms = 1,
                                   method = "normal",
                                   cores = 1,
                                   use_neff = TRUE,
@@ -674,7 +674,7 @@ bridge_sampler.MCMC_refClass <- function(samples,
   }
 
   out <- bridge_sampler(samples = samples_mcmc_list,
-                        log_posterior = log_posterior,
+                        log_posterior = log_posterior, num_splits = num_splits, total_perms = total_perms,
                         ...,
                         data = NULL,
                         lb = .nimble_bounds(mcmc_samples[[1]],
