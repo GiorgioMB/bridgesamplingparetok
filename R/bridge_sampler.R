@@ -471,7 +471,6 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., 
                                      verbose = FALSE) {
   # split samples in two parts
   nr <- nrow(samples[[1]])
-  print(nr)
   if (num_splits %% 2 != 0) {
   stop("Error: num_splits is not divisible by 2")
   }
@@ -509,12 +508,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., 
     }
     # convert to matrix
     samples_4_iter <- do.call("rbind", samples_4_iter_tmp)
-    print("Dimensionality of samples_4_fit")
-    print(dim(samples_4_fit))
-    print("Dimensionality of samples_4_iter")
-    print(dim(samples_4_iter))
     # run bridge sampling
-    stop()
     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                              args = list(samples_4_fit = samples_4_fit,
                                          samples_4_iter = samples_4_iter,
