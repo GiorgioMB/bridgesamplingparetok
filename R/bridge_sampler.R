@@ -187,7 +187,7 @@
 #'@importFrom stringr str_sub
 #'@importFrom stats qnorm pnorm dnorm median cov var
 #'@export
-bridge_sampler <- function(samples, n_splits, ...) {
+bridge_sampler <- function(samples, num_splits, ...) {
    UseMethod("bridge_sampler", samples)
 }
 
@@ -394,7 +394,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
 ##Permutations added
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, n_splits = 2,
+bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
                                      lb = NULL, ub = NULL, repetitions = 1,
                                      param_types = rep("real", ncol(samples[[1]])),
                                      method = "normal", cores = 1, use_neff = TRUE,
@@ -499,7 +499,7 @@ bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
 #' @export
 #' @rdname bridge_sampler
 ##Permutations added
-bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., n_splits = 2,
+bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num_splits = 2,
                                 data = NULL, lb = NULL, ub = NULL,
                                 repetitions = 1, method = "normal",
                                 cores = 1, use_neff = TRUE,
@@ -582,7 +582,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., n_s
 #' @importFrom utils read.csv
 ##Nothing can be added here afaik
 bridge_sampler.stanreg <-
-  function(samples, repetitions = 1, method = "normal", cores = 1, n_splits = 2,
+  function(samples, repetitions = 1, method = "normal", cores = 1, num_splits = 2,
            use_neff = TRUE, maxiter = 1000, silent = FALSE,
            verbose = FALSE, ...) {
     df <- eval(samples$call$diagnostic_file)
@@ -634,7 +634,7 @@ bridge_sampler.stanreg <-
 #' @rdname bridge_sampler
 #' @export
 ##Nothing can be added here afaik
-bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, n_splits = 2,
+bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
                                  lb = NULL, ub = NULL, repetitions = 1,
                                  method = "normal", cores = 1, use_neff = TRUE,
                                  packages = NULL, varlist = NULL,
@@ -662,7 +662,7 @@ bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data
 #' @rdname bridge_sampler
 #' @export
 ##Nothing can be added here afaik
-bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, n_splits = 2,
+bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
                                    lb = NULL, ub = NULL, repetitions = 1,
                                    method = "normal", cores = 1, use_neff = TRUE,
                                    packages = NULL, varlist = NULL,
@@ -689,7 +689,7 @@ bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., da
 #' @export
 ##Nothing can/should be added here 
 bridge_sampler.MCMC_refClass <- function(samples,
-                                  repetitions = 1, n_splits = 2,
+                                  repetitions = 1, num_splits = 2,
                                   method = "normal",
                                   cores = 1,
                                   use_neff = TRUE,
