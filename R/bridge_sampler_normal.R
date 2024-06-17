@@ -137,8 +137,8 @@
   }
   logml <- numeric(repetitions)
   niter <- numeric(repetitions)
-  pareto_k_numi <- vector("list", repetitions)
-  pareto_k_deni <- vector("list", repetitions)
+  pareto_k_numi <- list()
+  pareto_k_deni <- list()
   
   # run iterative updating scheme to compute log of marginal likelihood
   for (i in seq_len(repetitions)) {
