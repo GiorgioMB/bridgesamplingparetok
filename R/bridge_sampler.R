@@ -394,6 +394,73 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
 ##Permutations added
 #' @rdname bridge_sampler
 #' @export
+bridge_sampler.mcmc.listold <- function(samples = NULL, log_posterior = NULL, ..., data = NULL,
+                                     lb = NULL, ub = NULL, repetitions = 1,
+                                     param_types = rep("real", ncol(samples[[1]])),
+                                     method = "normal", cores = 1, use_neff = TRUE,
+                                     packages = NULL, varlist = NULL, envir = .GlobalEnv,
+                                     rcppFile = NULL, maxiter = 1000, silent = FALSE,
+                                     verbose = FALSE) {
+  # split samples in two parts
+  nr <- nrow(samples[[1]])
+  samples4fit_index <- seq_len(nr) %in% seq_len(round(nr/2))
+  samples_4_fit_tmp <- samples[samples4fit_index,,drop=FALSE]
+  samples_4_fit_tmp <- do.call("rbind", samples_4_fit_tmp)
+
+  # check lb and ub
+  if (!is.numeric(lb))
+    stop("lb needs to be numeric", call. = FALSE)
+  if (!is.numeric(ub))
+    stop("ub needs to be numeric", call. = FALSE)
+  if (!all(colnames(samples_4_fit_tmp) %in% names(lb)))
+    stop("lb does not contain all parameters.", call. = FALSE)
+  if (!all(colnames(samples_4_fit_tmp) %in% names(ub)))
+    stop("ub does not contain all parameters.", call. = FALSE)
+
+  # transform parameters to real line
+  tmp <- .transform2Real(samples_4_fit_tmp, lb, ub)
+  samples_4_fit <- tmp$theta_t
+  transTypes <- tmp$transTypes
+  samples_4_iter_tmp <- lapply(samples[!samples4fit_index,,drop=FALSE],
+                               function(x) .transform2Real(x, lb = lb, ub = ub)$theta_t)
+
+  # compute effective sample size
+  if (use_neff) {
+    samples_4_iter_tmp <- coda::mcmc.list(lapply(samples_4_iter_tmp, coda::mcmc))
+    neff <- tryCatch(median(coda::effectiveSize(samples_4_iter_tmp)), error = function(e) {
+      warning("effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
+      return(NULL)
+    })
+  } else {
+    neff <- NULL
+  }
+
+  # convert to matrix
+  samples_4_iter <- do.call("rbind", samples_4_iter_tmp)
+  print("Dimensionality of samples_4_fit")
+  print(dim(samples_4_fit))
+  print("Dimensionality of samples_4_iter")
+  print(dim(samples_4_iter))
+  # run bridge sampling
+  out <- do.call(what = paste0(".bridge.sampler.", method),
+                 args = list(samples_4_fit = samples_4_fit,
+                             samples_4_iter = samples_4_iter,
+                             neff = neff,
+                             log_posterior = log_posterior,
+                             "..." = ..., data = data,
+                             lb = lb, ub = ub,
+                             transTypes = transTypes,
+                             repetitions = repetitions, cores = cores,
+                             packages = packages, varlist = varlist, envir = envir,
+                             param_types = param_types,
+                             rcppFile = rcppFile, maxiter = maxiter,
+                             silent = silent, verbose = verbose,
+                             r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
+
+  return(out)
+
+}
+
 bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
                                      lb = NULL, ub = NULL, repetitions = 1,
                                      param_types = rep("real", ncol(samples[[1]])),
@@ -441,9 +508,9 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., 
     # convert to matrix
     samples_4_iter <- do.call("rbind", samples_4_iter_tmp)
     print("Dimensionality of samples_4_fit")
-    print(dim(samples_4_fit)
+    print(dim(samples_4_fit))
     print("Dimensionality of samples_4_iter")
-    print(dim(samples_4_iter)
+    print(dim(samples_4_iter))
     # run bridge sampling
     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                              args = list(samples_4_fit = samples_4_fit,
