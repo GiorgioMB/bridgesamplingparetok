@@ -299,18 +299,25 @@
   ## Load the evir package
   library(evir)
   
-  ## Fit the tail of a Generalized Pareto Distribution
-  if (length(largest_weights) > 0 && all(is.finite(largest_weights))) {
-    fit <- gpd(largest_weights, threshold = min(largest_weights))
-    ## Extract the shape parameter (k)
-    k <- fit$par.ests["xi"]
-    ## Return the shape parameter k
-    return(k)
-  } else {
-    warning("Insufficient or inappropriate data for GPD fitting.")
+  ## Attempt to Fit the tail of a Generalized Pareto Distribution
+  tryCatch({
+    if (length(largest_weights) > 0 && all(is.finite(largest_weights))) {
+      fit <- gpd(largest_weights, threshold = min(largest_weights))
+      ## Extract the shape parameter (k)
+      k <- fit$par.ests["xi"]
+      ## Return the shape parameter k
+      return(k)
+    } else {
+      warning("Insufficient or inappropriate data for GPD fitting.")
+      return(NA)
+    }
+  }, error = function(e) {
+    ## Return NA if an error occurs
+    warning("An error occurred during GPD fitting: ", conditionMessage(e))
     return(NA)
-  }
+  })
 }
+
 
 .run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L,
                                   method, maxiter, silent,
