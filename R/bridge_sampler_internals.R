@@ -264,10 +264,7 @@
 }
 
 .pareto_k_diagnostic <- function(numi, deni) {
-  ## Check if the necessary libraries are present
-  if (!requireNamespace("evir", quietly = TRUE)) {
-    stop("The evir package is required but not installed.")
-  }
+  ## Check if parallel is present
   if (!requireNamespace("parallel", quietly = TRUE)) {
     stop("The parallel package is required but not installed.")
   }
@@ -287,6 +284,11 @@
 }
 
 .compute_diagnostic <- function(weights) {
+  ##Check that the posterior package is there, and load it if not present
+  if (!requireNamespace("posterior", quietly = TRUE)) {
+    stop("The posterior package is required but not installed.")
+  }
+  library(posterior)
   num_samples <- length(weights)
   
   ## Calculate M
@@ -295,18 +297,13 @@
   
   ## Get the M largest weights
   largest_weights <- sort(weights, decreasing = TRUE)[1:M]
-  
-  ## Load the evir package
-  library(evir)
-  
+
   ## Attempt to Fit the tail of a Generalized Pareto Distribution
   tryCatch({
     if (length(largest_weights) > 0 && all(is.finite(largest_weights))) {
-      fit <- gpd(largest_weights, threshold = min(largest_weights))
-      ## Extract the shape parameter (k)
-      k <- fit$par.ests["xi"]
-      ## Return the shape parameter k
-      return(k)
+      diag <- pareto_diags(largest_weights)
+      ## Return the diagnostics data
+      return(diag)
     } else {
       warning("Insufficient or inappropriate data for GPD fitting.")
       return(NA)
