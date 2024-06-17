@@ -187,8 +187,8 @@
 
   logml <- numeric(repetitions)
   niter <- numeric(repetitions)
-  pareto_k_numi <- numeric(repetitions)
-  pareto_k_deni <- numeric(repetitions)
+  pareto_k_numi <- list()
+  pareto_k_deni <- list()
   # run iterative updating scheme to compute log of marginal likelihood
   for (i in seq_len(repetitions)) {
     tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
@@ -211,11 +211,12 @@
     niter[i] <- tmp$niter
     if("pareto_k" %in% names(tmp)) {
       print(tmp$pareto_k)
-      pareto_k_numi[i] <- tmp$pareto_k$numi
-      pareto_k_deni[i] <- tmp$pareto_k$deni
-    } else {print("pareto_k is not found in tmp")
-      pareto_k_numi[i] <- NA
-      pareto_k_deni[i] <- NA
+      pareto_k_numi[[i]] <- tmp$pareto_k$numi
+      pareto_k_deni[[i]] <- tmp$pareto_k$deni
+    } else {
+      print("There was an error computing the pareto_k diagnostic")
+      pareto_k_numi[[i]] <- NA
+      pareto_k_deni[[i]] <- NA
     }
     
     if (niter[i] == maxiter)
