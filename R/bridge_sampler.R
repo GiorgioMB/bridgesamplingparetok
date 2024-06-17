@@ -292,7 +292,10 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
     }
     result <- append(result, list(bridge_output))
   }
-
+  ##If only one permutation is considered
+  if (length(result) == 1) {
+    return(result[[1]])  ## Return the single element directly
+  }  
   return(result)
 }
 
@@ -360,6 +363,9 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
                                          r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
     result <- append(result, list(bridge_output))
   }
+  if (length(result) == 1) {
+    return(result[[1]])  ## Return the single element directly
+  }  
   return(result)
 }
 
@@ -470,8 +476,10 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
     
                                   
   }
+  if (length(result) == 1) {
+    return(result[[1]])  ## Return the single element directly
+  }  
   return(result)
-
 }
 
 #' @rdname bridge_sampler
