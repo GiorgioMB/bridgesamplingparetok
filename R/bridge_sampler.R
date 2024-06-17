@@ -441,6 +441,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., 
   print(dim(samples_4_fit))
   print("Dimensionality of samples_4_iter")
   print(dim(samples_4_iter))
+  stop()
   # run bridge sampling
   out <- do.call(what = paste0(".bridge.sampler.", method),
                  args = list(samples_4_fit = samples_4_fit,
