@@ -474,7 +474,9 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., 
   if (num_splits %% 2 != 0) {
   stop("Error: num_splits is not divisible by 2")
   }
+  print(num_splits)
   permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits)
+  print(dim(permutations))
   result <- list()
   for (perm in permutations) {
     samples4fit_index <- perm[[1]] 
