@@ -394,7 +394,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
 ##Permutations added
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.mcmc.listold <- function(samples = NULL, log_posterior = NULL, ..., data = NULL,
+bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., data = NULL,
                                      lb = NULL, ub = NULL, repetitions = 1,
                                      param_types = rep("real", ncol(samples[[1]])),
                                      method = "normal", cores = 1, use_neff = TRUE,
@@ -461,7 +461,7 @@ bridge_sampler.mcmc.listold <- function(samples = NULL, log_posterior = NULL, ..
 
 }
 
-bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
+bridge_sampler.mcmc.listwrong <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
                                      lb = NULL, ub = NULL, repetitions = 1,
                                      param_types = rep("real", ncol(samples[[1]])),
                                      method = "normal", cores = 1, use_neff = TRUE,
