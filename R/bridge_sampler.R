@@ -459,7 +459,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ...,
 bridge_sampler.stanreg <-
   function(samples, repetitions = 1, method = "normal", cores = 1,
            use_neff = TRUE, maxiter = 1000, silent = FALSE,
-           verbose = FALSE, ...) {
+           verbose = FALSE, num_splits = 2, ...) {
     df <- eval(samples$call$diagnostic_file)
     if (is.null(df))
       stop("the 'diagnostic_file' option must be specified in the call to ",
@@ -491,7 +491,7 @@ bridge_sampler.stanreg <-
                                       data = list(stanfit = sf), lb = lb, ub = ub,
                                       repetitions = repetitions, method = method, cores = cores,
                                       use_neff = use_neff, packages = "rstan",
-                                      maxiter = maxiter, silent = silent,
+                                      maxiter = maxiter, silent = silent, num_splits = num_splits,
                                       verbose = verbose)
     } else {
       bridge_output <- bridge_sampler(samples = samples,
@@ -500,7 +500,7 @@ bridge_sampler.stanreg <-
                                       repetitions = repetitions, varlist = "stanfit",
                                       envir = sys.frame(sys.nframe()), method = method,
                                       cores = cores, use_neff = use_neff,
-                                      packages = "rstan", maxiter = maxiter,
+                                      packages = "rstan", maxiter = maxiter, num_splits = num_splits,
                                       silent = silent, verbose = verbose)
     }
     return(bridge_output)
