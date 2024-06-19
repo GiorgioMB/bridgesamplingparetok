@@ -387,7 +387,7 @@
   }
 
   if (i >= maxiter) {
-    pareto_k <- .pareto_k_diagnostic(numi, deni)
+    pareto_k <- list(numi = NA, deni = NA)
     return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k))
   }
   
