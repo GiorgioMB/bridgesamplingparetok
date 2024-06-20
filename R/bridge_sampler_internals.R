@@ -387,6 +387,7 @@
   }
 
   if (i >= maxiter) {
+    print("Log Likelihood estimation failed")
     pareto_k <- list(numi = NA, deni = NA)
     return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k))
   }
