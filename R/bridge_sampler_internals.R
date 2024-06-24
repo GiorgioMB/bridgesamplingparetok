@@ -296,7 +296,7 @@
   }
   library(posterior)
   num_samples <- length(weights)
-
+  print("FITTING ON WHOLE WEIGHTS")
   ## Attempt to Fit the tail of a Generalized Pareto Distribution
   tryCatch({
     diag <- pareto_diags(weights)
