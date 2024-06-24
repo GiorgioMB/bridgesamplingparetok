@@ -317,6 +317,7 @@
   }, error = function(e) {
     ## Return NA if an error occurs
     warning("An error occurred during GPD fitting: ", conditionMessage(e))
+    print("Error encountered, Pareto fitting failed")
     return(NA)
   })
 }
