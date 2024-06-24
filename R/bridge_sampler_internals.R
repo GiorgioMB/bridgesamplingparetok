@@ -311,7 +311,7 @@
 .run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L,
                                   method, maxiter, silent,
                                   criterion, neff, return_always) {
-
+  library(posterior)
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
 
@@ -350,6 +350,8 @@
     logmlold <- logml
     numi <-  e^(l2 - lstar)/(s1 * e^(l2 - lstar) + s2 *  r)
     deni <- 1/(s1 * e^(l1 - lstar) + s2 * r)
+    print(pareto_khat(as.numeric(numi), tails = "right", r_eff = 1)$k)
+    print(pareto_khat(as.numeric(deni), tails = "right", r_eff = 1)$k)
 
     if (any(is.infinite(as.numeric(numi))) ||
         any(is.infinite(as.numeric((deni))))) {
