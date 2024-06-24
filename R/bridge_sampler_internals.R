@@ -384,9 +384,10 @@
 
   if (i >= maxiter) {
     print("Log Likelihood estimation failed")
-    pareto_k <- list(numi = NA, deni = NA)
     if (return_always == TRUE){
       pareto_k <- .pareto_k_diagnostic(numi, deni)
+    } else {
+      pareto_k <- list(numi = NA, deni = NA)
     }
     print("Return paretok?")
     print(return_always)
