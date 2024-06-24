@@ -204,7 +204,7 @@
       tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
                                    r0 = r0_2, tol = tol2, L = L, method = "warp3",
                                    maxiter = maxiter, silent = silent,
-                                   criterion = "logml", neff = neff)
+                                   criterion = "logml", neff = neff, return_always=return_always)
       tmp$niter <- maxiter + tmp$niter
     }
 
