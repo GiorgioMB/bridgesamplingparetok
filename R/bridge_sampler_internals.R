@@ -299,18 +299,12 @@
 
   ## Attempt to Fit the tail of a Generalized Pareto Distribution
   tryCatch({
-    if (length(largest_weights) > 0 && all(is.finite(largest_weights))) {
-      diag <- pareto_diags(weights)
-      ## Return the diagnostics data
-      return(diag)
-    } else {
-      warning("Insufficient or inappropriate data for GPD fitting.")
-      return(NA)
-    }
+    diag <- pareto_diags(weights)
+    ## Return the diagnostics data
+    return(diag)
   }, error = function(e) {
     ## Return NA if an error occurs
     warning("An error occurred during GPD fitting: ", conditionMessage(e))
-    print("Error encountered, Pareto fitting failed")
     return(NA)
   })
 }
