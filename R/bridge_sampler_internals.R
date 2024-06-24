@@ -376,8 +376,6 @@
     } else {
       pareto_k <- list(numi = NA, deni = NA)
     }
-    print("Return paretok?")
-    print(return_always)
     return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k))
   }
   
