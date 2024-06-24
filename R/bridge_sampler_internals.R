@@ -276,8 +276,8 @@
   }
   library(parallel)
   ## Convert brob objects to numeric
-  numi_numeric <- as.numeric(numi@x) * ifelse(numi@positive, 1, -1)
-  deni_numeric <- as.numeric(deni@x) * ifelse(deni@positive, 1, -1)
+  numi_numeric <- as.numeric(numi@x)
+  deni_numeric <- as.numeric(deni@x)
 
   ## Run diagnostic calculations in parallel for both numi and deni
   results <- mclapply(list(numi_numeric, deni_numeric), .compute_diagnostic, mc.cores = 2)
