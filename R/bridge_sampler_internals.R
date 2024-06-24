@@ -278,7 +278,7 @@
   ## Convert brob objects to numeric
   numi_numeric <- as.numeric(numi@x)
   deni_numeric <- as.numeric(deni@x)
-
+  print("Attempting to compute the Pareto-k")
   ## Run diagnostic calculations in parallel for both numi and deni
   results <- mclapply(list(numi_numeric, deni_numeric), .compute_diagnostic, mc.cores = 2)
 
@@ -297,8 +297,6 @@
   library(posterior)
   ## Attempt to Fit the tail of a Generalized Pareto Distribution
   tryCatch({
-    print("Attempting to compute the Pareto-k")
-    print(pareto_khat(weights, tail = 'right', r_eff = 1))
     diag <- pareto_khat(weights, tail = 'right', r_eff = 1) #pareto_diags(weights)
     ## Return the diagnostics data
     return(diag)
