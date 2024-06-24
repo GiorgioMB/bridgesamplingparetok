@@ -324,7 +324,7 @@
 
 .run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L,
                                   method, maxiter, silent,
-                                  criterion, neff) {
+                                  criterion, neff, return_always) {
 
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
@@ -389,6 +389,9 @@
   if (i >= maxiter) {
     print("Log Likelihood estimation failed")
     pareto_k <- list(numi = NA, deni = NA)
+    if (return_always == TRUE){
+      pareto_k <- .pareto_k_diagnostic(numi, deni)
+    }
     return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k))
   }
   
