@@ -23,7 +23,8 @@
   verbose,
   r0,
   tol1,
-  tol2) {
+  tol2, 
+  return_always) {
 
   if (is.null(neff))
     neff <- nrow(samples_4_iter)
@@ -145,7 +146,7 @@
     tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
                                  r0 = r0, tol = tol1, L = NULL, method = "normal",
                                  maxiter = maxiter, silent = silent,
-                                 criterion = "r", neff = neff)
+                                 criterion = "r", neff = neff, return_always = return_always)
     if (is.na(tmp$logml) & !is.null(tmp$r_vals)) {
       warning("logml could not be estimated within maxiter, rerunning with adjusted starting value. \nEstimate might be more variable than usual.", call. = FALSE)
       lr <- length(tmp$r_vals)
@@ -153,7 +154,7 @@
       r0_2 <- sqrt(tmp$r_vals[[lr - 1]] * tmp$r_vals[[lr]])
       tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
                                    r0 = r0_2, tol = tol2, L = NULL, method = "normal",
-                                   maxiter = maxiter, silent = silent,
+                                   maxiter = maxiter, silent = silent, return_always = return_always,
                                    criterion = "logml", neff = neff)
       tmp$niter <- maxiter + tmp$niter
     }
