@@ -360,10 +360,6 @@
   i <- 1
 
   while (i <= maxiter && criterion_val > tol) {
-
-    if (! silent)
-      cat(paste0("Iteration: ", i, "\n"))
-
     rold <- r
     logmlold <- logml
     numi <-  e^(l2 - lstar)/(s1 * e^(l2 - lstar) + s2 *  r)
