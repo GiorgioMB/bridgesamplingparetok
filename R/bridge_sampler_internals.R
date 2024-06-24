@@ -298,7 +298,7 @@
   num_samples <- length(weights)
   ## Attempt to Fit the tail of a Generalized Pareto Distribution
   tryCatch({
-    diag <- pareto_diags(weights)
+    diag <- pareto_khat(weights, tail = "right", r_eff = 1) #pareto_diags(weights)
     ## Return the diagnostics data
     return(diag)
   }, error = function(e) {
