@@ -357,8 +357,7 @@
       return(list(logml = NA, niter = i))
 
     }
-    print(pareto_khat(as.numeric(numi), tails = "right", r_eff = 1)$k)
-    print(pareto_khat(as.numeric(deni), tails = "right", r_eff = 1)$k)
+    
     r <- (n.1/n.2) * sum(numi)/sum(deni)
     r_vals <- c(r_vals, r)
     logml <- log(r) + lstar
