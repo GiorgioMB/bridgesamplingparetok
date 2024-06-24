@@ -296,18 +296,11 @@
   }
   library(posterior)
   num_samples <- length(weights)
-  
-  ## Calculate M
-  M <- min(0.2 * num_samples, 3 * sqrt(num_samples))
-  M <- floor(M)  ## Following the paper
-  
-  ## Get the M largest weights
-  largest_weights <- sort(weights, decreasing = TRUE)[1:M]
 
   ## Attempt to Fit the tail of a Generalized Pareto Distribution
   tryCatch({
     if (length(largest_weights) > 0 && all(is.finite(largest_weights))) {
-      diag <- pareto_diags(largest_weights)
+      diag <- pareto_diags(weights)
       ## Return the diagnostics data
       return(diag)
     } else {
