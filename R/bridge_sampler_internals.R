@@ -392,6 +392,8 @@
     if (return_always == TRUE){
       pareto_k <- .pareto_k_diagnostic(numi, deni)
     }
+    print("Return paretok?")
+    print(return_always)
     return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k))
   }
   
