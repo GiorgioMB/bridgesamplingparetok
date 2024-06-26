@@ -273,8 +273,8 @@
     stop("The parallel package is required but not installed.")
   }
   ## Convert brob objects to numeric
-  numi_numeric <- as.numeric(numi@x)
-  deni_numeric <- as.numeric(deni@x)
+  numi_numeric <- as.numeric(numi)
+  deni_numeric <- as.numeric(deni)
   print("Attempting to compute the Pareto-k")
   ## Run diagnostic calculations in parallel for both numi and deni
   results <- lapply(list(numi_numeric, deni_numeric), .compute_diagnostic)
