@@ -293,7 +293,7 @@
   }
   ## Attempt to Fit the tail of a Generalized Pareto Distribution
   tryCatch({
-    diag <- posterior::pareto_diags(weights, tail = 'right')
+    diag <- posterior::pareto_diags(weights, tail = 'right', r_eff = 1)
     ## Return the diagnostics data
     return(diag)
   }, error = function(e) {
