@@ -293,7 +293,7 @@
   }
   ## Attempt to Fit the tail of a Generalized Pareto Distribution
   tryCatch({
-    diag <- posterior::pareto_khat(weights, tail = 'right', r_eff = 1) #pareto_diags(weights)
+    diag <- posterior::pareto_diags(weights, tail = 'right')
     ## Return the diagnostics data
     return(diag)
   }, error = function(e) {
@@ -307,7 +307,6 @@
 .run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L,
                                   method, maxiter, silent,
                                   criterion, neff, return_always) {
-  library(posterior)
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
 
@@ -369,20 +368,14 @@
     if (return_always == TRUE){
       print("Returning log-likelihood regardless")
       pareto_k <- .pareto_k_diagnostic(numi, deni)
-      print(posterior::pareto_khat(as.numeric(numi), tail = 'right', r_eff = 1))#pareto_diags(weights)
-      print(posterior::pareto_khat(as.numeric(deni), tail = 'right', r_eff = 1))#pareto_diags(weights)
       return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals))
     } else {
       pareto_k <- list(numi = NA, deni = NA)
-      print(posterior::pareto_khat(as.numeric(numi), tail = 'right', r_eff = 1))#pareto_diags(weights)
-      print(posterior::pareto_khat(as.numeric(deni), tail = 'right', r_eff = 1))#pareto_diags(weights)
       return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals))
     }
   }
   
   pareto_k <- .pareto_k_diagnostic(numi, deni)
-  print(posterior::pareto_khat(as.numeric(numi), tail = 'right', r_eff = 1))#pareto_diags(weights)
-  print(posterior::pareto_khat(as.numeric(deni), tail = 'right', r_eff = 1))#pareto_diags(weights)
   return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k))
 
 }
