@@ -204,7 +204,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
     warning("cores > 1 only possible on Unix/MacOs. Uses 'core = 1' instead.", call. = FALSE)
     cores <- 1L
   }
-
+  original_seed <- .Random.seed
   # convert samples into matrix
   if (!requireNamespace("rstan")) stop("package rstan required")
   ex <- rstan::extract(samples, permuted = FALSE)
@@ -260,6 +260,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
     colnames(samples_4_iter) <- paste0("trans_", parameters)
     colnames(samples_4_fit) <- paste0("trans_", parameters)
     # run bridge sampling
+    .Random.seed <- original_seed
     if (cores == 1) {
       bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                                args = list(samples_4_fit = samples_4_fit,
@@ -311,6 +312,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
                                      verbose = FALSE, return_always = FALSE) {
   # split samples in two parts
   nr <- nrow(samples[[1]])
+  original_seed <- .Random.seed
   if (num_splits %% 2 != 0) {
   stop("Error: num_splits is not divisible by 2")
   }
@@ -349,6 +351,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
     # convert to matrix
     samples_4_iter <- do.call("rbind", samples_4_iter_tmp)
     # run bridge sampling
+    .Random.seed <- original_seed 
     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                              args = list(samples_4_fit = samples_4_fit,
                                          samples_4_iter = samples_4_iter,
@@ -412,6 +415,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
                                 silent = FALSE, verbose = FALSE) {
 
   # see Meng & Wong (1996), equation 4.1
+  original_seed <- .Random.seed 
 
   # Check simplex computation
   is_simplex_param <- param_types == "simplex"
@@ -457,7 +461,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
      } else {
        neff <- NULL
      }
-   
+     .Random.seed <- original_seed 
      bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                     args = list(samples_4_fit = samples_4_fit,
                                 samples_4_iter = samples_4_iter,
