@@ -9,7 +9,9 @@
   ((th - md + pi) %% (2*pi)) - pi + md
 }
 
-.generate_permutations <- function(mat, k, tot_perms) {  
+.generate_permutations <- function(mat, k, tot_perms) {
+  ##Save the original seed to make the behaviour equal to the original function
+  original_seed <- .Random.seed
   ## Function to split a vector into k chunks
   split_chunks <- function(vec, k) {
     n <- length(vec)
@@ -38,7 +40,9 @@
   if (length(permutations) > tot_perms) {
     permutations <- sample(permutations, tot_perms)
   }
-  
+
+  ##Reset the seed before the changes happen
+  .Random.seed <- original_seed
   ## Process the sampled permutations
   result <- list()
   for (perm in permutations) {
