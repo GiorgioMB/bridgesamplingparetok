@@ -162,7 +162,9 @@
     logml[i] <- tmp$logml
     niter[i] <- tmp$niter
     if("pareto_k" %in% names(tmp)) {
-      print(tmp$pareto_k)
+      if(verbose){
+        print(tmp$pareto_k)
+      }
       pareto_k_numi[[i]] <- tmp$pareto_k$numi
       pareto_k_deni[[i]] <- tmp$pareto_k$deni
     } else {
