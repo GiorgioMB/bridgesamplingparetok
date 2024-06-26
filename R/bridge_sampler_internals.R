@@ -275,7 +275,6 @@
   ## Convert brob objects to numeric
   numi_numeric <- as.numeric(numi)
   deni_numeric <- as.numeric(deni)
-  print("Attempting to compute the Pareto-k")
   ## Run diagnostic calculations in parallel for both numi and deni
   results <- lapply(list(numi_numeric, deni_numeric), .compute_diagnostic)
 
@@ -366,7 +365,6 @@
   if (i >= maxiter) {
     print("Log Likelihood estimation failed")
     if (return_always == TRUE){
-      print("Returning log-likelihood regardless")
       pareto_k <- .pareto_k_diagnostic(numi, deni)
       return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals))
     } else {
