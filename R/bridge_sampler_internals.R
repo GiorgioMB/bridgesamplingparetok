@@ -9,9 +9,7 @@
   ((th - md + pi) %% (2*pi)) - pi + md
 }
 
-.generate_permutations <- function(mat, k, tot_perms) {
-  library(combinat)
-  
+.generate_permutations <- function(mat, k, tot_perms) {  
   ## Function to split a vector into k chunks
   split_chunks <- function(vec, k) {
     n <- length(vec)
@@ -21,7 +19,7 @@
   
   ## Function to find all permutations of a list
   all_permutations <- function(lst) {
-    perm <- permn(seq_along(lst))
+    perm <- combinat::permn(seq_along(lst))
     lapply(perm, function(p) lst[p])
   }
   
@@ -274,13 +272,12 @@
   if (!requireNamespace("parallel", quietly = TRUE)) {
     stop("The parallel package is required but not installed.")
   }
-  library(parallel)
   ## Convert brob objects to numeric
   numi_numeric <- as.numeric(numi@x)
   deni_numeric <- as.numeric(deni@x)
   print("Attempting to compute the Pareto-k")
   ## Run diagnostic calculations in parallel for both numi and deni
-  results <- mclapply(list(numi_numeric, deni_numeric), .compute_diagnostic, mc.cores = 2)
+  results <- lapply(list(numi_numeric, deni_numeric), .compute_diagnostic)
 
   ## Name the results for clarity
   names(results) <- c("numi", "deni")
@@ -294,10 +291,9 @@
   if (!requireNamespace("posterior", quietly = TRUE)) {
     stop("The posterior package is required but not installed.")
   }
-  library(posterior)
   ## Attempt to Fit the tail of a Generalized Pareto Distribution
   tryCatch({
-    diag <- pareto_khat(weights, tail = 'right', r_eff = 1) #pareto_diags(weights)
+    diag <- posterior::pareto_khat(weights, tail = 'right', r_eff = 1) #pareto_diags(weights)
     ## Return the diagnostics data
     return(diag)
   }, error = function(e) {
@@ -373,14 +369,20 @@
     if (return_always == TRUE){
       print("Returning log-likelihood regardless")
       pareto_k <- .pareto_k_diagnostic(numi, deni)
+      print(posterior::pareto_khat(as.numeric(numi), tail = 'right', r_eff = 1))#pareto_diags(weights)
+      print(posterior::pareto_khat(as.numeric(deni), tail = 'right', r_eff = 1))#pareto_diags(weights)
       return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals))
     } else {
       pareto_k <- list(numi = NA, deni = NA)
+      print(posterior::pareto_khat(as.numeric(numi), tail = 'right', r_eff = 1))#pareto_diags(weights)
+      print(posterior::pareto_khat(as.numeric(deni), tail = 'right', r_eff = 1))#pareto_diags(weights)
       return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals))
     }
   }
   
   pareto_k <- .pareto_k_diagnostic(numi, deni)
+  print(posterior::pareto_khat(as.numeric(numi), tail = 'right', r_eff = 1))#pareto_diags(weights)
+  print(posterior::pareto_khat(as.numeric(deni), tail = 'right', r_eff = 1))#pareto_diags(weights)
   return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k))
 
 }
