@@ -307,7 +307,7 @@
                                   criterion, neff, return_always) {
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
-
+  print(class(q11))
   if (method == "normal") {
     l1 <- q11 - q12 # log(l)
     l2 <- q21 - q22 # log(ltilde)
@@ -352,8 +352,8 @@
     }
     ##Do pareto smoothing 
     if (pareto_smoothing == TRUE) {
-      numi <- posterior::pareto_smooth(numi, tail = "right", reff = 1)
-      deni <- posterior::pareto_smooth(deni, tail = "right", reff = 1)
+      numi <- as.numeric(posterior::pareto_smooth(numi, tail = "right", r_eff = 1))
+      deni <- as.numeric(posterior::pareto_smooth(deni, tail = "right", r_eff = 1))
     }
     mean_numi <- mean(numi)
     mean_deni <- mean(deni)
