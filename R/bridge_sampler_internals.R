@@ -339,7 +339,6 @@
   i <- 1
 
   while (i <= maxiter && criterion_val > tol) {
-    print(i)
     rold <- r
     logmlold <- logml
     numi <-  e^(l2 - lstar)/(s1 * e^(l2 - lstar) + s2 *  r)
@@ -357,26 +356,22 @@
       numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
       deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
     }
-    print("End smoothing")
-    mean_numi <- mean(numi)
-    mean_deni <- mean(deni)
-    var_numi <- var(numi)
-    var_deni <- var(deni)
-    cov_numi_deni <- cov(numi, deni)
-    print("Stats calculated")
+    mean_numi <- mean(as.numeric(numi))
+    mean_deni <- mean(as.numeric(deni))
+    var_numi <- var(as.numeric(numi))
+    var_deni <- var(as.numeric(deni))
+    cov_numi_deni <- cov(as.numeric(numi), as.numeric(deni))
     r <- mean_numi/mean_deni
     r_vals <- c(r_vals, r)
     logml <- log(r) + lstar
     logml_vals <- c(logml_vals, logml)
     criterion_val <- switch(criterion, "r" = abs((r - rold)/r),
                             "logml" = abs((logml - logmlold)/logml))
-    print("LogML estimated")
     i <- i + 1
     var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni)) 
     std_r <- sqrt(var_r)
   }
   if (i >= maxiter) {
-    print("Log Likelihood estimation failed")
     if (return_always == TRUE){
       pareto_k <- .pareto_k_diagnostic(numi, deni)
       return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_r = std_r))
