@@ -18,6 +18,7 @@
   varlist,
   envir,
   rcppFile,
+  pareto_smoothing,
   maxiter,
   silent,
   verbose,
