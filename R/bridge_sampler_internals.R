@@ -354,8 +354,8 @@
     ##Do pareto smoothing 
     print("Begin smoothing")
     if (pareto_smoothing == TRUE) {
-      numi <- as.numeric(posterior::pareto_smooth(numi, tail = "right", r_eff = 1))
-      deni <- as.numeric(posterior::pareto_smooth(deni, tail = "right", r_eff = 1))
+      numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
+      deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
     }
     print("End smoothing")
     mean_numi <- mean(numi)
