@@ -352,21 +352,25 @@
 
     }
     ##Do pareto smoothing 
+    print("Begin smoothing")
     if (pareto_smoothing == TRUE) {
       numi <- as.numeric(posterior::pareto_smooth(numi, tail = "right", r_eff = 1))
       deni <- as.numeric(posterior::pareto_smooth(deni, tail = "right", r_eff = 1))
     }
+    print("End smoothing")
     mean_numi <- mean(numi)
     mean_deni <- mean(deni)
     var_numi <- var(numi)
     var_deni <- var(deni)
     cov_numi_deni <- cov(numi, deni)
+    print("Stats calculated")
     r <- mean_numi/mean_deni
     r_vals <- c(r_vals, r)
     logml <- log(r) + lstar
     logml_vals <- c(logml_vals, logml)
     criterion_val <- switch(criterion, "r" = abs((r - rold)/r),
                             "logml" = abs((logml - logmlold)/logml))
+    print("LogML estimated")
     i <- i + 1
     var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni)) 
     std_r <- sqrt(var_r)
