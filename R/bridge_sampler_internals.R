@@ -303,7 +303,7 @@
 
 
 .run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L,
-                                  method, maxiter, silent, smooth,
+                                  method, maxiter, silent, pareto_smoothing,
                                   criterion, neff, return_always) {
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
@@ -351,7 +351,7 @@
 
     }
     ##Do pareto smoothing 
-    if (smooth == TRUE) {
+    if (pareto_smoothing == TRUE) {
       numi <- posterior::pareto_smooth(numi, tail = "right", reff = 1)
       deni <- posterior::pareto_smooth(deni, tail = "right", reff = 1)
     }
