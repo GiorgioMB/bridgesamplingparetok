@@ -24,7 +24,6 @@
   r0,
   tol1,
   tol2, 
-  pareto_smoothing,
   return_always) {
 
   if (is.null(neff))
