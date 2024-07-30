@@ -23,7 +23,7 @@
   silent,
   verbose,
   r0,
-  smooth = smooth,
+  pareto_smoothing,
   tol1,
   tol2,
   return_always) {
@@ -196,7 +196,7 @@
   for (i in seq_len(repetitions)) {
     tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
                                  r0 = r0, tol = tol1, L = L, method = "warp3",
-                                 maxiter = maxiter, silent = silent, smooth = smooth,
+                                 maxiter = maxiter, silent = silent, pareto_smoothing = pareto_smoothing,
                                  criterion = "r", neff = neff, return_always=return_always)
     if (is.na(tmp$logml) & !is.null(tmp$r_vals)) {
       warning("logml could not be estimated within maxiter, rerunning with adjusted starting value. \nEstimate might be more variable than usual.", call. = FALSE)
@@ -205,7 +205,7 @@
       r0_2 <- sqrt(tmp$r_vals[[lr - 1]] * tmp$r_vals[[lr]])
       tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
                                    r0 = r0_2, tol = tol2, L = L, method = "warp3",
-                                   maxiter = maxiter, silent = silent, smooth = smooth,
+                                   maxiter = maxiter, silent = silent, pareto_smoothing = pareto_smoothing,
                                    criterion = "logml", neff = neff, return_always=return_always)
       tmp$niter <- maxiter + tmp$niter
     }
