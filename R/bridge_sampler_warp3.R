@@ -232,11 +232,11 @@
   if (repetitions == 1) {
     out <- list(logml = logml, niter = niter, method = "warp3", q11 = q11,
                 q12 = q12, q21 = q21[[1]], q22 = q22[[1]], pareto_k_numi = pareto_k_numi,
-                pareto_k_deni = pareto_k_deni)
+                pareto_k_deni = pareto_k_deni, std_ratio = std_rs)
     class(out) <- "bridge"
   } else if (repetitions > 1) {
     out <- list(logml = logml, niter = niter, method = "warp3", repetitions = repetitions,
-                pareto_k_numi = pareto_k_numi, pareto_k_deni = pareto_k_deni)
+                pareto_k_numi = pareto_k_numi, pareto_k_deni = pareto_k_deni, std_ratio = std_rs)
     class(out) <- "bridge_list"
   }
 
