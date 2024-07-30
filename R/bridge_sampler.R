@@ -364,7 +364,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
                              args = list(samples_4_fit = samples_4_fit,
                                          samples_4_iter = samples_4_iter, pareto_smoothing = pareto_smoothing,
                                          neff = neff, log_posterior = log_posterior,
-                                         "..." = ..., data = data, pareto_smoothing = pareto_smoothing,
+                                         "..." = ..., data = data,
                                          lb = lb, ub = ub, transTypes = transTypes,
                                          repetitions = repetitions, cores = cores,
                                          packages = packages, varlist = varlist, envir = envir,
