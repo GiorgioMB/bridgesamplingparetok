@@ -351,28 +351,34 @@
 
     }
     
-    r <- (n.1/n.2) * sum(numi)/sum(deni)
+    mean_numi <- mean(numi)
+    mean_deni <- mean(deni)
+    var_numi <- var(numi)
+    var_deni <- var(deni)
+    cov_numi_deni <- cov(numi, deni)
+    r <- mean_numi/mean_deni
     r_vals <- c(r_vals, r)
     logml <- log(r) + lstar
     logml_vals <- c(logml_vals, logml)
     criterion_val <- switch(criterion, "r" = abs((r - rold)/r),
                             "logml" = abs((logml - logmlold)/logml))
     i <- i + 1
-
+    var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni)) 
+    std_r <- sqrt(var_r)
   }
-
+  ##Pareto smooth numi-deni with right tail and reff = 1 (check if every iteration or just at the end)
   if (i >= maxiter) {
     print("Log Likelihood estimation failed")
     if (return_always == TRUE){
       pareto_k <- .pareto_k_diagnostic(numi, deni)
-      return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals))
+      return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_r = std_r))
     } else {
       pareto_k <- list(numi = NA, deni = NA)
-      return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals))
+      return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_r = std_r))
     }
   }
   
   pareto_k <- .pareto_k_diagnostic(numi, deni)
-  return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k))
+  return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, std_r = std_r))
 
 }
