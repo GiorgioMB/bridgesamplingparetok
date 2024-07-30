@@ -303,7 +303,7 @@
 
 
 .run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L,
-                                  method, maxiter, silent,
+                                  method, maxiter, silent, smooth,
                                   criterion, neff, return_always) {
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
@@ -350,7 +350,11 @@
       return(list(logml = NA, niter = i))
 
     }
-    
+    ##Do pareto smoothing 
+    if (smooth == TRUE) {
+      numi <- posterior::pareto_smooth(numi, tail = "right", reff = 1)
+      deni <- posterior::pareto_smooth(deni, tail = "right", reff = 1)
+    }
     mean_numi <- mean(numi)
     mean_deni <- mean(deni)
     var_numi <- var(numi)
@@ -366,7 +370,6 @@
     var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni)) 
     std_r <- sqrt(var_r)
   }
-  ##Pareto smooth numi-deni with right tail and reff = 1 (check if every iteration or just at the end)
   if (i >= maxiter) {
     print("Log Likelihood estimation failed")
     if (return_always == TRUE){
