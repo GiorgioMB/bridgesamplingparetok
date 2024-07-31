@@ -445,7 +445,9 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
   }
 
   # transform parameters to real line
+  print("Failure happens here?")
   tmp <- .transform2Real(samples, lb, ub, theta_types = param_types)
+  print("Nope")
   theta_t <- tmp$theta_t
   transTypes <- tmp$transTypes
 
