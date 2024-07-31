@@ -28,13 +28,13 @@
   return(out)
 }
                   
-.cmdstan_log_posterior <- function(params, fit) {
+.cmdstan_log_posterior <- function(s.row, data) {
     ##If params is not numeric, attempt to convert it to numeric
-  if(!is.numeric(params)) {
-    params <- as.numeric(params)
+  if(!is.numeric(s.row)) {
+    s.row <- as.numeric(s.row)
   }
   out <- tryCatch({
-    log_prob <- fit$log_prob(params, jacobian = TRUE)
+    log_prob <- data$log_prob(s.row)
     log_prob
   }, error = function(e) {
     -Inf
