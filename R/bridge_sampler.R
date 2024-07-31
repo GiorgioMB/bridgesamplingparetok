@@ -194,6 +194,32 @@ bridge_sampler <- function(samples, num_splits, ...) {
 #' @rdname bridge_sampler
 #' @export
 
+bridge_sampler.cmdstanfit <- function(samples = NULL, fit_cmdstan_model = samples,
+                                      repetitions = 1, method = "normal", cores = 1,
+                                      use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
+                                      total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing = FALSE, ub = NA, lb = NA, ...) {
+   if (is.na(seed) & verbose) {
+       print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
+    }
+   draws <- fit_cmdstan_model$draws(format = "matrix")
+   if (is.na(ub)){
+      ub <- rep(Inf, ncol(draws))
+      lb <- rep(-Inf, ncol(draws))
+      names(ub) <- colnames(draws)
+      names(lb) <- colnames(draws)
+   }
+   bridge_out <- bridge_sampler(samples = draws, num_splits = num_splits, total_perms = total_perms,
+                        ..., pareto_smoothing = pareto_smoothing,
+                        return_always = return_always,
+                        lb = lb, ub = ub,
+                        repetitions = repetitions,
+                        method = method,
+                        cores = cores, seed = seed,
+                        use_neff = use_neff,
+                        verbose = verbose)
+   
+   
+
 ##Permutations added
 bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
                                       repetitions = 1, method = "normal", cores = 1,
@@ -445,9 +471,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
   }
 
   # transform parameters to real line
-  print("Failure happens here?")
   tmp <- .transform2Real(samples, lb, ub, theta_types = param_types)
-  print("Nope")
   theta_t <- tmp$theta_t
   transTypes <- tmp$transTypes
 
