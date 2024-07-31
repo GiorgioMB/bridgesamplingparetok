@@ -60,10 +60,6 @@
                             theta_types = rep("real", ncol(theta))) {
 
   ### transform samples to real line
-  print(str(theta))
-  print(str(lb))
-  print(str(ub))
-  print(str(theta_types))
   theta_t <- theta
   transTypes <- character(ncol(theta))
   cn <- colnames(theta)
@@ -96,8 +92,7 @@
   for (i in seq_len(ncol(theta))) {
 
     p <- cn[i]
-    print(p)
-    print(lb[[p]])
+    
     if (theta_types[[p]] == "circular") {
       transTypes[[p]] <- "circular"
       theta_t[,i] <- .gaplessCircular(theta[,i])
