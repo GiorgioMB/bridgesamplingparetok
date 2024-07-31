@@ -203,8 +203,6 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
     }
    print("Correct so far")
    draws <- samples$draws(format = "matrix")
-   lp <- samples$draws(variables = "lp__")
-   lp <- lp[, "lp__", drop = FALSE]
    if (is.na(ub)){
       ub <- rep(Inf, ncol(draws))
       lb <- rep(-Inf, ncol(draws))
@@ -217,7 +215,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
                         return_always = return_always,
                         lb = lb, ub = ub,
                         repetitions = repetitions,
-                        method = method, log_posterior = lp,
+                        method = method, log_posterior = .cmdstan_log_posterior,
                         cores = cores, seed = seed,
                         use_neff = use_neff,
                         verbose = verbose)
