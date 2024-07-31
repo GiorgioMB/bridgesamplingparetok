@@ -27,5 +27,22 @@
   if (is.na(out)) out <- -Inf
   return(out)
 }
+                  
+.cmdstan_log_posterior <- function(params, fit) {
+    ##If params is not numeric, attempt to convert it to numeric
+  if(!is.numeric(params)) {
+    params <- as.numeric(params)
+  }
+  out <- tryCatch({
+    log_prob <- fit$log_prob(params, jacobian = TRUE)
+    log_prob
+  }, error = function(e) {
+    -Inf
+  })
 
-
+  if (is.na(out)) {
+    out <- -Inf
+  }
+  
+  return(out)
+}
