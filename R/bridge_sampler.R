@@ -201,6 +201,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
    if (is.na(seed) & verbose) {
        print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
     }
+   print("Correct so far")
    draws <- samples$draws(format = "matrix")
    if (is.na(ub)){
       ub <- rep(Inf, ncol(draws))
@@ -208,6 +209,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
       names(ub) <- colnames(draws)
       names(lb) <- colnames(draws)
    }
+   print("Calling matrix")
    bridge_out <- bridge_sampler.matrix(samples = draws, num_splits = num_splits, total_perms = total_perms,
                         ..., pareto_smoothing = pareto_smoothing,
                         return_always = return_always,
@@ -217,6 +219,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
                         cores = cores, seed = seed,
                         use_neff = use_neff,
                         verbose = verbose)
+   print("Done")
    return(bridge_out)
 }
    
@@ -473,16 +476,19 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
     lb <- lb[-last_sim]
     ub <- ub[-last_sim]
   }
+  print("Start")
 
   # transform parameters to real line
   tmp <- .transform2Real(samples, lb, ub, theta_types = param_types)
   theta_t <- tmp$theta_t
   transTypes <- tmp$transTypes
+  print("Good so far")
 
   # split samples for proposal/iterative scheme
   nr <- nrow(samples)
   permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits, total_perms)
   result <- list()
+  print("Starting")
   for (perm in permutations) {
      samples4fit_index <- perm[[1]]
      samples_4_fit <- theta_t[samples4fit_index, ,drop = FALSE]
@@ -502,6 +508,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
      if (!is.na(seed)) {
        set.seed(seed)
      }
+     print("Going steady")
      bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                     args = list(samples_4_fit = samples_4_fit,
                                 samples_4_iter = samples_4_iter,
@@ -522,7 +529,8 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
   }
   if (length(result) == 1) {
     return(result[[1]])  ## Return the single element directly
-  }  
+  }
+  print("Done here")
   return(result)
 }
 
