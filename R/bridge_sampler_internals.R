@@ -60,7 +60,10 @@
                             theta_types = rep("real", ncol(theta))) {
 
   ### transform samples to real line
-
+  print(str(theta))
+  print(str(lb))
+  print(str(ub))
+  print(str(theta_types))
   theta_t <- theta
   transTypes <- character(ncol(theta))
   cn <- colnames(theta)
