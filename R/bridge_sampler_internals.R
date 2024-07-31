@@ -96,7 +96,8 @@
   for (i in seq_len(ncol(theta))) {
 
     p <- cn[i]
-
+    print(p)
+    print(lb[[p]])
     if (theta_types[[p]] == "circular") {
       transTypes[[p]] <- "circular"
       theta_t[,i] <- .gaplessCircular(theta[,i])
