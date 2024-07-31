@@ -188,6 +188,7 @@
 #'@importFrom stats qnorm pnorm dnorm median cov var
 #'@export
 bridge_sampler <- function(samples, num_splits, ...) {
+   cat("Dispatching with class:", class(samples), "\n")
    UseMethod("bridge_sampler", samples)
 }
 
