@@ -222,7 +222,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
       names(ub) <- colnames(draws)
       names(lb) <- colnames(draws)
    }
-   bridge_out <- bridge_sampler(samples = draws, num_splits = num_splits, total_perms = total_perms,
+   bridge_out <- bridge_sampler.matrix(samples = draws, num_splits = num_splits, total_perms = total_perms,
                         ..., pareto_smoothing = pareto_smoothing,
                         return_always = return_always,
                         lb = lb, ub = ub,
