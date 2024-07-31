@@ -194,7 +194,7 @@ bridge_sampler <- function(samples, num_splits, ...) {
 #' @rdname bridge_sampler
 #' @export
 
-bridge_sampler.cmdstanfit <- function(samples = NULL, fit_cmdstan_model = samples,
+bridge_sampler.CmdStanFit <- function(samples = NULL, fit_cmdstan_model = samples,
                                       repetitions = 1, method = "normal", cores = 1,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
                                       total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing = FALSE, ub = NA, lb = NA, ...) {
