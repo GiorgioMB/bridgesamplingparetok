@@ -37,10 +37,12 @@
     log_prob <- data$log_prob(s.row)
     log_prob
   }, error = function(e) {
+    print(e)
     -Inf
   })
 
   if (is.na(out)) {
+    print("NA")
     out <- -Inf
   }
   
