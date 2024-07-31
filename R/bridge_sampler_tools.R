@@ -29,7 +29,8 @@
 }
                   
 .cmdstan_log_posterior <- function(s.row, data) {
-    ##If params is not numeric, attempt to convert it to numeric
+  print("Parameters:")
+  print(s.row)
   if(!is.numeric(s.row)) {
     s.row <- as.numeric(s.row)
   }
