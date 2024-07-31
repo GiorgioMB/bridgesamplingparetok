@@ -217,6 +217,8 @@ bridge_sampler.cmdstanfit <- function(samples = NULL, fit_cmdstan_model = sample
                         cores = cores, seed = seed,
                         use_neff = use_neff,
                         verbose = verbose)
+   return(bridge_out)
+}
    
    
 
