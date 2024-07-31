@@ -188,9 +188,23 @@
 #'@importFrom stats qnorm pnorm dnorm median cov var
 #'@export
 bridge_sampler <- function(samples, num_splits, ...) {
-   cat("Dispatching with class:", class(samples), "\n")
-   UseMethod("bridge_sampler", samples)
+    intended_method <- paste("bridge_sampler", class(samples)[1], sep = ".")
+    cat("Attempting to dispatch to: ", intended_method, "\n")
+
+    # Try to use the generic method, if it fails, check for CmdStanMCMC
+    tryCatch({
+        UseMethod("bridge_sampler", samples)
+    }, error = function(e) {
+        cat("Error encountered: ", e$message, "\n")
+        if ("CmdStanMCMC" %in% class(samples)) {
+            cat("Falling back to bridge_sampler.CmdStanMCMC\n")
+            bridge_sampler.CmdStanMCMC(samples, num_splits, ...)
+        } else {
+            stop("No applicable method for 'bridge_sampler' and no fallback available.")
+        }
+    })
 }
+
 
 #' @rdname bridge_sampler
 #' @export
