@@ -215,7 +215,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
    if (is.na(seed) & verbose) {
        print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
     }
-   draws <- fit_cmdstan_model$draws(format = "matrix")
+   draws <- samples$draws(format = "matrix")
    if (is.na(ub)){
       ub <- rep(Inf, ncol(draws))
       lb <- rep(-Inf, ncol(draws))
