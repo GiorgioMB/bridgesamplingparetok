@@ -216,7 +216,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
                         lb = lb, ub = ub,
                         repetitions = repetitions,
                         method = method, log_posterior = .cmdstan_log_posterior,
-                        cores = cores, seed = seed,
+                        cores = cores, seed = seed, data = samples,
                         use_neff = use_neff,
                         verbose = verbose)
    print("Done")
