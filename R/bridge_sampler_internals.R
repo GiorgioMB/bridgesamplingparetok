@@ -301,8 +301,8 @@
 }
 
 
-.run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L,
-                                  method, maxiter, silent, pareto_smoothing,
+.run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L, pareto_smoothing_last,
+                                  method, maxiter, silent, pareto_smoothing_all,
                                   criterion, neff, return_always) {
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
@@ -349,7 +349,7 @@
 
     }
     ##Do pareto smoothing 
-    if (pareto_smoothing == TRUE) {
+    if (pareto_smoothing_all == TRUE) {
       numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
       deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
     }
@@ -377,7 +377,12 @@
       return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_r = std_r))
     }
   }
-  
+  if (pareto_smoothing_last == TRUE && pareto_smoothing_all == FALSE) {
+    numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
+    deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
+    r <- mean_numi/mean_deni
+    logml <- log(r) + lstar
+  }
   pareto_k <- .pareto_k_diagnostic(numi, deni)
   return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, std_r = std_r))
 
