@@ -195,7 +195,7 @@ bridge_sampler <- function(samples, num_splits, ...) {
 #' @rdname bridge_sampler
 #' @export
 bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = samples,
-                                      repetitions = 1, method = "normal", cores = 1,
+                                      repetitions = 1, method = "normal", cores = 1, keep_log_eval = TRUE,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
                                       total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ub = NA, lb = NA, ...) {
    if (is.na(seed) & verbose) {
@@ -217,6 +217,9 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
                         cores = cores, seed = seed, data = samples,
                         use_neff = use_neff,
                         verbose = verbose)
+   if (!keep_log_eval && file.exists("cmdstanr_log_eval.csv")) {
+    file.remove("cmdstanr_log_eval.csv")
+   }
    return(bridge_out)
 }
    
@@ -225,7 +228,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
 ##Permutations added
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
+bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep_log_eval = TRUE,
                                       repetitions = 1, method = "normal", cores = 1,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
                                       total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ...) {
@@ -330,7 +333,10 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
   ##If only one permutation is considered
   if (length(result) == 1) {
     return(result[[1]])  ## Return the single element directly
-  }  
+  }
+  if (!keep_log_eval && file.exists("rstan_log_eval.csv")) {
+    file.remove("rstan_log_eval.csv")
+  }
   return(result)
 }
 
