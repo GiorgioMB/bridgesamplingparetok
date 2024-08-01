@@ -38,6 +38,7 @@
 }
                   
 .cmdstan_log_posterior <- function(s.row, data) {
+  print(s.row)
   if("lp__" %in% names(s.row)) {
     s.row <- s.row[!names(s.row) %in% "lp__"]
     }
