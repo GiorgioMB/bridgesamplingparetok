@@ -368,6 +368,12 @@
     var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni)) 
     std_r <- sqrt(var_r)
   }
+  if (pareto_smoothing_last == TRUE && pareto_smoothing_all == FALSE) {
+    numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
+    deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
+    r <- mean_numi/mean_deni
+    logml <- log(r) + lstar
+  }
   if (i >= maxiter) {
     if (return_always == TRUE){
       pareto_k <- .pareto_k_diagnostic(numi, deni)
@@ -377,12 +383,7 @@
       return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_r = std_r))
     }
   }
-  if (pareto_smoothing_last == TRUE && pareto_smoothing_all == FALSE) {
-    numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
-    deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
-    r <- mean_numi/mean_deni
-    logml <- log(r) + lstar
-  }
+  
   pareto_k <- .pareto_k_diagnostic(numi, deni)
   return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, std_r = std_r))
 
