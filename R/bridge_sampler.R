@@ -213,7 +213,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
    bridge_out <- bridge_sampler.matrix(samples = draws, num_splits = num_splits, total_perms = total_perms,
                         ..., pareto_smoothing_all = pareto_smoothing_all, pareto_smoothing_last = pareto_smoothing_last,
                         return_always = return_always,
-                        lb = lb, ub = ub,
+                        lb = lb, ub = ub, is_cmdstanr = TRUE,
                         repetitions = repetitions,
                         method = method, log_posterior = .cmdstan_log_posterior,
                         cores = cores, seed = seed, data = samples,
