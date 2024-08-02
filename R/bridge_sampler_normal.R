@@ -28,7 +28,7 @@
   tol2, 
   return_always,
   is_cmdstanr = FALSE) {
-
+  print(is_cmdstanr)
   if (is.null(neff))
     neff <- nrow(samples_4_iter)
 
