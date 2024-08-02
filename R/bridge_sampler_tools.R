@@ -49,7 +49,7 @@
     s.row <- as.numeric(s.row)
   }
   out <- tryCatch({
-    log_prob <- data$log_prob(s.row)
+    log_prob <- data$log_prob(s.row, jacobian = TRUE)
     log_prob
   }, error = function(e) {
     print(e)
