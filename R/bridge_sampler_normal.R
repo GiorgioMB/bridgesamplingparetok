@@ -16,7 +16,6 @@
   repetitions,
   packages,
   varlist,
-  is_cmdstanr,
   envir,
   rcppFile,
   pareto_smoothing_all,
@@ -27,7 +26,8 @@
   r0,
   tol1,
   tol2, 
-  return_always) {
+  return_always,
+  is_cmdstanr = FALSE) {
 
   if (is.null(neff))
     neff <- nrow(samples_4_iter)
