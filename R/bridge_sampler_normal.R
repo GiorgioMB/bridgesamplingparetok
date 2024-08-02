@@ -57,7 +57,7 @@
                    data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
     } else {
       q11 <- apply(.invTransform2Real(samples_4_iter, lb, ub, param_types), 1, log_posterior,
-                   data = data, ...)
+                   data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
     }
     for (i in seq_len(repetitions)) {
       if (!is_cmdstanr){
@@ -65,7 +65,7 @@
                           data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
       } else {
         q21[[i]] <- apply(.invTransform2Real(gen_samples[[i]], lb, ub, param_types), 1, log_posterior,
-                          data = data, ...)
+                          data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
       }
     }
   } else if (cores > 1) {
@@ -78,7 +78,7 @@
       if (!is_cmdstanr){
         q11 <- unlist(q11) + .logJacobian(samples_4_iter, transTypes, lb, ub)
       } else {
-        q11 <- unlist(q11)
+        q11 <- unlist(q11) + .logJacobian(samples_4_iter, transTypes, lb, ub)
       }
       for (i in seq_len(repetitions)) {
         split2 <- .split_matrix(matrix=.invTransform2Real(gen_samples[[i]], lb, ub, param_types), cores = cores)
@@ -89,7 +89,7 @@
         if (!is_cmdstanr){
           q21[[i]] <- unlist(q21[[i]]) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
         } else {
-          q21[[i]] <- unlist(q21[[i]])
+          q21[[i]] <- unlist(q21[[i]])+ .logJacobian(gen_samples[[i]], transTypes, lb, ub)
         }
       }
     } else {
@@ -110,7 +110,7 @@
                                  data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
     } else {
       q11 <- parallel::parRapply(cl = cl, x = .invTransform2Real(samples_4_iter, lb, ub, param_types), log_posterior,
-                                 data = data, ...)
+                                 data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
     }
     for (i in seq_len(repetitions)) {
       if (!is_cmdstanr){
@@ -118,7 +118,7 @@
                                         data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
       } else {
         q21[[i]] <- parallel::parRapply(cl = cl, x = .invTransform2Real(gen_samples[[i]], lb, ub, param_types), log_posterior,
-                                        data = data, ...)
+                                        data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
       }
     }
     parallel::stopCluster(cl)
