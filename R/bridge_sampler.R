@@ -194,7 +194,7 @@ bridge_sampler <- function(samples, num_splits, ...) {
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = samples, not_fit_cmdstan_model = NA,
+bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = samples,
                                       repetitions = 1, method = "normal", cores = 1, keep_log_eval = TRUE,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
                                       total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ...) {
@@ -212,7 +212,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
                         lb = lb, ub = ub, is_cmdstanr = TRUE,
                         repetitions = repetitions,
                         method = method, log_posterior = .cmdstan_log_posterior,
-                        cores = cores, seed = seed, data = samples,
+                        cores = cores, seed = seed, data = fit_cmdstan_model,
                         use_neff = use_neff,
                         verbose = verbose)
    if (!keep_log_eval && file.exists("cmdstanr_log_eval.csv")) {
