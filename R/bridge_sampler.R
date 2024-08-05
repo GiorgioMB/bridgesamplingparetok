@@ -203,7 +203,6 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
     }
    draws <- samples$unconstrain_draws(format = "matrix")
    parameters <- colnames(draws)
-   names(transTypes) <- parameters
    lb <- rep(-Inf, length(parameters))
    ub <- rep(Inf, length(parameters))
    names(lb) <- names(ub) <- parameters
