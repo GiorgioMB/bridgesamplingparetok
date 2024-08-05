@@ -197,19 +197,17 @@ bridge_sampler <- function(samples, num_splits, ...) {
 bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = samples, not_fit_cmdstan_model = NA,
                                       repetitions = 1, method = "normal", cores = 1, keep_log_eval = TRUE,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
-                                      total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ub = NA, lb = NA, ...) {
+                                      total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ...) {
    if (is.na(seed) & verbose) {
        print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
     }
-   parameter_names <- names(not_fit_cmdstan_model$variables()$parameters)
-   draws <- samples$draws(variables = parameter_names, format = "matrix")
-   if (is.na(ub)){
-      ub <- rep(Inf, ncol(draws))
-      lb <- rep(-Inf, ncol(draws))
-      names(ub) <- colnames(draws)
-      names(lb) <- colnames(draws)
-   }
-  
+   draws <- samples$unconstrain_draws(format = "draws_array")
+   parameters <- colnames(draws)
+   transTypes <- rep("unbounded", length(parameters))
+   names(transTypes) <- parameters
+   lb <- rep(-Inf, length(parameters))
+   ub <- rep(Inf, length(parameters))
+   names(lb) <- names(ub) <- parameters
    bridge_out <- bridge_sampler.matrix(samples = draws, num_splits = num_splits, total_perms = total_perms,
                         ..., pareto_smoothing_all = pareto_smoothing_all, pareto_smoothing_last = pareto_smoothing_last,
                         return_always = return_always,
@@ -217,7 +215,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
                         repetitions = repetitions,
                         method = method, log_posterior = .cmdstan_log_posterior,
                         cores = cores, seed = seed, data = samples,
-                        use_neff = use_neff,
+                        use_neff = use_neff, transTypes = transTypes
                         verbose = verbose)
    if (!keep_log_eval && file.exists("cmdstanr_log_eval.csv")) {
     file.remove("cmdstanr_log_eval.csv")
