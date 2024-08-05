@@ -198,7 +198,10 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
                                       repetitions = 1, method = "normal", cores = 1, keep_log_eval = TRUE,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
                                       total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ...) {
-   if (is.na(seed) & verbose) {
+    if(file.exists("cmdstanr_log_eval.csv")) {
+        file.remove("cmdstanr_log_eval.csv")
+    }
+    if (is.na(seed) & verbose) {
        print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
     }
    draws <- samples$unconstrain_draws(format = "matrix")
@@ -230,6 +233,9 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
                                       repetitions = 1, method = "normal", cores = 1,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
                                       total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ...) {
+  if(file.exists("rstan_log_eval.csv")) {
+        file.remove("rstan_log_eval.csv")
+    }
   # cores > 1 only for unix:
   if (is.na(seed) & verbose) {
        print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
