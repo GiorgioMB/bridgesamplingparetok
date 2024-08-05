@@ -215,7 +215,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, fit_cmdstan_model = sampl
                         repetitions = repetitions,
                         method = method, log_posterior = .cmdstan_log_posterior,
                         cores = cores, seed = seed, data = samples,
-                        use_neff = use_neff, transTypes = transTypes
+                        use_neff = use_neff, transTypes = transTypes,
                         verbose = verbose)
    if (!keep_log_eval && file.exists("cmdstanr_log_eval.csv")) {
     file.remove("cmdstanr_log_eval.csv")
