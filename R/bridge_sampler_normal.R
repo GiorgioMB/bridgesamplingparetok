@@ -26,8 +26,8 @@
   r0,
   tol1,
   tol2, 
-  return_always,
-  is_cmdstanr = FALSE) {
+  return_always) {
+  
   if (is.null(neff))
     neff <- nrow(samples_4_iter)
 
@@ -51,22 +51,11 @@
   # evaluate log of likelihood times prior for posterior samples and generated samples
   q21 <- vector(mode = "list", length = repetitions)
   if (cores == 1) {
-    if (!is_cmdstanr){
-      q11 <- apply(.invTransform2Real(samples_4_iter, lb, ub, param_types), 1, log_posterior,
-                   data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
-    } else {
-      print(.logJacobian(samples_4_iter, transTypes, lb, ub))
-      q11 <- apply(.invTransform2Real(samples_4_iter, lb, ub, param_types), 1, log_posterior,
-                   data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
-    }
+    q11 <- apply(.invTransform2Real(samples_4_iter, lb, ub, param_types), 1, log_posterior,
+                 data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
     for (i in seq_len(repetitions)) {
-      if (!is_cmdstanr){
-        q21[[i]] <- apply(.invTransform2Real(gen_samples[[i]], lb, ub, param_types), 1, log_posterior,
-                          data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
-      } else {
-        q21[[i]] <- apply(.invTransform2Real(gen_samples[[i]], lb, ub, param_types), 1, log_posterior,
-                          data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
-      }
+      q21[[i]] <- apply(.invTransform2Real(gen_samples[[i]], lb, ub, param_types), 1, log_posterior,
+                        data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
     }
   } else if (cores > 1) {
     if ( .Platform$OS.type == "unix") {
@@ -75,22 +64,14 @@
                                   function(x) apply(x, 1, log_posterior, data = data, ...),
                                   mc.preschedule = FALSE,
                                   mc.cores = cores)
-      if (!is_cmdstanr){
-        q11 <- unlist(q11) + .logJacobian(samples_4_iter, transTypes, lb, ub)
-      } else {
-        q11 <- unlist(q11) + .logJacobian(samples_4_iter, transTypes, lb, ub)
-      }
+      q11 <- unlist(q11) + .logJacobian(samples_4_iter, transTypes, lb, ub)
       for (i in seq_len(repetitions)) {
         split2 <- .split_matrix(matrix=.invTransform2Real(gen_samples[[i]], lb, ub, param_types), cores = cores)
         q21[[i]] <- parallel::mclapply(split2, FUN =
                                   function(x) apply(x, 1, log_posterior, data = data, ...),
                                   mc.preschedule = FALSE,
                                   mc.cores = cores)
-        if (!is_cmdstanr){
-          q21[[i]] <- unlist(q21[[i]]) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
-        } else {
-          q21[[i]] <- unlist(q21[[i]])+ .logJacobian(gen_samples[[i]], transTypes, lb, ub)
-        }
+        q21[[i]] <- unlist(q21[[i]]) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
       }
     } else {
     cl <- parallel::makeCluster(cores, useXDR = FALSE)
@@ -105,21 +86,12 @@
     } else if (is.character(log_posterior)) {
       parallel::clusterExport(cl = cl, varlist = log_posterior, envir = envir)
     }
-    if (!is_cmdstanr){
-      q11 <- parallel::parRapply(cl = cl, x = .invTransform2Real(samples_4_iter, lb, ub, param_types), log_posterior,
-                                 data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
-    } else {
-      q11 <- parallel::parRapply(cl = cl, x = .invTransform2Real(samples_4_iter, lb, ub, param_types), log_posterior,
-                                 data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
-    }
+
+    q11 <- parallel::parRapply(cl = cl, x = .invTransform2Real(samples_4_iter, lb, ub, param_types), log_posterior,
+                               data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
     for (i in seq_len(repetitions)) {
-      if (!is_cmdstanr){
-        q21[[i]] <- parallel::parRapply(cl = cl, x = .invTransform2Real(gen_samples[[i]], lb, ub, param_types), log_posterior,
-                                        data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
-      } else {
-        q21[[i]] <- parallel::parRapply(cl = cl, x = .invTransform2Real(gen_samples[[i]], lb, ub, param_types), log_posterior,
-                                        data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
-      }
+      q21[[i]] <- parallel::parRapply(cl = cl, x = .invTransform2Real(gen_samples[[i]], lb, ub, param_types), log_posterior,
+                                      data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
     }
     parallel::stopCluster(cl)
     }
