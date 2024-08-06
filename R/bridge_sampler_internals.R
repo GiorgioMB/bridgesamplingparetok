@@ -342,6 +342,8 @@
     logmlold <- logml
     numi <-  e^(l2 - lstar)/(s1 * e^(l2 - lstar) + s2 *  r)
     deni <- 1/(s1 * e^(l1 - lstar) + s2 * r)
+    print(str(numi))
+    print(str(deni))
 
     if (any(is.infinite(as.numeric(numi))) ||
         any(is.infinite(as.numeric((deni))))) {
