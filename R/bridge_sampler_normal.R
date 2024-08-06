@@ -55,6 +55,7 @@
       q11 <- apply(.invTransform2Real(samples_4_iter, lb, ub, param_types), 1, log_posterior,
                    data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
     } else {
+      print(.logJacobian(samples_4_iter, transTypes, lb, ub))
       q11 <- apply(.invTransform2Real(samples_4_iter, lb, ub, param_types), 1, log_posterior,
                    data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
     }
@@ -188,7 +189,7 @@
                                    criterion = "logml", neff = neff)
       tmp$niter <- maxiter + tmp$niter
     }
-  
+    print(str(tmp))
     logml[i] <- tmp$logml
     niter[i] <- tmp$niter
     std_rs[i] <- tmp$std_r
