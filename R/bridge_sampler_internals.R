@@ -368,6 +368,8 @@
     if (pareto_smoothing_all == TRUE) {
       numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
       deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
+      print(numi)
+      print(deni)
     }
     mean_numi <- mean(as.numeric(numi))
     mean_deni <- mean(as.numeric(deni))
