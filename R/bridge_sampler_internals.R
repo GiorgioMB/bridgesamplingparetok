@@ -366,8 +366,11 @@
     }
     ##Do pareto smoothing 
     if (pareto_smoothing_all == TRUE) {
-      write.csv("numerator.csv", numi)
-      write.csv("denominator.csv", deni)
+      print(posterior:::isconstant(is_constant(as.numeric(deni))))
+      print(posterior:::isconstant(is_constant(as.numeric(numi))))
+
+      write.csv(numi, file = "numerator.csv")
+      write.csv(deni, file = "denominator.csv")
       numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
       deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
       print(numi)
