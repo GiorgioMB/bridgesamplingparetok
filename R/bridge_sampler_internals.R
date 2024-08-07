@@ -366,8 +366,8 @@
     }
     ##Do pareto smoothing 
     if (pareto_smoothing_all == TRUE) {
-      print(posterior:::isconstant(is_constant(as.numeric(deni))))
-      print(posterior:::isconstant(is_constant(as.numeric(numi))))
+      print(posterior:::is_constant(as.numeric(deni)))
+      print(posterior:::is_constant(as.numeric(numi)))
 
       write.csv(numi, file = "numerator.csv")
       write.csv(deni, file = "denominator.csv")
