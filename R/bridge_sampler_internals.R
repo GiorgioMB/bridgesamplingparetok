@@ -364,6 +364,7 @@
       return(list(logml = NA, niter = i))
 
     }
+    return(list(numi = numi, deni = deni))
     ##Do pareto smoothing 
     if (pareto_smoothing_all == TRUE) {
       numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
