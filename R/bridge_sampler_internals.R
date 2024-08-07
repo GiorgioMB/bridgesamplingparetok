@@ -364,9 +364,10 @@
       return(list(logml = NA, niter = i))
 
     }
-    return(list(numi = numi, deni = deni))
     ##Do pareto smoothing 
     if (pareto_smoothing_all == TRUE) {
+      write.csv("numerator.csv", numi)
+      write.csv("denominator.csv", deni)
       numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
       deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
       print(numi)
