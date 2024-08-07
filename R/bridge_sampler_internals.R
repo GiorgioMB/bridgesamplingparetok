@@ -306,6 +306,18 @@
                                   criterion, neff, return_always) {
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
+  print(any(is.na(as.numeric(q11))))
+  print(any(is.na(as.numeric(q12))))
+  print(any(is.na(as.numeric(q21))))
+  print(any(is.na(as.numeric(q22))))
+  print(any(is.na(as.numeric(L))))
+  print(any(is.infinite(as.numeric(q11))))
+  print(any(is.infinite(as.numeric(q12))))
+  print(any(is.infinite(as.numeric(q21))))
+  print(any(is.infinite(as.numeric(q22))))
+  print(any(is.infinite(as.numeric(L))))
+
+
   if (method == "normal") {
     l1 <- q11 - q12 # log(l)
     l2 <- q21 - q22 # log(ltilde)
@@ -321,7 +333,7 @@
   #   criterion, neff,
   #   file = "iterative_scheme.rda"
   # )
-
+  
   lstar <- median(l1)
   n.1 <- length(l1)
   n.2 <- length(l2)
@@ -342,9 +354,10 @@
     logmlold <- logml
     numi <-  e^(l2 - lstar)/(s1 * e^(l2 - lstar) + s2 *  r)
     deni <- 1/(s1 * e^(l1 - lstar) + s2 * r)
-    print(str(numi))
-    print(str(deni))
-
+    print(any(is.na(as.numeric(numi))))
+    print(any(is.na(as.numeric(deni))))
+    print(any(is.infinite(as.numeric(numi))))
+    print(any(is.infinite(as.numeric(deni))))
     if (any(is.infinite(as.numeric(numi))) ||
         any(is.infinite(as.numeric((deni))))) {
       warning("Infinite value in iterative scheme, returning NA.\n Try rerunning with more samples.", call. = FALSE)
