@@ -369,8 +369,8 @@
       print(posterior:::is_constant(as.numeric(deni)))
       print(posterior:::is_constant(as.numeric(numi)))
 
-      write.csv(numi, file = "numerator.csv")
-      write.csv(deni, file = "denominator.csv")
+      write.csv(as.numeric(numi), file = "numerator.csv")
+      write.csv(as.numeric(deni), file = "denominator.csv")
       numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
       deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
       print(numi)
