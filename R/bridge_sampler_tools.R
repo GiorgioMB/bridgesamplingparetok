@@ -115,8 +115,8 @@
   return(model)
 }
 
-.negative_log_likelihood <- function(y_true, y_pred) {
-  z, log_det_jacobian = y_pred  # Unpack the list
+negative_log_likelihood <- function(y_true, y_pred) {
+  z, log_det_jacobian = y_pred 
   logp_z <- -0.5 * tensorflow::tf$reduce_sum(z^2, axis = 1L) - 0.5 * length(z) * log(2 * pi)
   nll = -tensorflow::tf$reduce_mean(logp_z + log_det_jacobian)
   return(nll)
@@ -131,7 +131,7 @@
   
   realnvp_model %>% keras::compile(
     optimizer = keras::optimizer_adam(lr = learning_rate),
-    loss = .negative_log_likelihood
+    loss = negative_log_likelihood
   )
 
   history <- realnvp_model %>% keras::fit(
