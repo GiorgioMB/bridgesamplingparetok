@@ -143,12 +143,6 @@
 .train_realnvp <- function(samples, normal_samples, num_coupling_layers = 5, epochs = 50, batch_size = 32, learning_rate = 0.001, train_ratio = 0.8, verbose = FALSE) {
   input_shape <- ncol(samples)
   realnvp_model <- .create_realnvp(input_shape, num_coupling_layers)
-  
-  if(verbose){
-    cat("Parameters are:", realnvp_model$parameters, "\n")
-    cat(str(realnvp_model))
-  }
-  
   optimizer <- optim_adam(realnvp_model$parameters, lr = learning_rate)
   
   for (epoch in seq_len(epochs)) {
