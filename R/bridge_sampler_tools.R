@@ -148,7 +148,7 @@
   input_shape <- ncol(samples)
   realnvp_model <- .create_realnvp(input_shape, num_coupling_layers)
   if(verbose){
-    print(realnvp_model)
+    print(realnvp_model$parameters)
   }
   optimizer <- optim_adam(realnvp_model$parameters, lr = learning_rate)
   for (epoch in seq_len(epochs)) {
