@@ -146,6 +146,7 @@
   
   if(verbose){
     cat("Parameters are:", realnvp_model$parameters, "\n")
+    cat(str(realnvp_model))
   }
   
   optimizer <- optim_adam(realnvp_model$parameters, lr = learning_rate)
