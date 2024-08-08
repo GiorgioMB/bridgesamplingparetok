@@ -136,7 +136,7 @@
   log_det_jacobian <- y_pred[[2]]
   logp_z <- -0.5 * torch_sum(z^2, dim = 2L) - 0.5 * ncol(z) * log(2 * pi)
   nll <- -torch_mean(logp_z + log_det_jacobian)
-  mse <- torch_mean((y_true - predictions)^2)
+  mse <- torch_mean((y_true - z)^2)
   
   nll + mse
 }
