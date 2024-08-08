@@ -162,16 +162,20 @@
 }
                   
 .transform_to_normal <- function(samples) {
-  # Sort the samples
-  sorted_samples <- sort(samples)
+  n <- nrow(samples)
+  m <- ncol(samples)
   
-  # Compute ECDF values
-  n <- length(samples)
-  ecdf_values <- (rank(sorted_samples) - 0.5) / n  # Using mid-rank to compute ECDF
+  # Initialize the output matrix
+  transformed <- matrix(nrow = n, ncol = m)
   
-  # Transform using the standard normal inverse CDF (quantile function)
-  normal_transformed <- qnorm(ecdf_values)
+  for (j in 1:m) {
+    column_data <- samples[, j]
+    sorted_data <- sort(column_data)
+    ranks <- rank(column_data, ties.method = "average")  
+    
+    ecdf_values <- (ranks - 0.5) / n  
+    transformed[, j] <- qnorm(ecdf_values)
+  }
   
-  # Return the transformed samples
-  return(normal_transformed)
+  return(transformed)
 }
