@@ -160,3 +160,20 @@
   
   realnvp_model
 }
+                  
+.transform_to_normal <- function(samples) {
+  n <- nrow(samples)
+  m <- ncol(samples)
+  
+  transformed <- matrix(nrow = n, ncol = m)
+  
+  for (j in 1:m) {
+    column_data <- samples[, j]
+    sorted_data <- sort(column_data)
+    ranks <- rank(column_data, ties.method = "average") 
+    ecdf_values <- (ranks - 0.5) / n 
+    transformed[, j] <- qnorm(ecdf_values)
+  }
+  
+  return(transformed)
+}
