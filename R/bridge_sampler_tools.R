@@ -95,7 +95,7 @@
   
   log_det_jacobian <- tensorflow::tf$reduce_sum(s, axis = 1)  # sum log(s) for Jacobian determinant
   
-  output <- tensorflow::tf$keras$layers$Concatenate()([y1, y2])
+  output <- tensorflow::tf$keras$layers$Concatenate()(list(y1, y2))
   return(tensorflow::tf$keras$Model(inputs = input, outputs = list(output, log_det_jacobian)))
 }
                                           
