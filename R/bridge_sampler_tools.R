@@ -78,13 +78,11 @@
 #--------------------------------------------------------------------------
 .create_affine_coupling_layer <- function(input_shape) {
   d <- as.integer(input_shape / 2)
-
   scale_translation_network <- nn_sequential(
     nn_linear(d, 512),
     nn_relu(),
     nn_linear(512, d * 2)
   )
-  
   net <- nn_module(
     initialize = function() {
       self$scale_translation_network <- scale_translation_network
@@ -113,14 +111,16 @@
 .create_realnvp <- function(input_shape, num_coupling_layers) {
   net <- nn_module(
     initialize = function() {
-      self$coupling_layers <- nn_module_list(lapply(seq_len(num_coupling_layers), function(i) .create_affine_coupling_layer(input_shape)))
-      self$register_parameters()  # Register parameters
+      self$coupling_layers <- nn_module_list()
+      for (i in seq_len(num_coupling_layers)) {
+        self$coupling_layers$append(.create_affine_coupling_layer(input_shape))
+      }
     },
     forward = function(x) {
       total_log_det_jacobian <- 0
       
-      for (coupling_layer in self$coupling_layers) {
-        result <- coupling_layer(x)
+      for (i in seq_len(length(self$coupling_layers))) {
+        result <- self$coupling_layers[[i]](x)
         x <- result[[1]]  # updated x
         total_log_det_jacobian <- total_log_det_jacobian + result[[2]]
       }
@@ -131,7 +131,6 @@
   
   net
 }
-
 .negative_log_likelihood <- function(y_true, y_pred) {
   z <- y_pred[[1]]
   log_det_jacobian <- y_pred[[2]]
@@ -141,13 +140,14 @@
   nll
 }
 
-# Define the training function for RealNVP
 .train_realnvp <- function(samples, normal_samples, num_coupling_layers = 5, epochs = 50, batch_size = 32, learning_rate = 0.001, train_ratio = 0.8, verbose = FALSE) {
   input_shape <- ncol(samples)
   realnvp_model <- .create_realnvp(input_shape, num_coupling_layers)
+  
   if(verbose){
-    print(cat("Parameters are", realnvp_model$parameters))
+    cat("Parameters are:", realnvp_model$parameters, "\n")
   }
+  
   optimizer <- optim_adam(realnvp_model$parameters, lr = learning_rate)
   
   for (epoch in seq_len(epochs)) {
