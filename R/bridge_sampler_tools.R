@@ -105,7 +105,7 @@
     }
   )
   
-  net
+  net()
 }
 
 .create_realnvp <- function(input_shape, num_coupling_layers) {
@@ -129,7 +129,7 @@
     }
   )
   
-  net
+  net()
 }
 .negative_log_likelihood <- function(y_true, y_pred) {
   z <- y_pred[[1]]
