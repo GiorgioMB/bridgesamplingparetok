@@ -151,7 +151,7 @@
   for (epoch in seq_len(epochs)) {
     realnvp_model$zero_grad()
     outputs <- realnvp_model(samples)
-    loss <- negative_log_likelihood(normal_samples, outputs)
+    loss <- .negative_log_likelihood(normal_samples, outputs)
     loss$backward()
     optimizer$step()
   }
