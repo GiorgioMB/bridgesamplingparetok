@@ -143,6 +143,7 @@
 
 
 .train_realnvp <- function(samples, normal_samples, num_coupling_layers = 5, epochs = 50, batch_size = 32, learning_rate = 0.001, train_ratio = 0.8) {
+  library(torch)                                                                                                                                            
   input_shape <- ncol(samples)
   realnvp_model <- .create_realnvp(input_shape, num_coupling_layers)
   
