@@ -354,27 +354,34 @@
     logmlold <- logml
     numi <-  e^(l2 - lstar)/(s1 * e^(l2 - lstar) + s2 *  r)
     deni <- 1/(s1 * e^(l1 - lstar) + s2 * r)
-    print(any(is.na(as.numeric(numi))))
-    print(any(is.na(as.numeric(deni))))
-    print(any(is.infinite(as.numeric(numi))))
-    print(any(is.infinite(as.numeric(deni))))
+    if (any(is.na(as.numeric(numi))) ||
+        any(is.na(as.numeric((deni))))) {
+      warning("NA value in iterative scheme, returning NA.\n Try rerunning with more samples.", call. = FALSE)
+      return(list(logml = NA, niter = i))
+    }
     if (any(is.infinite(as.numeric(numi))) ||
         any(is.infinite(as.numeric((deni))))) {
       warning("Infinite value in iterative scheme, returning NA.\n Try rerunning with more samples.", call. = FALSE)
       return(list(logml = NA, niter = i))
-
     }
     ##Do pareto smoothing 
     if (pareto_smoothing_all == TRUE) {
-      print(posterior:::is_constant(as.numeric(deni)))
-      print(posterior:::is_constant(as.numeric(numi)))
-
       write.csv(as.numeric(numi), file = "numerator.csv")
       write.csv(as.numeric(deni), file = "denominator.csv")
-      numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
-      deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
-      print(numi)
-      print(deni)
+      is_deni_constant <- posterior:::is_constant(as.numeric(deni))
+      is_numi_constant <- posterior:::is_constant(as.numeric(numi))
+      
+      # Check if either condition is TRUE and raise an error with a specific message
+      if (is_deni_constant || is_numi_constant) {
+        if (is_deni_constant) {
+          warning("Denominator is constant, Pareto smoothing can't be done")
+        } else {
+          warning("Numerator is constant, Pareto smoothing can't be done")
+        }
+      } else {
+        numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
+        deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
+      }
     }
     mean_numi <- mean(as.numeric(numi))
     mean_deni <- mean(as.numeric(deni))
