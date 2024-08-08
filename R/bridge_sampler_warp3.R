@@ -221,7 +221,9 @@
       pareto_k_numi[[i]] <- tmp$pareto_k$numi
       pareto_k_deni[[i]] <- tmp$pareto_k$deni
     } else {
-      print("There was an error computing the pareto_k diagnostic")
+      if(verbose){
+        print("There was an error computing the pareto_k diagnostic")
+      }
       pareto_k_numi[[i]] <- NA
       pareto_k_deni[[i]] <- NA
     }
