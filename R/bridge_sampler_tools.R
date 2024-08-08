@@ -110,11 +110,11 @@
   net
 }
 
-# Define the RealNVP model
 .create_realnvp <- function(input_shape, num_coupling_layers) {
   net <- nn_module(
     initialize = function() {
       self$coupling_layers <- nn_module_list(lapply(seq_len(num_coupling_layers), function(i) .create_affine_coupling_layer(input_shape)))
+      self$register_parameters()  # Register parameters
     },
     forward = function(x) {
       total_log_det_jacobian <- 0
@@ -122,7 +122,7 @@
       for (coupling_layer in self$coupling_layers) {
         result <- coupling_layer(x)
         x <- result[[1]]  # updated x
-        total_log_det_jacobian <- total_log_det_jacobian + result[[2]]  # accumulate the log determinant of Jacobian
+        total_log_det_jacobian <- total_log_det_jacobian + result[[2]]
       }
       
       list(x, total_log_det_jacobian)
@@ -132,7 +132,6 @@
   net
 }
 
-# Define the negative log likelihood function
 .negative_log_likelihood <- function(y_true, y_pred) {
   z <- y_pred[[1]]
   log_det_jacobian <- y_pred[[2]]
@@ -143,24 +142,24 @@
 }
 
 # Define the training function for RealNVP
-.train_realnvp <- function(samples, normal_samples, num_coupling_layers = 5, epochs = 50, batch_size = 32, learning_rate = 0.001, train_ratio = 0.8, verbose = FALSE) {
-  library(torch)
+.train_realnvp <- function(samples, normal_samples, num_coupling_layers = 5, epochs = 50, batch_size = 32, learning_rate = 0.001, train_ratio = 0.8) {
   input_shape <- ncol(samples)
   realnvp_model <- .create_realnvp(input_shape, num_coupling_layers)
-  if(verbose){
-    print(realnvp_model$parameters)
-  }
+  
   optimizer <- optim_adam(realnvp_model$parameters, lr = learning_rate)
+  
   for (epoch in seq_len(epochs)) {
     realnvp_model$zero_grad()
     outputs <- realnvp_model(samples)
     loss <- .negative_log_likelihood(normal_samples, outputs)
     loss$backward()
     optimizer$step()
-    # Print the loss every 10 iterations, to have an idea of how the model is going
-    if (epoch %% 10 == 0 && verbose) {
+    
+    # Optionally print the loss for monitoring
+    if (epoch %% 10 == 0) {
       cat(sprintf("Epoch [%d/%d], Loss: %f\n", epoch, epochs, loss$item()))
     }
   }
+  
   realnvp_model
 }
