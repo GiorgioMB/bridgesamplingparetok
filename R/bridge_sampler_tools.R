@@ -76,7 +76,7 @@
 #--------------------------------------------------------------------------
 # functions for RealNVP support
 #--------------------------------------------------------------------------
-create_affine_coupling_layer <- function(input_shape) {
+,create_affine_coupling_layer <- function(input_shape) {
   # Define the input layer
   input <- nnf_input(input_shape)
   
@@ -118,13 +118,13 @@ create_affine_coupling_layer <- function(input_shape) {
   return(model)
 }
 
-create_realnvp <- function(input_shape, num_coupling_layers) {
+.create_realnvp <- function(input_shape, num_coupling_layers) {
   inputs <- nnf_input(input_shape)
   x <- inputs
   total_log_det_jacobian <- 0
   
   for (i in seq_len(num_coupling_layers)) {
-    coupling_layer <- create_affine_coupling_layer(input_shape)
+    coupling_layer <- .create_affine_coupling_layer(input_shape)
     result <- coupling_layer(x)
     x <- result[[1]]  # updated x
     total_log_det_jacobian <- total_log_det_jacobian + result[[2]]  # accumulate the log determinant of Jacobian
@@ -144,7 +144,7 @@ create_realnvp <- function(input_shape, num_coupling_layers) {
   return(model)
 }
 
-negative_log_likelihood <- function(y_true, y_pred) {
+.negative_log_likelihood <- function(y_true, y_pred) {
   z <- y_pred[[1]]
   log_det_jacobian <- y_pred[[2]]
   logp_z <- -0.5 * torch_sum(z^2, dim = 1L) - 0.5 * length(z) * log(2 * pi)
@@ -152,10 +152,10 @@ negative_log_likelihood <- function(y_true, y_pred) {
   return(nll)
 }
 
-train_realnvp <- function(samples, normal_samples, num_coupling_layers = 5, epochs = 50, batch_size = 32, learning_rate = 0.001, train_ratio = 0.8) {
+.train_realnvp <- function(samples, normal_samples, num_coupling_layers = 5, epochs = 50, batch_size = 32, learning_rate = 0.001, train_ratio = 0.8) {
   library(torch)
   input_shape <- ncol(samples)
-  realnvp_model <- create_realnvp(input_shape, num_coupling_layers)
+  realnvp_model <- .create_realnvp(input_shape, num_coupling_layers)
   optimizer <- optim_adam(realnvp_model$parameters, lr = learning_rate)
   
   dataset <- tensor_dataset(list(samples, normal_samples))
@@ -166,7 +166,7 @@ train_realnvp <- function(samples, normal_samples, num_coupling_layers = 5, epoc
     for (batch in enumerate(dataloader)) {
       optimizer$zero_grad()
       output <- realnvp_model(batch[[1]])
-      loss <- negative_log_likelihood(batch[[2]], output)
+      loss <- .negative_log_likelihood(batch[[2]], output)
       loss$backward()
       optimizer$step()
     }
