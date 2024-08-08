@@ -161,7 +161,6 @@
                                    criterion = "logml", neff = neff)
       tmp$niter <- maxiter + tmp$niter
     }
-    print(str(tmp))
     logml[i] <- tmp$logml
     niter[i] <- tmp$niter
     std_rs[i] <- tmp$std_r
@@ -172,7 +171,9 @@
       pareto_k_numi[[i]] <- tmp$pareto_k$numi
       pareto_k_deni[[i]] <- tmp$pareto_k$deni
     } else {
-      print("There was an error computing the pareto_k diagnostic")
+      if(verbose){
+        print("There was an error computing the pareto_k diagnostic")
+      }
       pareto_k_numi[[i]] <- NA
       pareto_k_deni[[i]] <- NA
     }
