@@ -419,6 +419,6 @@
   }
   
   pareto_k <- .pareto_k_diagnostic(numi, deni)
-  return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, std_r = std_logml))
+  return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, std_logml = std_logml))
 
 }
