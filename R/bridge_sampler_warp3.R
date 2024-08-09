@@ -190,7 +190,7 @@
 
   logml <- numeric(repetitions)
   niter <- numeric(repetitions)
-  std_rs <- numeric(repetitions)
+  std_logmls <- numeric(repetitions)
   pareto_k_numi <- list()
   pareto_k_deni <- list()
   # run iterative updating scheme to compute log of marginal likelihood
@@ -213,7 +213,7 @@
 
     logml[i] <- tmp$logml
     niter[i] <- tmp$niter
-    std_rs[i] <- tmp$std_r
+    std_logmls[i] <- tmp$std_logml
     if("pareto_k" %in% names(tmp)) {
       if(verbose){
         print(tmp$pareto_k)
@@ -235,11 +235,11 @@
   if (repetitions == 1) {
     out <- list(logml = logml, niter = niter, method = "warp3", q11 = q11,
                 q12 = q12, q21 = q21[[1]], q22 = q22[[1]], pareto_k_numi = pareto_k_numi,
-                pareto_k_deni = pareto_k_deni, std_ratio = std_rs)
+                pareto_k_deni = pareto_k_deni, mcse_logml = std_logmls)
     class(out) <- "bridge"
   } else if (repetitions > 1) {
     out <- list(logml = logml, niter = niter, method = "warp3", repetitions = repetitions,
-                pareto_k_numi = pareto_k_numi, pareto_k_deni = pareto_k_deni, std_ratio = std_rs)
+                pareto_k_numi = pareto_k_numi, pareto_k_deni = pareto_k_deni, mcse_logml = std_logmls)
     class(out) <- "bridge_list"
   }
 
