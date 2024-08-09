@@ -303,20 +303,21 @@
 
 .run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L, pareto_smoothing_last,
                                   method, maxiter, silent, pareto_smoothing_all,
-                                  criterion, neff, return_always) {
+                                  criterion, neff, return_always, verbose) {
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
-  print(any(is.na(as.numeric(q11))))
-  print(any(is.na(as.numeric(q12))))
-  print(any(is.na(as.numeric(q21))))
-  print(any(is.na(as.numeric(q22))))
-  print(any(is.na(as.numeric(L))))
-  print(any(is.infinite(as.numeric(q11))))
-  print(any(is.infinite(as.numeric(q12))))
-  print(any(is.infinite(as.numeric(q21))))
-  print(any(is.infinite(as.numeric(q22))))
-  print(any(is.infinite(as.numeric(L))))
-
+  if(verbose){
+    print(any(is.na(as.numeric(q11))))
+    print(any(is.na(as.numeric(q12))))
+    print(any(is.na(as.numeric(q21))))
+    print(any(is.na(as.numeric(q22))))
+    print(any(is.na(as.numeric(L))))
+    print(any(is.infinite(as.numeric(q11))))
+    print(any(is.infinite(as.numeric(q12))))
+    print(any(is.infinite(as.numeric(q21))))
+    print(any(is.infinite(as.numeric(q22))))
+    print(any(is.infinite(as.numeric(L))))
+  }
 
   if (method == "normal") {
     l1 <- q11 - q12 # log(l)
