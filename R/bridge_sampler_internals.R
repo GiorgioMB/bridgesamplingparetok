@@ -395,8 +395,12 @@
     criterion_val <- switch(criterion, "r" = abs((r - rold)/r),
                             "logml" = abs((logml - logmlold)/logml))
     i <- i + 1
-    var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni)) 
-    std_r <- sqrt(var_r)
+    var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni))
+    # Compute variance in log scale by match the variance of a
+    # log-normal approximation
+    # https://en.wikipedia.org/wiki/Log-normal_distribution#Arithmetic_moments
+    var_logml <- log(1 + var_r / r^2)
+    std_logml <- sqrt(var_logml)
   }
   if (pareto_smoothing_last == TRUE && pareto_smoothing_all == FALSE) {
     numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
@@ -407,10 +411,10 @@
   if (i >= maxiter) {
     if (return_always == TRUE){
       pareto_k <- .pareto_k_diagnostic(numi, deni)
-      return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_r = std_r))
+      return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_logml = std_logml))
     } else {
       pareto_k <- list(numi = NA, deni = NA)
-      return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_r = std_r))
+      return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_logml = std_logml))
     }
   }
   
