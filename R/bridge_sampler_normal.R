@@ -25,8 +25,9 @@
   verbose,
   r0,
   tol1,
-  tol2, 
-  return_always) {
+  tol2,
+  return_always,
+  keep_log_eval = FALSE) {
   
   if (is.null(neff))
     neff <- nrow(samples_4_iter)
@@ -52,48 +53,48 @@
   q21 <- vector(mode = "list", length = repetitions)
   if (cores == 1) {
     q11 <- apply(.invTransform2Real(samples_4_iter, lb, ub, param_types), 1, log_posterior,
-                 data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
+                 data = data, keep_log_eval = keep_log_eval, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
     for (i in seq_len(repetitions)) {
       q21[[i]] <- apply(.invTransform2Real(gen_samples[[i]], lb, ub, param_types), 1, log_posterior,
-                        data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
+                        data = data, keep_log_eval = keep_log_eval, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
     }
   } else if (cores > 1) {
-    if ( .Platform$OS.type == "unix") {
-      split1 <- .split_matrix(matrix=.invTransform2Real(samples_4_iter, lb, ub, param_types), cores=cores)
+    if (.Platform$OS.type == "unix") {
+      split1 <- .split_matrix(matrix = .invTransform2Real(samples_4_iter, lb, ub, param_types), cores = cores)
       q11 <- parallel::mclapply(split1, FUN =
-                                  function(x) apply(x, 1, log_posterior, data = data, ...),
+                                  function(x) apply(x, 1, log_posterior, data = data, keep_log_eval = keep_log_eval, ...),
                                   mc.preschedule = FALSE,
                                   mc.cores = cores)
       q11 <- unlist(q11) + .logJacobian(samples_4_iter, transTypes, lb, ub)
       for (i in seq_len(repetitions)) {
-        split2 <- .split_matrix(matrix=.invTransform2Real(gen_samples[[i]], lb, ub, param_types), cores = cores)
+        split2 <- .split_matrix(matrix = .invTransform2Real(gen_samples[[i]], lb, ub, param_types), cores = cores)
         q21[[i]] <- parallel::mclapply(split2, FUN =
-                                  function(x) apply(x, 1, log_posterior, data = data, ...),
-                                  mc.preschedule = FALSE,
-                                  mc.cores = cores)
+                                    function(x) apply(x, 1, log_posterior, data = data, keep_log_eval = keep_log_eval, ...),
+                                    mc.preschedule = FALSE,
+                                    mc.cores = cores)
         q21[[i]] <- unlist(q21[[i]]) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
       }
     } else {
-    cl <- parallel::makeCluster(cores, useXDR = FALSE)
-    sapply(packages, function(x) parallel::clusterCall(cl = cl, "require", package = x,
-                                                       character.only = TRUE))
-    parallel::clusterExport(cl = cl, varlist = varlist, envir = envir)
-
-    if ( ! is.null(rcppFile)) {
-      parallel::clusterExport(cl = cl, varlist = "rcppFile", envir = parent.frame())
-      parallel::clusterCall(cl = cl, "require", package = "Rcpp", character.only = TRUE)
-      parallel::clusterEvalQ(cl = cl, Rcpp::sourceCpp(file = rcppFile))
-    } else if (is.character(log_posterior)) {
-      parallel::clusterExport(cl = cl, varlist = log_posterior, envir = envir)
-    }
-
-    q11 <- parallel::parRapply(cl = cl, x = .invTransform2Real(samples_4_iter, lb, ub, param_types), log_posterior,
-                               data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
-    for (i in seq_len(repetitions)) {
-      q21[[i]] <- parallel::parRapply(cl = cl, x = .invTransform2Real(gen_samples[[i]], lb, ub, param_types), log_posterior,
-                                      data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
-    }
-    parallel::stopCluster(cl)
+      cl <- parallel::makeCluster(cores, useXDR = FALSE)
+      sapply(packages, function(x) parallel::clusterCall(cl = cl, "require", package = x,
+                                                         character.only = TRUE))
+      parallel::clusterExport(cl = cl, varlist = varlist, envir = envir)
+  
+      if (!is.null(rcppFile)) {
+        parallel::clusterExport(cl = cl, varlist = "rcppFile", envir = parent.frame())
+        parallel::clusterCall(cl = cl, "require", package = "Rcpp", character.only = TRUE)
+        parallel::clusterEvalQ(cl = cl, Rcpp::sourceCpp(file = rcppFile))
+      } else if (is.character(log_posterior)) {
+        parallel::clusterExport(cl = cl, varlist = log_posterior, envir = envir)
+      }
+  
+      q11 <- parallel::parRapply(cl = cl, x = .invTransform2Real(samples_4_iter, lb, ub, param_types), log_posterior,
+                                 data = data, keep_log_eval = keep_log_eval, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
+      for (i in seq_len(repetitions)) {
+        q21[[i]] <- parallel::parRapply(cl = cl, x = .invTransform2Real(gen_samples[[i]], lb, ub, param_types), log_posterior,
+                                        data = data, keep_log_eval = keep_log_eval, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
+      }
+      parallel::stopCluster(cl)
     }
   }
   if(verbose) {
