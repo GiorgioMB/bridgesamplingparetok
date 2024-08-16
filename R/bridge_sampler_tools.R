@@ -22,22 +22,24 @@
   lst
 }
 
-.stan_log_posterior <- function(s.row, data) {
+.stan_log_posterior <- function(s.row, data, keep_log_eval) {
   out <- tryCatch(rstan::log_prob(object = data$stanfit, upars = s.row), error = function(e) -Inf)
   if (is.na(out)) out <- -Inf
   result <- data.frame(matrix(s.row, nrow = 1))
   result$log_posterior <- out
   csv_file <- "rstan_log_eval.csv"
   # Append the result to the CSV file
-  if (!file.exists(csv_file)) {
-    write.csv(result, file = csv_file, row.names = FALSE)
-  } else {
-    write.table(result, file = csv_file, row.names = FALSE, col.names = FALSE, append = TRUE, sep = ",")
+  if (keep_log_eval) {
+    if (!file.exists(csv_file)) {
+      write.csv(result, file = csv_file, row.names = FALSE)
+    } else {
+      write.table(result, file = csv_file, row.names = FALSE, col.names = FALSE, append = TRUE, sep = ",")
+    }
   }
   return(out)
 }
                   
-.cmdstan_log_posterior <- function(s.row, data) {
+.cmdstan_log_posterior <- function(s.row, data, keep_log_eval) {
   if("lp__" %in% names(s.row)) {
     s.row <- s.row[!names(s.row) %in% "lp__"]
     }
@@ -64,10 +66,12 @@
   result$log_posterior <- out
   csv_file <- "cmdstanr_log_eval.csv"
   # Append the result to the CSV file
-  if (!file.exists(csv_file)) {
-    write.csv(result, file = csv_file, row.names = FALSE)
-  } else {
-    write.table(result, file = csv_file, row.names = FALSE, col.names = FALSE, append = TRUE, sep = ",")
+  if (keep_log_eval) {
+    if (!file.exists(csv_file)) {
+      write.csv(result, file = csv_file, row.names = FALSE)
+    } else {
+      write.table(result, file = csv_file, row.names = FALSE, col.names = FALSE, append = TRUE, sep = ",")
+    }
   }
   
   return(out)
