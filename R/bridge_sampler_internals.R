@@ -306,19 +306,20 @@
                                   criterion, neff, return_always, verbose) {
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
-  if(verbose){
-    print(any(is.na(as.numeric(q11))))
-    print(any(is.na(as.numeric(q12))))
-    print(any(is.na(as.numeric(q21))))
-    print(any(is.na(as.numeric(q22))))
-    print(any(is.na(as.numeric(L))))
-    print(any(is.infinite(as.numeric(q11))))
-    print(any(is.infinite(as.numeric(q12))))
-    print(any(is.infinite(as.numeric(q21))))
-    print(any(is.infinite(as.numeric(q22))))
-    print(any(is.infinite(as.numeric(L))))
-  }
+  
+  if (verbose) {
+    cat("Checking for NA and Infinite values:\n")
+    vars <- list(q11 = q11, q12 = q12, q21 = q21, q22 = q22, L = L)
+    for (var_name in names(vars)) {
+        numeric_var <- as.numeric(vars[[var_name]]) 
+      
+        has_na <- any(is.na(numeric_var))
+        cat(sprintf("NA values in %s: %s\n", var_name, ifelse(has_na, "Yes", "No")))
 
+        has_inf <- any(is.infinite(numeric_var))
+        cat(sprintf("Infinite values in %s: %s\n", var_name, ifelse(has_inf, "Yes", "No")))
+    }
+  }
   if (method == "normal") {
     l1 <- q11 - q12 # log(l)
     l2 <- q21 - q22 # log(ltilde)
