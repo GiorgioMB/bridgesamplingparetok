@@ -367,8 +367,6 @@
     }
     ##Do pareto smoothing 
     if (pareto_smoothing_all == TRUE) {
-      write.csv(as.numeric(numi), file = "numerator.csv")
-      write.csv(as.numeric(deni), file = "denominator.csv")
       is_deni_constant <- posterior:::is_constant(as.numeric(deni))
       is_numi_constant <- posterior:::is_constant(as.numeric(numi))
       
