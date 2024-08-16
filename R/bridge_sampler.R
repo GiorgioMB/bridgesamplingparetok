@@ -188,13 +188,20 @@
 #'@importFrom stats qnorm pnorm dnorm median cov var
 #'@export
 bridge_sampler <- function(samples, num_splits, ...) {
-    UseMethod("bridge_sampler", samples)
+  # Check if the object has more than one class
+  if (length(class(samples)) > 1) {
+    # Use only the first class
+    class(samples) <- class(samples)[1]
+  }
+  # Now dispatch the method based on the first class
+  UseMethod("bridge_sampler", samples)
 }
+
 
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method = "normal", cores = 1, keep_log_eval = TRUE,
+bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method = "normal", cores = 1, keep_log_eval = FALSE,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
                                       total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ...) {
     if(file.exists("cmdstanr_log_eval.csv")) {
@@ -214,7 +221,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method =
                         lb = lb, ub = ub, repetitions = repetitions,
                         method = method, log_posterior = .cmdstan_log_posterior,
                         cores = cores, seed = seed, data = samples,
-                        use_neff = use_neff,
+                        use_neff = use_neff, keep_log_eval = keep_log_eval,
                         verbose = verbose)
    if (!keep_log_eval && file.exists("cmdstanr_log_eval.csv")) {
     file.remove("cmdstanr_log_eval.csv")
@@ -227,7 +234,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method =
 ##Permutations added
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep_log_eval = TRUE,
+bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep_log_eval = FALSE,
                                       repetitions = 1, method = "normal", cores = 1,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
                                       total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ...) {
@@ -307,7 +314,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
                                            neff = neff,
                                            log_posterior = .stan_log_posterior,
                                            data = list(stanfit = stanfit_model),
-                                           lb = lb, ub = ub,
+                                           lb = lb, ub = ub, keep_log_eval = keep_log_eval,
                                            param_types = rep("real", ncol(samples_4_fit)),
                                            transTypes = transTypes, pareto_smoothing_all = pareto_smoothing_all, pareto_smoothing_last = pareto_smoothing_last,
                                            repetitions = repetitions, cores = cores,
@@ -318,7 +325,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
       bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                                args = list(samples_4_fit = samples_4_fit,
                                            samples_4_iter = samples_4_iter,
-                                           neff = neff,
+                                           neff = neff, keep_log_eval = keep_log_eval,
                                            log_posterior = .stan_log_posterior,
                                            data = list(stanfit = stanfit_model),
                                            lb = lb, ub = ub, pareto_smoothing_all = pareto_smoothing_all,
@@ -332,12 +339,12 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
     }
     result <- append(result, list(bridge_output))
   }
+  if (!keep_log_eval && file.exists("rstan_log_eval.csv")) {
+    file.remove("rstan_log_eval.csv")
+  }
   ##If only one permutation is considered
   if (length(result) == 1) {
     return(result[[1]])  ## Return the single element directly
-  }
-  if (!keep_log_eval && file.exists("rstan_log_eval.csv")) {
-    file.remove("rstan_log_eval.csv")
   }
   return(result)
 }
