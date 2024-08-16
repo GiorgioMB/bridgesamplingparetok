@@ -58,22 +58,22 @@
   q21 <- vector(mode = "list", length = repetitions)
   if (cores == 1) {
       q11 <- log(e^(apply(.invTransform2Real(samples_4_iter, lb, ub, param_types), 1, log_posterior,
-                          data = data, keep_log_eval = TRUE, ...) + 
+                          data = data, keep_log_eval = keep_log_eval, ...) + 
                    .logJacobian(samples_4_iter, transTypes, lb, ub)) +
                  e^(apply(.invTransform2Real(matrix(2*m, nrow = n_post, ncol = length(m), byrow = TRUE) -
                                                  samples_4_iter, lb, ub, param_types), 1, log_posterior, 
-                          data = data, keep_log_eval = TRUE, ...) +
+                          data = data, keep_log_eval = keep_log_eval, ...) +
                    .logJacobian(matrix(2*m, nrow = n_post, ncol = length(m), byrow = TRUE) -
                                  samples_4_iter, transTypes, lb, ub)))
       for (i in seq_len(repetitions)) {
           q21[[i]] <- log(e^(apply(.invTransform2Real(matrix(m, nrow = n_post, ncol = length(m), byrow = TRUE) -
                                                        gen_samples[[i]] %*% t(L), lb, ub, param_types), 1, log_posterior, 
-                                                data = data, keep_log_eval = TRUE, ...) +
+                                                data = data, keep_log_eval = keep_log_eval, ...) +
                           .logJacobian(matrix(m, nrow = n_post, ncol = length(m), byrow = TRUE) -
                                        gen_samples[[i]] %*% t(L), transTypes, lb, ub)) +
                        e^(apply(.invTransform2Real(matrix(m, nrow = n_post, ncol = length(m), byrow = TRUE) +
                                                    gen_samples[[i]] %*% t(L), lb, ub, param_types), 1, log_posterior, 
-                                                data = data, keep_log_eval = TRUE, ...) +
+                                                data = data, keep_log_eval = keep_log_eval, ...) +
                           .logJacobian(matrix(m, nrow = n_post, ncol = length(m), byrow = TRUE) +
                                        gen_samples[[i]] %*% t(L), transTypes, lb, ub)))
       }
@@ -84,11 +84,11 @@
               matrix(2*m, nrow = n_post, ncol = length(m), byrow = TRUE) - samples_4_iter, lb, ub, param_types
           ), cores=cores)
           q11a <- parallel::mclapply(split1a, FUN =
-                                      function(x) apply(x, 1, log_posterior, data = data, keep_log_eval = TRUE, ...),
+                                      function(x) apply(x, 1, log_posterior, data = data, keep_log_eval = keep_log_eval, ...),
                                      mc.preschedule = FALSE,
                                      mc.cores = cores)
           q11b <- parallel::mclapply(split1b, FUN =
-                                      function(x) apply(x, 1, log_posterior, data = data, keep_log_eval = TRUE, ...),
+                                      function(x) apply(x, 1, log_posterior, data = data, keep_log_eval = keep_log_eval, ...),
                                      mc.preschedule = FALSE,
                                      mc.cores = cores)
           q11 <- log(e^(unlist(q11a) + .logJacobian(samples_4_iter, transTypes, lb, ub)) +
@@ -105,11 +105,11 @@
                   matrix(m, nrow = n_post, ncol = length(m), byrow = TRUE) + tmp_mat2, lb, ub, param_types
               ), cores=cores)
               q21a <- parallel::mclapply(split2a, FUN =
-                                          function(x) apply(x, 1, log_posterior, data = data, keep_log_eval = TRUE, ...),
+                                          function(x) apply(x, 1, log_posterior, data = data, keep_log_eval = keep_log_eval, ...),
                                          mc.preschedule = FALSE,
                                          mc.cores = cores)
               q21b <- parallel::mclapply(split2b, FUN =
-                                          function(x) apply(x, 1, log_posterior, data = data, keep_log_eval = TRUE, ...),
+                                          function(x) apply(x, 1, log_posterior, data = data, keep_log_eval = keep_log_eval, ...),
                                          mc.preschedule = FALSE,
                                          mc.cores = cores)
               q21[[i]] <- log(e^(unlist(q21a) +
@@ -134,13 +134,13 @@
           }
   
           q11 <- log(e^(parallel::parRapply(cl = cl, x = .invTransform2Real(samples_4_iter, lb, ub, param_types),
-                                            log_posterior, data = data, keep_log_eval = TRUE, ...) +
+                                            log_posterior, data = data, keep_log_eval = keep_log_eval, ...) +
                         .logJacobian(samples_4_iter, transTypes, lb, ub)) +
                      e^(parallel::parRapply(cl = cl,
                                             x = .invTransform2Real(matrix(2*m, nrow = n_post,
                                                                            ncol = length(m), byrow = TRUE) -
                                                                    samples_4_iter, lb, ub, param_types),
-                                            log_posterior, data = data, keep_log_eval = TRUE, ...) +
+                                            log_posterior, data = data, keep_log_eval = keep_log_eval, ...) +
                         .logJacobian(matrix(2*m, nrow = n_post, ncol = length(m), byrow = TRUE) -
                                      samples_4_iter, transTypes, lb, ub)))
           for (i in seq_len(repetitions)) {
@@ -148,14 +148,14 @@
                                                      x = .invTransform2Real(matrix(m, nrow = n_post,
                                                                                    ncol = length(m), byrow = TRUE) -
                                                                            gen_samples[[i]] %*% t(L), lb, ub, param_types),
-                                                     log_posterior, data = data, keep_log_eval = TRUE, ...) +
+                                                     log_posterior, data = data, keep_log_eval = keep_log_eval, ...) +
                               .logJacobian(matrix(m, nrow = n_post, ncol = length(m), byrow = TRUE) -
                                            gen_samples[[i]] %*% t(L), transTypes, lb, ub)) +
                          e^(parallel::parRapply(cl = cl,
                                                 x = .invTransform2Real(matrix(m, nrow = n_post,
                                                                               ncol = length(m), byrow = TRUE) +
                                                                         gen_samples[[i]] %*% t(L), lb, ub, param_types),
-                                                log_posterior, data = data, keep_log_eval = TRUE, ...) +
+                                                log_posterior, data = data, keep_log_eval = keep_log_eval, ...) +
                             .logJacobian(matrix(m, nrow = n_post, ncol = length(m), byrow = TRUE) +
                                          gen_samples[[i]] %*% t(L), transTypes, lb, ub)))
           }
