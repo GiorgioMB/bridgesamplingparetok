@@ -349,7 +349,6 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
   return(result)
 }
 
-##Permutations added
 #' @rdname bridge_sampler
 #' @export
 bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_splits = 2, total_perms = 1, ..., data = NULL,
@@ -428,7 +427,6 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
 
 #' @rdname bridge_sampler
 #' @export
-##I don't think I can add anything here tbh
 bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
                                 data = NULL, lb = NULL, ub = NULL, total_perms = 1,
                                 num_splits = 2, repetitions = 1, method = "normal",
@@ -469,6 +467,9 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
   if (is.na(seed) & verbose) {
        print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
     }
+  if (num_splits %% 2 != 0) {
+  stop("Error: num_splits is not divisible by 2")
+  }
   # see Meng & Wong (1996), equation 4.1
   # Check simplex computation
   is_simplex_param <- param_types == "simplex"
@@ -544,7 +545,6 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
 #' @rdname bridge_sampler
 #' @export
 #' @importFrom utils read.csv
-##Nothing can be added here afaik
 bridge_sampler.stanreg <-
   function(samples, repetitions = 1, method = "normal", cores = 1, num_splits = 2, pareto_smoothing_all = FALSE,
            use_neff = TRUE, maxiter = 1000, silent = FALSE, total_perms = 1, pareto_smoothing_last = FALSE,
@@ -598,7 +598,6 @@ bridge_sampler.stanreg <-
 
 #' @rdname bridge_sampler
 #' @export
-##Nothing can be added here afaik
 bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
                                  total_perms = 1, lb = NULL, ub = NULL, repetitions = 1,
                                  method = "normal", cores = 1, use_neff = TRUE, pareto_smoothing_last = FALSE,
@@ -606,7 +605,7 @@ bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data
                                  envir = .GlobalEnv, rcppFile = NULL, seed = NA, pareto_smoothing_all = FALSE,
                                  maxiter = 1000, silent = FALSE, verbose = FALSE) {
 
-
+  ##Note: I am not quite sure how log_posterior is handled here
   # convert to mcmc.list
   samples <- coda::as.mcmc(samples)
   cn <- coda::varnames(samples)
@@ -736,7 +735,7 @@ bridge_sampler.MCMC_refClass <- function(samples,
                                             project = nimble_model))
 
   # wrapper to match required format for log_posterior
-  log_posterior <- function(x, data) {
+  log_posterior <- function(x, data, keep_log_eval) {
     clog_posterior$run(x)
   }
 
