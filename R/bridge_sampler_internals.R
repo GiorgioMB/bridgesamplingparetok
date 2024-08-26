@@ -408,11 +408,6 @@
     mean_deni <- mean(as.numeric(deni))
     r <- mean_numi/mean_deni
     logml <- log(r) + lstar
-  } else {
-    mean_numi <- mean(as.numeric(numi))
-    mean_deni <- mean(as.numeric(deni))
-    r <- mean_numi/mean_deni
-    logml <- log(r) + lstar
   }
   if (i >= maxiter) {
     if (return_always == TRUE){
