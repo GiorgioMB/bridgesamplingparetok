@@ -395,6 +395,7 @@
                             "logml" = abs((logml - logmlold)/logml))
     i <- i + 1
     var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni))
+    var_r <- var_r / length(numi)
     # Compute variance in log scale by match the variance of a
     # log-normal approximation
     # https://en.wikipedia.org/wiki/Log-normal_distribution#Arithmetic_moments
@@ -409,6 +410,7 @@
     r <- mean_numi/mean_deni
     logml <- log(r) + lstar
     var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni))
+    var_r <- var_r / length(numi)
     var_logml <- log(1 + var_r / r^2)
     std_logml <- sqrt(var_logml)
   }
