@@ -404,6 +404,13 @@
   if (pareto_smoothing_last == TRUE && pareto_smoothing_all == FALSE) {
     numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
     deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
+    mean_numi <- mean(as.numeric(numi))
+    mean_deni <- mean(as.numeric(deni))
+    r <- mean_numi/mean_deni
+    logml <- log(r) + lstar
+  } else {
+    mean_numi <- mean(as.numeric(numi))
+    mean_deni <- mean(as.numeric(deni))
     r <- mean_numi/mean_deni
     logml <- log(r) + lstar
   }
