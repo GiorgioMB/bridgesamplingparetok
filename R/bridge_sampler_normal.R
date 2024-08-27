@@ -144,8 +144,8 @@
   std_logmls <- numeric(repetitions)
   pareto_k_numi <- list()
   pareto_k_deni <- list()
-  numi <- numeric(repetitions)
-  deni <- numeric(repetitions)
+  numi <- list()
+  deni <- list()
   # run iterative updating scheme to compute log of marginal likelihood
   for (i in seq_len(repetitions)) {
     tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
@@ -166,8 +166,8 @@
     logml[i] <- tmp$logml
     niter[i] <- tmp$niter
     std_logmls[i] <- tmp$std_logml
-    numi[i] <- tmp$numi
-    deni[i] <- tmp$deni
+    numi[[i]] <- tmp$numi
+    deni[[i]] <- tmp$deni
     if("pareto_k" %in% names(tmp)) {
       if(verbose){
         print(tmp$pareto_k)
