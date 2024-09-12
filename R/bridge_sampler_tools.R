@@ -84,6 +84,7 @@
 #--------------------------------------------------------------------------
 .create_affine_coupling_layer <- function(input_shape) {
   d <- as.integer(input_shape / 2)
+  print(d)
   scale_translation_network <- nn_sequential(
     nn_linear(d, 512),
     nn_relu(),
