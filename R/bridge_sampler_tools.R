@@ -202,9 +202,6 @@
     column_sds <- apply(samples, 2, sd)
     samples <- sweep(samples, 2, column_means, "-")
     samples <- sweep(samples, 2, column_sds, "/")
-
-    samples <- rep(samples, 2)
-    samples <- matrix(samples, ncol = d * 2)
     if (!inherits(samples, "torch_tensor")) {
         samples <- torch::torch_tensor(samples)
     }
