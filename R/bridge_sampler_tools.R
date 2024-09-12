@@ -175,17 +175,23 @@
     set.seed(seed)
     n <- nrow(samples)
     d <- ncol(samples)
-    if(mean(samples) != 0 || sd(samples) != 1) {
-        samples <- (samples - mean(samples)) / sd(samples)
-    }
+
+    # Apply column-wise normalization
+    column_means <- colMeans(samples)
+    column_sds <- apply(samples, 2, sd)
+    samples <- sweep(samples, 2, column_means, "-")
+    samples <- sweep(samples, 2, column_sds, "/")
+
     samples <- rep(samples, 2)
     samples <- matrix(samples, ncol = d * 2)
-    if(!inherits(samples, "torch_tensor")) {
+    if (!inherits(samples, "torch_tensor")) {
         samples <- torch::torch_tensor(samples)
     }
+
     normal_samples <- rnorm(n * d)
     normal_samples <- matrix(normal_samples, nrow = n, ncol = d)
     normal_samples <- torch::torch_tensor(normal_samples)
+
     trained_rnvp <- .train_realnvp(samples, normal_samples, num_coupling_layers, epochs, learning_rate, verbose)
     x_rnvp_warped <- as.matrix(trained_rnvp$forward(samples)[[1]])
     x_log_det_jacobian <- as.matrix(trained_rnvp$forward(samples)[[2]])
