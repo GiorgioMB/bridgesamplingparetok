@@ -82,7 +82,6 @@
 #--------------------------------------------------------------------------
 # functions for RealNVP support / DEPRECATED
 #--------------------------------------------------------------------------
-
 .create_affine_coupling_layer <- function(input_shape) {
   d <- as.integer(input_shape / 2)
   scale_translation_network <- nn_sequential(
@@ -105,16 +104,31 @@
       y1 <- x1
       y2 <- x2 * torch_exp(s) + t
       
-      log_det_jacobian <- torch_sum(s, dim = 2) 
+      log_det_jacobian <- torch_sum(s, dim = 2)
       
       output <- torch_cat(list(y1, y2), dim = 2)
+      list(output, log_det_jacobian)
+    },
+    inverse = function(y) {
+      y1 <- y[, 1:d]
+      y2 <- y[, (d + 1):input_shape]
+      
+      st <- self$scale_translation_network(y1)
+      s <- st[, 1:d]
+      t <- st[, (d + 1):(2 * d)]
+      
+      x1 <- y1
+      x2 <- (y2 - t) / torch_exp(s)
+      
+      log_det_jacobian <- -torch_sum(s, dim = 2)
+      
+      output <- torch_cat(list(x1, x2), dim = 2)
       list(output, log_det_jacobian)
     }
   )
   
   net()
 }
-
 
 
 .create_realnvp <- function(input_shape, num_coupling_layers) {
@@ -127,17 +141,24 @@
     },
     forward = function(x) {
       total_log_det_jacobian <- 0
-      
       for (i in seq_len(length(self$coupling_layers))) {
         result <- self$coupling_layers[[i]](x)
-        x <- result[[1]]  # updated x
+        x <- result[[1]]
         total_log_det_jacobian <- total_log_det_jacobian + result[[2]]
       }
-      
       list(x, total_log_det_jacobian)
+    },
+    inverse = function(y) {
+      total_log_det_jacobian <- 0
+      for (i in length(self$coupling_layers):1) {
+        result <- self$coupling_layers[[i]]$inverse(y)
+        y <- result[[1]]
+        total_log_det_jacobian <- total_log_det_jacobian + result[[2]]
+      }
+      list(y, total_log_det_jacobian)
     }
   )
- 
+  
   net()
 }
 
@@ -195,6 +216,7 @@
     trained_rnvp <- .train_realnvp(samples, normal_samples, num_coupling_layers, epochs, learning_rate, verbose)
     x_rnvp_warped <- as.matrix(trained_rnvp$forward(samples)[[1]])
     x_log_det_jacobian <- as.matrix(trained_rnvp$forward(samples)[[2]])
+
     if (return_model) {
         return(list(transformed_samples = x_rnvp_warped, log_det_jacobian = x_log_det_jacobian, model = trained_rnvp))
     } else {
