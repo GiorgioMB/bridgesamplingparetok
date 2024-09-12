@@ -311,7 +311,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
       bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                                args = list(samples_4_fit = samples_4_fit,
                                            samples_4_iter = samples_4_iter,
-                                           neff = neff,
+                                           neff = neff, seed = seed,
                                            log_posterior = .stan_log_posterior,
                                            data = list(stanfit = stanfit_model),
                                            lb = lb, ub = ub, keep_log_eval = keep_log_eval,
@@ -327,7 +327,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
                                            samples_4_iter = samples_4_iter,
                                            neff = neff, keep_log_eval = keep_log_eval,
                                            log_posterior = .stan_log_posterior,
-                                           data = list(stanfit = stanfit_model),
+                                           data = list(stanfit = stanfit_model), seed = seed,
                                            lb = lb, ub = ub, pareto_smoothing_all = pareto_smoothing_all,
                                            param_types = rep("real", ncol(samples_4_fit)),
                                            transTypes = transTypes, pareto_smoothing_last = pareto_smoothing_last,
@@ -405,7 +405,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
        set.seed(seed)
     }
     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
-                             args = list(samples_4_fit = samples_4_fit,
+                             args = list(samples_4_fit = samples_4_fit, seed = seed,
                                          samples_4_iter = samples_4_iter, pareto_smoothing_all = pareto_smoothing_all,
                                          neff = neff, log_posterior = log_posterior,
                                          "..." = ..., data = data, pareto_smoothing_last = pareto_smoothing_last,
@@ -526,7 +526,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
                                 "..." = ..., data = data,
                                 lb = lb, ub = ub, pareto_smoothing_last = pareto_smoothing_last,
                                 transTypes = transTypes, pareto_smoothing_all = pareto_smoothing_all,
-                                param_types = param_types,
+                                param_types = param_types, seed = seed,
                                 repetitions = repetitions, cores = cores,
                                 packages = packages, varlist = varlist, envir = envir,
                                 rcppFile = rcppFile, maxiter = maxiter,
@@ -580,7 +580,7 @@ bridge_sampler.stanreg <-
       bridge_output <- bridge_sampler(samples = samples, log_posterior = .stan_log_posterior,
                                       data = list(stanfit = sf), lb = lb, ub = ub, seed = seed, pareto_smoothing_last = pareto_smoothing_last,
                                       repetitions = repetitions, method = method, cores = cores, pareto_smoothing_all = pareto_smoothing_all,
-                                      use_neff = use_neff, packages = "rstan", total_perms = total_perms,
+                                      use_neff = use_neff, packages = "rstan", total_perms = total_perms, 
                                       maxiter = maxiter, silent = silent, num_splits = num_splits, return_always = return_always,
                                       verbose = verbose)
     } else {
