@@ -43,12 +43,9 @@
 
   trained_realnvp <- transformed$model
   if(verbose){
-    if (exists("inverse", where = trained_realnvp, inherits = TRUE)) {
-      cat("The trained_realnvp object has an $inverse method.\n")
-    } else {
-      cat("The trained_realnvp object does NOT have an $inverse method.\n")
-    }
     print(trained_realnvp)
+    print(str(trained_realnvp))
+
   }
   realnvp_generated <- vector("list", repetitions)
   realnvp_log_jacobians <- vector("list", repetitions)
