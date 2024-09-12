@@ -48,6 +48,7 @@
   realnvp_log_jacobians <- vector("list", repetitions)
   for (i in seq_len(repetitions)) {
     latent_samples <- matrix(rnorm(n_post * ncol(samples_4_fit)), nrow = n_post)
+    print(dim(latent_samples))
     realnvp_results <- trained_realnvp$inverse(torch::torch_tensor(latent_samples))
     realnvp_generated[[i]] <- as.matrix(realnvp_results[[1]])
     realnvp_log_jacobians[[i]] <- as.matrix(realnvp_results[[2]])
