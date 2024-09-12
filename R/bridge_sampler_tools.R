@@ -84,8 +84,6 @@
 #--------------------------------------------------------------------------
 .create_affine_coupling_layer <- function(input_shape) {
   d <- as.integer(input_shape / 2)
-  print("Input Shape")
-  print(d)
   scale_translation_network <- nn_sequential(
     nn_linear(d, 512),
     nn_relu(),
@@ -112,6 +110,10 @@
       list(output, log_det_jacobian)
     },
     inverse = function(y) {
+      print("Divide following by two")
+      print(ncol(y))
+      print("Expected Value")
+      print(d)
       y1 <- y[, 1:d]
       y2 <- y[, (d + 1):input_shape]
       
