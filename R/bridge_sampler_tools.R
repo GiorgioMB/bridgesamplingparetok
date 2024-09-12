@@ -171,7 +171,7 @@
   realnvp_model
 }
                  
-.transform_to_normal <- function(samples, num_coupling_layers = 5, epochs = 50, learning_rate = 0.001, verbose = FALSE, seed = 1) {
+.transform_to_normal <- function(samples, num_coupling_layers = 5, epochs = 50, learning_rate = 0.001, verbose = FALSE, seed = 1, return_model = FALSE) {
     set.seed(seed)
     n <- nrow(samples)
     d <- ncol(samples)
@@ -195,6 +195,10 @@
     trained_rnvp <- .train_realnvp(samples, normal_samples, num_coupling_layers, epochs, learning_rate, verbose)
     x_rnvp_warped <- as.matrix(trained_rnvp$forward(samples)[[1]])
     x_log_det_jacobian <- as.matrix(trained_rnvp$forward(samples)[[2]])
+    if (return_model) {
+        return(list(transformed_samples = x_rnvp_warped, log_det_jacobian = x_log_det_jacobian, model = trained_rnvp))
+    } else {
+        return(list(x_rnvp_warped, x_log_det_jacobian))
+    }
 
-    list(x_rnvp_warped, x_log_det_jacobian)
 }
