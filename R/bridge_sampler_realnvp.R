@@ -38,7 +38,9 @@
     neff <- nrow(samples_4_iter)
 
   n_post <- nrow(samples_4_iter)
-
+  if(verbose){
+    print(str(samples_4_fit))
+  }
   transformed <- .transform_to_normal(samples_4_fit, num_coupling_layers = num_coupling_layers, epochs = epochs, learning_rate = learning_rate, verbose = verbose, seed = seed, return_model = TRUE)
 
   trained_realnvp <- transformed$model
@@ -51,6 +53,9 @@
   realnvp_log_jacobians <- vector("list", repetitions)
   for (i in seq_len(repetitions)) {
     latent_samples <- matrix(rnorm(n_post * ncol(samples_4_fit)), nrow = n_post)
+    if(verbose){
+      print(str(latent_samples))
+    }
     realnvp_results <- trained_realnvp$inverse(latent_samples)
     realnvp_generated[[i]] <- realnvp_results[[1]]
     realnvp_log_jacobians[[i]] <- realnvp_results[[2]]
