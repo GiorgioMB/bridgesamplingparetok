@@ -42,6 +42,9 @@
   transformed <- .transform_to_normal(samples_4_fit, num_coupling_layers = num_coupling_layers, epochs = epochs, learning_rate = learning_rate, verbose = verbose, seed = seed, return_model = TRUE)
 
   trained_realnvp <- transformed$model
+  if(verbose){
+    print(trained_realnvp)
+  }
   realnvp_generated <- vector("list", repetitions)
   realnvp_log_jacobians <- vector("list", repetitions)
   for (i in seq_len(repetitions)) {
