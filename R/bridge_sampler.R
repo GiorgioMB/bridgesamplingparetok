@@ -201,8 +201,8 @@ bridge_sampler <- function(samples, num_splits, ...) {
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method = "normal", cores = 1, keep_log_eval = FALSE,
-                                      use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
+bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method = "normal", cores = 1, keep_log_eval = FALSE, epochs = 50,
+                                      use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2, num_coupling_layers = 5, learning_rate = 10e-4
                                       total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ...) {
     if(file.exists("cmdstanr_log_eval.csv")) {
         file.remove("cmdstanr_log_eval.csv")
@@ -220,10 +220,10 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method =
    names(lb) <- names(ub) <- parameters
    bridge_out <- bridge_sampler.matrix(samples = draws, num_splits = num_splits, total_perms = total_perms,
                         ..., pareto_smoothing_all = pareto_smoothing_all, pareto_smoothing_last = pareto_smoothing_last,
-                        return_always = return_always,
-                        lb = lb, ub = ub, repetitions = repetitions,
+                        return_always = return_always, num_coupling_layers = num_coupling_layers,
+                        lb = lb, ub = ub, repetitions = repetitions, epochs = epochs,
                         method = method, log_posterior = .cmdstan_log_posterior,
-                        cores = cores, seed = seed, data = samples,
+                        cores = cores, seed = seed, data = samples, learning_rate = learning_rate,
                         use_neff = use_neff, keep_log_eval = keep_log_eval,
                         verbose = verbose)
    if (!keep_log_eval && file.exists("cmdstanr_log_eval.csv")) {
@@ -237,9 +237,9 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method =
 ##Permutations added
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep_log_eval = FALSE,
-                                      repetitions = 1, method = "normal", cores = 1,
-                                      use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
+bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep_log_eval = FALSE, epochs = 50,
+                                      repetitions = 1, method = "normal", cores = 1, num_coupling_layers = 5,
+                                      use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2, learning_rate = 10e-4,
                                       total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ...) {
   if(file.exists("rstan_log_eval.csv")) {
         file.remove("rstan_log_eval.csv")
@@ -313,23 +313,23 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
     if (cores == 1) {
       bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                                args = list(samples_4_fit = samples_4_fit,
-                                           samples_4_iter = samples_4_iter,
-                                           neff = neff, seed = seed,
+                                           samples_4_iter = samples_4_iter, epochs = epochs,
+                                           neff = neff, seed = seed, num_coupling_layers = num_coupling_layers,
                                            log_posterior = .stan_log_posterior,
                                            data = list(stanfit = stanfit_model),
                                            lb = lb, ub = ub, keep_log_eval = keep_log_eval,
                                            param_types = rep("real", ncol(samples_4_fit)),
                                            transTypes = transTypes, pareto_smoothing_all = pareto_smoothing_all, pareto_smoothing_last = pareto_smoothing_last,
-                                           repetitions = repetitions, cores = cores,
+                                           repetitions = repetitions, cores = cores, learning_rate = learning_rate,
                                            packages = "rstan", maxiter = maxiter, silent = silent,
                                            verbose = verbose, return_always = return_always,
                                            r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
     } else {
       bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                                args = list(samples_4_fit = samples_4_fit,
-                                           samples_4_iter = samples_4_iter,
+                                           samples_4_iter = samples_4_iter, epochs = epochs,
                                            neff = neff, keep_log_eval = keep_log_eval,
-                                           log_posterior = .stan_log_posterior,
+                                           log_posterior = .stan_log_posterior, num_coupling_layers = num_coupling_layers,
                                            data = list(stanfit = stanfit_model), seed = seed,
                                            lb = lb, ub = ub, pareto_smoothing_all = pareto_smoothing_all,
                                            param_types = rep("real", ncol(samples_4_fit)),
@@ -337,7 +337,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
                                            repetitions = repetitions, varlist = "stanfit",
                                            envir = sys.frame(sys.nframe()), return_always = return_always,
                                            cores = cores, packages = "rstan", maxiter = maxiter,
-                                           silent = silent, verbose = verbose,
+                                           silent = silent, verbose = verbose, learning_rate = learning_rate,
                                            r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
     }
     result <- append(result, list(bridge_output))
@@ -357,9 +357,9 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
 bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_splits = 2, total_perms = 1, ..., data = NULL,
                                      lb = NULL, ub = NULL, repetitions = 1, pareto_smoothing_all = FALSE,
                                      param_types = rep("real", ncol(samples[[1]])), pareto_smoothing_last = FALSE,
-                                     method = "normal", cores = 1, use_neff = TRUE,
-                                     packages = NULL, varlist = NULL, envir = .GlobalEnv,
-                                     rcppFile = NULL, maxiter = 1000, silent = FALSE,
+                                     method = "normal", cores = 1, use_neff = TRUE, num_coupling_layers = 5,
+                                     packages = NULL, varlist = NULL, envir = .GlobalEnv, epochs = 50,
+                                     rcppFile = NULL, maxiter = 1000, silent = FALSE, learning_rate = 10e-4,
                                      verbose = FALSE, return_always = FALSE, seed = NA) {
   # split samples in two parts
   nr <- nrow(samples[[1]])
@@ -408,14 +408,14 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
        set.seed(seed)
     }
     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
-                             args = list(samples_4_fit = samples_4_fit, seed = seed,
+                             args = list(samples_4_fit = samples_4_fit, seed = seed, epochs = epochs,
                                          samples_4_iter = samples_4_iter, pareto_smoothing_all = pareto_smoothing_all,
-                                         neff = neff, log_posterior = log_posterior,
+                                         neff = neff, log_posterior = log_posterior, num_coupling_layers = num_coupling_layers,
                                          "..." = ..., data = data, pareto_smoothing_last = pareto_smoothing_last,
                                          lb = lb, ub = ub, transTypes = transTypes,
                                          repetitions = repetitions, cores = cores,
                                          packages = packages, varlist = varlist, envir = envir,
-                                         param_types = param_types,
+                                         param_types = param_types, learning_rate = learning_rate,
                                          rcppFile = rcppFile, maxiter = maxiter,
                                          silent = silent, verbose = verbose, return_always = return_always,
                                          r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
@@ -432,11 +432,11 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
 #' @export
 bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
                                 data = NULL, lb = NULL, ub = NULL, total_perms = 1,
-                                num_splits = 2, repetitions = 1, method = "normal",
+                                num_splits = 2, repetitions = 1, method = "normal", epochs = 50,
                                 cores = 1, use_neff = TRUE, pareto_smoothing_last = FALSE,
                                 packages = NULL, varlist = NULL, pareto_smoothing_all = FALSE,
-                                envir = .GlobalEnv, rcppFile = NULL,
-                                maxiter = 1000, return_always = FALSE,
+                                envir = .GlobalEnv, rcppFile = NULL, num_coupling_layers = 5,
+                                maxiter = 1000, return_always = FALSE, learning_rate = 10e-4,
                                 param_types = rep("real", ncol(samples)),
                                 silent = FALSE, verbose = FALSE, seed = NA) {
   samples <- as.matrix(samples)
@@ -446,11 +446,11 @@ bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
                                   data = data, lb = lb, ub = ub,
                                   repetitions = repetitions,pareto_smoothing_all = pareto_smoothing_all,
                                   method = method, pareto_smoothing_last = pareto_smoothing_last,
-                                  cores = cores, use_neff = use_neff,
-                                  packages = packages, varlist = varlist,
+                                  cores = cores, use_neff = use_neff, epochs = epochs,
+                                  packages = packages, varlist = varlist, num_coupling_layers = num_coupling_layers,
                                   envir = envir, rcppFile = rcppFile,
                                   maxiter = maxiter, return_always = return_always,
-                                  param_types = param_types,
+                                  param_types = param_types, learning_rate = learning_rate,
                                   silent = silent, verbose = verbose, seed = seed)
   return(bridge_output)
 }
@@ -459,11 +459,11 @@ bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
 #' @rdname bridge_sampler
 ##Permutations added
 bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num_splits = 2, total_perms = 1,
-                                data = NULL, lb = NULL, ub = NULL,
-                                repetitions = 1, method = "normal",
+                                data = NULL, lb = NULL, ub = NULL, num_coupling_layers = 5,
+                                repetitions = 1, method = "normal", epochs = 50,
                                 cores = 1, use_neff = TRUE, pareto_smoothing_all = FALSE,
                                 packages = NULL, varlist = NULL, pareto_smoothing_last = FALSE,
-                                envir = .GlobalEnv, rcppFile = NULL,
+                                envir = .GlobalEnv, rcppFile = NULL, learning_rate = 10e-4,
                                 maxiter = 1000, return_always = FALSE,
                                 param_types = rep("real", ncol(samples)),
                                 silent = FALSE, verbose = FALSE, seed = NA) {
@@ -523,9 +523,9 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
      }
      bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                     args = list(samples_4_fit = samples_4_fit,
-                                samples_4_iter = samples_4_iter,
+                                samples_4_iter = samples_4_iter, epochs = epochs,
                                 neff = neff, return_always = return_always,
-                                log_posterior = log_posterior,
+                                log_posterior = log_posterior, num_coupling_layers = num_coupling_layers,
                                 "..." = ..., data = data,
                                 lb = lb, ub = ub, pareto_smoothing_last = pareto_smoothing_last,
                                 transTypes = transTypes, pareto_smoothing_all = pareto_smoothing_all,
@@ -533,7 +533,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
                                 repetitions = repetitions, cores = cores,
                                 packages = packages, varlist = varlist, envir = envir,
                                 rcppFile = rcppFile, maxiter = maxiter,
-                                silent = silent, verbose = verbose,
+                                silent = silent, verbose = verbose, learning_rate = learning_rate,
                                 r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
       result <- append(result, list(bridge_output))
     
@@ -549,9 +549,9 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
 #' @export
 #' @importFrom utils read.csv
 bridge_sampler.stanreg <-
-  function(samples, repetitions = 1, method = "normal", cores = 1, num_splits = 2, pareto_smoothing_all = FALSE,
-           use_neff = TRUE, maxiter = 1000, silent = FALSE, total_perms = 1, pareto_smoothing_last = FALSE,
-           verbose = FALSE, return_always = FALSE, seed = NA, ...) {
+  function(samples, repetitions = 1, method = "normal", cores = 1, num_splits = 2, pareto_smoothing_all = FALSE, epochs = 50,
+           use_neff = TRUE, maxiter = 1000, silent = FALSE, total_perms = 1, pareto_smoothing_last = FALSE, num_coupling_layers = 5,
+           verbose = FALSE, return_always = FALSE, seed = NA, learning_rate = 10e-4, ...) {
     
     df <- eval(samples$call$diagnostic_file)
     if (is.null(df))
@@ -580,19 +580,19 @@ bridge_sampler.stanreg <-
     }
 
     if (cores == 1) {
-      bridge_output <- bridge_sampler(samples = samples, log_posterior = .stan_log_posterior,
+      bridge_output <- bridge_sampler(samples = samples, log_posterior = .stan_log_posterior, num_coupling_layers = num_coupling_layers, 
                                       data = list(stanfit = sf), lb = lb, ub = ub, seed = seed, pareto_smoothing_last = pareto_smoothing_last,
                                       repetitions = repetitions, method = method, cores = cores, pareto_smoothing_all = pareto_smoothing_all,
-                                      use_neff = use_neff, packages = "rstan", total_perms = total_perms, 
+                                      use_neff = use_neff, packages = "rstan", total_perms = total_perms, epochs = epochs,
                                       maxiter = maxiter, silent = silent, num_splits = num_splits, return_always = return_always,
-                                      verbose = verbose)
+                                      verbose = verbose, learning_rate = learning_rate)
     } else {
       bridge_output <- bridge_sampler(samples = samples,
                                       log_posterior = .stan_log_posterior, pareto_smoothing_all = pareto_smoothing_all,
                                       data = list(stanfit = sf), lb = lb, ub = ub, pareto_smoothing_last = pareto_smoothing_last,
-                                      repetitions = repetitions, varlist = "stanfit", seed = seed,
-                                      envir = sys.frame(sys.nframe()), method = method,
-                                      cores = cores, use_neff = use_neff, total_perms = total_perms,
+                                      repetitions = repetitions, varlist = "stanfit", seed = seed, num_coupling_layers = num_coupling_layers, 
+                                      envir = sys.frame(sys.nframe()), method = method, epochs = epochs, learning_rate = learning_rate,
+                                      cores = cores, use_neff = use_neff, total_perms = total_perms, 
                                       packages = "rstan", maxiter = maxiter, num_splits = num_splits, return_always = return_always,
                                       silent = silent, verbose = verbose)
     }
@@ -601,10 +601,10 @@ bridge_sampler.stanreg <-
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
-                                 total_perms = 1, lb = NULL, ub = NULL, repetitions = 1,
+bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2, learning_rate = 10e-4,
+                                 total_perms = 1, lb = NULL, ub = NULL, repetitions = 1, num_coupling_layers = 5,
                                  method = "normal", cores = 1, use_neff = TRUE, pareto_smoothing_last = FALSE,
-                                 packages = NULL, varlist = NULL, return_always = FALSE,
+                                 packages = NULL, varlist = NULL, return_always = FALSE, epochs = 50,
                                  envir = .GlobalEnv, rcppFile = NULL, seed = NA, pareto_smoothing_all = FALSE,
                                  maxiter = 1000, silent = FALSE, verbose = FALSE) {
 
@@ -615,10 +615,10 @@ bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data
   samples <- samples[,cn != "deviance", drop = FALSE]
 
   # run bridge sampling
-  out <- bridge_sampler(samples = samples, log_posterior = log_posterior, num_splts = num_splits,
+  out <- bridge_sampler(samples = samples, log_posterior = log_posterior, num_splts = num_splits, epochs = epochs, learning_rate = learning_rate,
                         total_perms = total_perms, ..., data = data, lb = lb, ub = ub, seed = seed, pareto_smoothing_last = pareto_smoothing_last,
                         repetitions = repetitions, method = method, cores = cores, return_always = return_always, pareto_smoothing_all = pareto_smoothing_all,
-                        use_neff = use_neff, packages = packages, varlist = varlist, envir = envir,
+                        use_neff = use_neff, packages = packages, varlist = varlist, envir = envir, num_coupling_layers = num_coupling_layers,
                         rcppFile = rcppFile, maxiter = maxiter, silent = silent, verbose = verbose)
 
   return(out)
@@ -629,10 +629,10 @@ bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data
 #' @export
 ##Nothing can be added here afaik
 bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL, num_splits = 2,
-                                   total_perms = 1, lb = NULL, ub = NULL, repetitions = 1,
+                                   total_perms = 1, lb = NULL, ub = NULL, repetitions = 1, num_coupling_layers = 5,
                                    method = "normal", cores = 1, use_neff = TRUE, pareto_smoothing_last = FALSE,
                                    packages = NULL, varlist = NULL, return_always = FALSE, pareto_smoothing_all = FALSE,
-                                   envir = .GlobalEnv, rcppFile = NULL, seed = NA,
+                                   envir = .GlobalEnv, rcppFile = NULL, seed = NA, epochs = 50, learning_rate = 10e-4,
                                    maxiter = 1000, silent = FALSE, verbose = FALSE) {
 
 
@@ -641,11 +641,11 @@ bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., da
 
   # run bridge sampling
   out <- bridge_sampler(samples = samples, log_posterior = log_posterior, num_splits = num_splits, 
-                        total_perms = total_perms, ..., return_always = return_always,
-                        data = data, lb = lb, ub = ub, repetitions = repetitions,
+                        total_perms = total_perms, ..., return_always = return_always, epochs = epochs,
+                        data = data, lb = lb, ub = ub, repetitions = repetitions, num_coupling_layers = num_coupling_layers,
                         method = method, cores = cores, use_neff = use_neff, pareto_smoothing_all = pareto_smoothing_all,
                         packages = packages, varlist = varlist, envir = envir,pareto_smoothing_last = pareto_smoothing_last,
-                        rcppFile = rcppFile, maxiter = maxiter, silent = silent,
+                        rcppFile = rcppFile, maxiter = maxiter, silent = silent, learning_rate = learning_rate,
                         verbose = verbose, seed = seed)
 
   return(out)
@@ -656,11 +656,11 @@ bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., da
 #' @export
 bridge_sampler.MCMC_refClass <- function(samples,
                                   repetitions = 1, num_splits = 2, total_perms = 1,
-                                  method = "normal",
+                                  method = "normal", epochs = 50,
                                   cores = 1, pareto_smoothing_all = FALSE,
-                                  use_neff = TRUE,
+                                  use_neff = TRUE, num_coupling_layers = 5,
                                   maxiter = 1000, pareto_smoothing_last = FALSE,
-                                  silent = FALSE, seed = NA,
+                                  silent = FALSE, seed = NA, learning_rate = 10e-4,
                                   verbose = FALSE, return_always = FALSE,
                                   ...) {
   if (!requireNamespace("nimble")) stop("package nimble required")
@@ -742,10 +742,10 @@ bridge_sampler.MCMC_refClass <- function(samples,
     clog_posterior$run(x)
   }
 
-  out <- bridge_sampler(samples = samples_mcmc_list,
+  out <- bridge_sampler(samples = samples_mcmc_list, num_coupling_layers = num_coupling_layers,
                         log_posterior = log_posterior, num_splits = num_splits, total_perms = total_perms,
                         ..., pareto_smoothing_all = pareto_smoothing_all, pareto_smoothing_last = pareto_smoothing_last,
-                        data = NULL, return_always = return_always,
+                        data = NULL, return_always = return_always, epochs = epochs, learning_rate = learning_rate,
                         lb = .nimble_bounds(mcmc_samples[[1]],
                                             nimble_model, "lower"),
                         ub = .nimble_bounds(mcmc_samples[[1]],
