@@ -185,12 +185,12 @@
       warning("logml could not be estimated within maxiter, returning NA.", call. = FALSE)
   }
   if (repetitions == 1) {
-    out <- list(logml = logml, niter = niter, method = "warp3", q11 = q11,
+    out <- list(logml = logml, niter = niter, method = "realnvp", q11 = q11,
                 q12 = q12, q21 = q21[[1]], q22 = q22[[1]], pareto_k_numi = pareto_k_numi,
                 pareto_k_deni = pareto_k_deni, mcse_logml = std_logmls)
     class(out) <- "bridge"
   } else if (repetitions > 1) {
-    out <- list(logml = logml, niter = niter, method = "warp3", repetitions = repetitions,
+    out <- list(logml = logml, niter = niter, method = "realnvp", repetitions = repetitions,
                 pareto_k_numi = pareto_k_numi, pareto_k_deni = pareto_k_deni, mcse_logml = std_logmls)
     class(out) <- "bridge_list"
   }
