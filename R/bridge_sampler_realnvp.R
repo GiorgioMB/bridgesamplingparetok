@@ -54,19 +54,22 @@
   print("Check")
   # Calculate q12: log density of the posterior samples under the proposal
   q12 <- apply(samples_4_iter, 1, function(x) {
-    print(str(x))
-    result <- trained_realnvp$forward(x)
-    transformed_sample <- result[[1]]  # Data in the normal space
+    x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float64())
+
+    # Forward pass through the RealNVP model
+    result <- trained_realnvp$forward(x_tensor)
+    transformed_sample <- result[[1]]  # This is now a tensor in the normal space
     log_jacobian <- result[[2]]  # Log-Jacobian determinant from the transformation
 
     # Evaluate the density under the standard multivariate normal
-    log_density_normal <- dmvnorm(transformed_sample, mean = rep(0, length(transformed_sample)), sigma = diag(length(transformed_sample)), log = TRUE)
+    transformed_sample_array <- as.array(transformed_sample)
+    log_density_normal <- dmvnorm(transformed_sample_array, mean = rep(0, length(transformed_sample_array)), sigma = diag(length(transformed_sample_array)), log = TRUE)
 
     # Combine the normal log-density with the log-Jacobian
-    total_log_density <- log_density_normal + log_jacobian
+    total_log_density <- log_density_normal + as.numeric(log_jacobian)
     total_log_density
   })
-  print("q11 done")
+  print("q12 done")
   # Calculate q22: log density of the generated samples under the proposal
   q22 <- vector("list", repetitions)
   for (i in seq_len(repetitions)) {
