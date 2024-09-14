@@ -202,7 +202,7 @@ bridge_sampler <- function(samples, num_splits, ...) {
 #' @rdname bridge_sampler
 #' @export
 bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method = "normal", cores = 1, keep_log_eval = FALSE, epochs = 50,
-                                      use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2, num_coupling_layers = 5, learning_rate = 10e-4
+                                      use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2, num_coupling_layers = 5, learning_rate = 10e-4,
                                       total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, pareto_smoothing_last = FALSE, ...) {
     if(file.exists("cmdstanr_log_eval.csv")) {
         file.remove("cmdstanr_log_eval.csv")
