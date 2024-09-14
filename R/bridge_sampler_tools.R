@@ -110,10 +110,6 @@
       list(output, log_det_jacobian)
     },
     inverse = function(y) {
-      print("Divide following by two")
-      print(ncol(y))
-      print("Expected Value")
-      print(d)
       y1 <- y[, 1:d]
       y2 <- y[, (d + 1):input_shape]
       
