@@ -54,7 +54,7 @@
   print("Check")
   # Calculate q12: log density of the posterior samples under the proposal
   q12 <- apply(samples_4_iter, 1, function(x) {
-    x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float64())
+    x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float32())
     print(str(x_tensor))
     # Forward pass through the RealNVP model
     result <- trained_realnvp$forward(x_tensor)
