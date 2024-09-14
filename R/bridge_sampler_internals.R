@@ -326,7 +326,11 @@
   } else if (method == "warp3") {
     l1 <- -log(2) + determinant(L)$modulus + (q11 - q12) # log(l)
     l2 <-  -log(2) + determinant(L)$modulus + (q21 - q22) # log(ltilde)
+  } else if (method == "realnvp") {
+    l1 <- q11 - q12 # Log ratio of the posterior to the proposal for the posterior samples
+    l2 <- q21 - q22 # Log ratio of the posterior to the proposal for the generated proposal samples
   }
+  
   ## for dbugging:
   # save(
   #   l1, l2,
