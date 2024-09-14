@@ -21,6 +21,7 @@
   rcppFile,
   maxiter,
   silent,
+  seed,
   verbose,
   r0,
   pareto_smoothing_all,
