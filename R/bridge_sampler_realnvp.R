@@ -53,7 +53,7 @@
     realnvp_generated[[i]] <- as.matrix(realnvp_results[[1]])
     realnvp_log_jacobians[[i]] <- as.matrix(realnvp_results[[2]])
   }
-
+  print("Check")
   # Calculate q12: log density of the posterior samples under the proposal
   q12 <- apply(samples_4_iter, 1, function(x) {
     result <- trained_realnvp$inverse(x)
