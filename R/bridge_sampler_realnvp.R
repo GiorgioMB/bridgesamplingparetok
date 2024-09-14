@@ -27,12 +27,12 @@
   pareto_smoothing_last,
   tol1,
   tol2,
+  num_coupling_layers,
+  epochs,
+  learning_rate,
   seed,
   return_always,
-  keep_log_eval = FALSE,
-  num_coupling_layers = 10,
-  epochs = 50,
-  learning_rate = 0.001) {
+  keep_log_eval = FALSE) {
 
   if (is.null(neff))
     neff <- nrow(samples_4_iter)
