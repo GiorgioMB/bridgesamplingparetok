@@ -45,39 +45,46 @@
     print(trained_realnvp)
   }
   realnvp_generated <- vector("list", repetitions)
-  realnvp_log_jacobians <- vector("list", repetitions)
   for (i in seq_len(repetitions)) {
-    latent_samples <- matrix(rnorm(n_post * ncol(samples_4_fit)), nrow = n_post)
-    print(dim(latent_samples))
-    realnvp_results <- trained_realnvp$inverse(torch::torch_tensor(latent_samples))
-    realnvp_generated[[i]] <- as.matrix(realnvp_results[[1]])
-    realnvp_log_jacobians[[i]] <- as.matrix(realnvp_results[[2]])
+    realnvp_generated[[i]] <- matrix(rnorm(n_post * ncol(samples_4_fit)), nrow = n_post)
+    if (verbose) {
+        print(paste("Dimension of generated samples in repetition", i, ":", dim(realnvp_generated[[i]])))
+    }
   }
   print("Check")
   # Calculate q12: log density of the posterior samples under the proposal
   q12 <- apply(samples_4_iter, 1, function(x) {
-    result <- trained_realnvp$inverse(x)
-    log_density <- result[[2]]
-    log_density
-  })
+    # Use the forward transformation to map to the latent space
+    result <- trained_realnvp$forward(x)
+    transformed_sample <- result[[1]]  # This is the transformed data now in the latent (normal) space
+    log_jacobian <- result[[2]]  # Log-Jacobian determinant from the transformation
 
+    # Evaluate the density under the standard multivariate normal
+    log_density_normal <- dmvnorm(transformed_sample, mean = rep(0, length(transformed_sample)), sigma = diag(length(transformed_sample)), log = TRUE)
+
+    # Combine the normal log-density with the log-Jacobian
+    total_log_density <- log_density_normal + log_jacobian
+    total_log_density
+  })
+  print("q11 done")
   # Calculate q22: log density of the generated samples under the proposal
   q22 <- vector("list", repetitions)
   for (i in seq_len(repetitions)) {
-    q22[[i]] <- apply(realnvp_generated[[i]], 1, function(x) {
-      result <- trained_realnvp$inverse(x)
-      log_density <- result[[2]]
-      log_density
-    })
+      # Calculate the density of the generated samples directly
+      q22[[i]] <- apply(realnvp_generated[[i]], 1, function(x) {
+          # Evaluate the density under the standard multivariate normal
+          log_density_normal <- dmvnorm(x, mean = rep(0, length(x)), sigma = diag(length(x)), log = TRUE)
+          log_density_normal
+      })
   }
-
+  print("q22 done")
   # Evaluate q11: log posterior + Jacobian for the posterior samples
   q11 <- apply(samples_4_iter, 1, function(x) {
     posterior_val <- log_posterior(x, data = data, keep_log_eval = keep_log_eval, ...)
     jacobian_val <- trained_realnvp$forward(x)[[2]]
     posterior_val + jacobian_val
   })
-
+  print("q11 done")
   # Evaluate q21: log posterior + Jacobian for the generated samples
   q21 <- vector("list", repetitions)
   for (i in seq_len(repetitions)) {
@@ -87,7 +94,7 @@
       posterior_val + jacobian_val
     })
   }
-
+  print("q21 done")
   # Use the iterative updating scheme to compute the log marginal likelihood
   logml <- numeric(repetitions)
   niter <- numeric(repetitions)
