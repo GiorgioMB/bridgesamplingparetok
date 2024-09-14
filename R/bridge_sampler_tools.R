@@ -192,8 +192,10 @@
   realnvp_model
 }
                  
-.transform_to_normal <- function(samples, num_coupling_layers = 5, epochs = 50, learning_rate = 0.001, verbose = FALSE, seed = 1, return_model = FALSE) {
-    set.seed(seed)
+.transform_to_normal <- function(samples, num_coupling_layers = 5, epochs = 50, learning_rate = 0.001, verbose = FALSE, seed = NA, return_model = FALSE) {
+    if (!is.na(seed)) {
+       set.seed(seed)
+    }
     n <- nrow(samples)
     d <- ncol(samples)
 
