@@ -48,7 +48,7 @@
   for (i in seq_len(repetitions)) {
     realnvp_generated[[i]] <- matrix(rnorm(n_post * ncol(samples_4_fit)), nrow = n_post)
     if (verbose) {
-        print(paste("Dimension of generated samples in repetition", i, ":", nrow(realnvp_generated[[i]]), ncol(realnvp_generated[[i]])))
+        print(paste("Dimension of generated samples in repetition", i, ":", nrow(realnvp_generated[[i]]), ",", ncol(realnvp_generated[[i]])))
     }
   }
   # Calculate q12: log density of the posterior samples under the proposal
@@ -81,9 +81,7 @@
   q11 <- apply(samples_4_iter, 1, function(x) {
     posterior_val <- log_posterior(x, data = data, keep_log_eval = keep_log_eval, ...)
     x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float32())
-    jacobian_val <- trained_realnvp$forward(x_tensor)[[2]]
-    jacobian_val <- as.numeric(jacobian_val)
-    posterior_val + jacobian_val
+    posterior_val
   })
   # Evaluate q21: log posterior + Jacobian for the generated samples
   q21 <- vector("list", repetitions)
@@ -91,7 +89,7 @@
     q21[[i]] <- apply(realnvp_generated[[i]], 1, function(x) {
       posterior_val <- log_posterior(x, data = data, keep_log_eval = keep_log_eval, ...)
       x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float32())
-      jacobian_val <- trained_realnvp$forward(x_tensor)[[2]]
+      jacobian_val <- trained_realnvp$inverse(x_tensor)[[2]]
       jacobian_val <- as.numeric(jacobian_val)
       posterior_val + jacobian_val
     })
