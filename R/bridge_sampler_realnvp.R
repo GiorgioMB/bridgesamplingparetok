@@ -48,7 +48,7 @@
   for (i in seq_len(repetitions)) {
     realnvp_generated[[i]] <- matrix(rnorm(n_post * ncol(samples_4_fit)), nrow = n_post)
     if (verbose) {
-        print(paste("Dimension of generated samples in repetition", i, ":", dim(realnvp_generated[[i]])))
+        print(paste("Dimension of generated samples in repetition", i, ":", nrow(realnvp_generated[[i]]), ncol(realnvp_generated[[i]])))
     }
   }
   print("Check")
