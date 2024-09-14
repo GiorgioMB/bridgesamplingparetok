@@ -80,7 +80,6 @@
   # Evaluate q11: log posterior + Jacobian for the posterior samples
   q11 <- apply(samples_4_iter, 1, function(x) {
     posterior_val <- log_posterior(x, data = data, keep_log_eval = keep_log_eval, ...)
-    x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float32())
     posterior_val
   })
   # Evaluate q21: log posterior + Jacobian for the generated samples
