@@ -210,6 +210,9 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method =
     if (is.na(seed) & verbose) {
        print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
     }
+    if (!is.na(seed)) {
+       set.seed(seed)
+    }
    draws <- samples$unconstrain_draws(format = "matrix")
    parameters <- colnames(draws)
    lb <- rep(-Inf, length(parameters))
