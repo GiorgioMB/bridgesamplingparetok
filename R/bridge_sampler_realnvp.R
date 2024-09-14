@@ -51,7 +51,6 @@
         print(paste("Dimension of generated samples in repetition", i, ":", nrow(realnvp_generated[[i]]), ncol(realnvp_generated[[i]])))
     }
   }
-  print("Check")
   # Calculate q12: log density of the posterior samples under the proposal
   q12 <- apply(samples_4_iter, 1, function(x) {
     x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float32())
@@ -68,7 +67,6 @@
     total_log_density <- log_density_normal + as.numeric(log_jacobian)
     total_log_density
   })
-  print("q12 done")
   # Calculate q22: log density of the generated samples under the proposal
   q22 <- vector("list", repetitions)
   for (i in seq_len(repetitions)) {
@@ -79,15 +77,14 @@
           log_density_normal
       })
   }
-  print("q22 done")
   # Evaluate q11: log posterior + Jacobian for the posterior samples
   q11 <- apply(samples_4_iter, 1, function(x) {
     posterior_val <- log_posterior(x, data = data, keep_log_eval = keep_log_eval, ...)
     x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float32())
     jacobian_val <- trained_realnvp$forward(x_tensor)[[2]]
+    jacobian_val <- as.numeric(jacobian_val)
     posterior_val + jacobian_val
   })
-  print("q11 done")
   # Evaluate q21: log posterior + Jacobian for the generated samples
   q21 <- vector("list", repetitions)
   for (i in seq_len(repetitions)) {
@@ -95,10 +92,10 @@
       posterior_val <- log_posterior(x, data = data, keep_log_eval = keep_log_eval, ...)
       x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float32())
       jacobian_val <- trained_realnvp$forward(x_tensor)[[2]]
+      jacobian_val <- as.numeric(jacobian_val)
       posterior_val + jacobian_val
     })
   }
-  print("q21 done")
   if(verbose) {
     print("summary(q12): (log_dens of proposal (i.e., with dmvnorm) for posterior samples)")
     print(summary(q12))
@@ -132,6 +129,7 @@
       q22 = q22[[i]],
       r0 = r0, 
       tol = tol1, 
+      L = NULL,
       method = "realnvp", 
       pareto_smoothing_all = pareto_smoothing_all,
       maxiter = maxiter, 
@@ -153,6 +151,7 @@
         q21 = q21[[i]], 
         q22 = q22[[i]], 
         r0 = r0_2, 
+        L = NULL,
         tol = tol2, 
         method = "realnvp", 
         pareto_smoothing_last = pareto_smoothing_last,
