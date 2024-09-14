@@ -54,9 +54,9 @@
   print("Check")
   # Calculate q12: log density of the posterior samples under the proposal
   q12 <- apply(samples_4_iter, 1, function(x) {
-    # Use the forward transformation to map to the latent space
+    print(str(x))
     result <- trained_realnvp$forward(x)
-    transformed_sample <- result[[1]]  # This is the transformed data now in the latent (normal) space
+    transformed_sample <- result[[1]]  # Data in the normal space
     log_jacobian <- result[[2]]  # Log-Jacobian determinant from the transformation
 
     # Evaluate the density under the standard multivariate normal
