@@ -55,7 +55,6 @@
   # Calculate q12: log density of the posterior samples under the proposal
   q12 <- apply(samples_4_iter, 1, function(x) {
     x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float32())
-    print(str(x_tensor))
     # Forward pass through the RealNVP model
     result <- trained_realnvp$forward(x_tensor)
     transformed_sample <- result[[1]]  # This is now a tensor in the normal space
@@ -84,7 +83,8 @@
   # Evaluate q11: log posterior + Jacobian for the posterior samples
   q11 <- apply(samples_4_iter, 1, function(x) {
     posterior_val <- log_posterior(x, data = data, keep_log_eval = keep_log_eval, ...)
-    jacobian_val <- trained_realnvp$forward(x)[[2]]
+    x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float32())
+    jacobian_val <- trained_realnvp$forward(x_tensor)[[2]]
     posterior_val + jacobian_val
   })
   print("q11 done")
@@ -93,11 +93,28 @@
   for (i in seq_len(repetitions)) {
     q21[[i]] <- apply(realnvp_generated[[i]], 1, function(x) {
       posterior_val <- log_posterior(x, data = data, keep_log_eval = keep_log_eval, ...)
-      jacobian_val <- trained_realnvp$forward(x)[[2]]
+      x_tensor <- torch_tensor(matrix(x, nrow = 1), dtype = torch_float32())
+      jacobian_val <- trained_realnvp$forward(x_tensor)[[2]]
       posterior_val + jacobian_val
     })
   }
   print("q21 done")
+  if(verbose) {
+    print("summary(q12): (log_dens of proposal (i.e., with dmvnorm) for posterior samples)")
+    print(summary(q12))
+    print("summary(q22): (log_dens of proposal (i.e., with dmvnorm) for generated samples)")
+    print(lapply(q22, summary))
+    print("summary(q11): (log_dens of posterior (i.e., with log_posterior) for posterior samples)")
+    print(summary(q11))
+    print("summary(q21): (log_dens of posterior (i.e., with log_posterior) for generated samples)")
+    print(lapply(q21, summary))
+    .PROPOSALS <- vector("list", repetitions)
+    # for (i in seq_len(repetitions)) {
+    #   .PROPOSALS[[i]] <- .invTransform2Real(gen_samples[[i]], lb, ub, param_types)
+    # }
+    # assign(".PROPOSALS", .PROPOSALS, pos = .GlobalEnv)
+    # message("All proposal samples written to .GlobalEnv as .PROPOSALS")
+  }
   # Use the iterative updating scheme to compute the log marginal likelihood
   logml <- numeric(repetitions)
   niter <- numeric(repetitions)
