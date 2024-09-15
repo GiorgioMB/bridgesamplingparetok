@@ -1,3 +1,5 @@
+#' Internal bridge sampler with student-t proposal
+#' @keywords internal
 .bridge.sampler.student <- function(
   samples_4_fit, 
   samples_4_iter,
