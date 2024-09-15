@@ -327,7 +327,6 @@
     l1 <- -log(2) + determinant(L)$modulus + (q11 - q12) # log(l)
     l2 <-  -log(2) + determinant(L)$modulus + (q21 - q22) # log(ltilde)
   }
-  
   ## for dbugging:
   # save(
   #   l1, l2,
