@@ -1,4 +1,3 @@
-
 #--------------------------------------------------------------------------
 # functions for Stan support
 #--------------------------------------------------------------------------
@@ -83,19 +82,27 @@
 #--------------------------------------------------------------------------
                   
 .estimate_df <- function(data) {
-  # Ensure that the moments package is available
-  if (!requireNamespace("moments", quietly = TRUE)) {
-    stop("The 'moments' package is needed for this function to work. Please install it using install.packages('moments')")
-  }
-  
-  kurt_values <- apply(data, 2, moments::kurtosis)
-  avg_kurtosis <- mean(kurt_values)
-  if (avg_kurtosis > 3) {
-    df <- 6 / (avg_kurtosis - 3) + 4
-  } else {
-    df <- Inf 
-  }
-  return(df)
+    if (!requireNamespace("moments", quietly = TRUE)) {
+        stop("The 'moments' package is needed for this function to work. Please install it using install.packages('moments')")
+    }
+
+    # Calculate kurtosis for each column
+    kurt_values <- apply(data, 2, moments::kurtosis)
+
+    # Use median kurtosis to reduce the impact of outliers
+    median_kurtosis <- median(kurt_values)
+
+    kurtosis_threshold <- 100 ## Arbitrary threshold for extremely high kurtosis    
+    if (median_kurtosis > kurtosis_threshold) {
+        warning("Kurtosis is extremely high, suggesting df <= 3. Returning df = 3.")
+        df <- 3
+    } else if (median_kurtosis > 3) {
+        # Apply the standard formula for df if kurtosis is above 3
+        df <- 6 / (median_kurtosis - 3) + 4
+    } else {
+        # If kurtosis <= 3, assume the distribution is Gaussian-like
+        df <- Inf
+    }
+
+    return(df)
 }
-
-
