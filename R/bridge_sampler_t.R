@@ -25,7 +25,6 @@
   tol2,
   return_always,
   keep_log_eval = FALSE) {
-  library(mvtnorm)
   
   # Set seed if provided
   if(!is.na(seed) && !is.null(seed)) {
@@ -44,14 +43,14 @@
 
   df <- .estimate_df(samples_4_fit)
   # Sampling and density computation using Student t-distribution
-  q12 <- dmvt(samples_4_iter, mean = m, sigma = V, df = df, log = TRUE)
+  q12 <- dmvt(samples_4_iter, delta = m, sigma = V, df = df, log = TRUE)
   gen_samples <- vector(mode = "list", length = repetitions)
   q22 <- vector(mode = "list", length = repetitions)
   
   for (i in seq_len(repetitions)) {
     gen_samples[[i]] <- rmvt(n_post, sigma = V, df = df, delta = m)
     colnames(gen_samples[[i]]) <- colnames(samples_4_iter)
-    q22[[i]] <- dmvt(gen_samples[[i]], mean = m, sigma = V, df = df, log = TRUE)
+    q22[[i]] <- dmvt(gen_samples[[i]], delta = m, sigma = V, df = df, log = TRUE)
   }
 
   # Evaluate log of likelihood times prior for posterior samples and generated samples
