@@ -359,6 +359,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
                                      packages = NULL, varlist = NULL, envir = .GlobalEnv,  
                                      rcppFile = NULL, maxiter = 1000, silent = FALSE,  
                                      verbose = FALSE, return_always = FALSE, seed = NA) {
+  print(method)
   # split samples in two parts
   nr <- nrow(samples[[1]])
   if (is.na(seed) & verbose) {
@@ -405,6 +406,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
     if (!is.na(seed)) {
        set.seed(seed)
     }
+    print(paste0(".bridge.sampler.", method))
     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                              args = list(samples_4_fit = samples_4_fit, seed = seed,  
                                          samples_4_iter = samples_4_iter, pareto_smoothing_all = pareto_smoothing_all,
