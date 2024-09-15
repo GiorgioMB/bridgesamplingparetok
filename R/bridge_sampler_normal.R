@@ -1,5 +1,3 @@
-#' Internal bridge sampler with matching normal proposal
-#' @keywords internal
 .bridge.sampler.normal <- function(
   samples_4_fit, # matrix with already transformed samples for fitting the
                  # proposal (rows are samples), colnames are "trans_x" where
@@ -17,7 +15,6 @@
   cores,
   repetitions,
   packages,
-  seed,
   varlist,
   envir,
   rcppFile,
@@ -31,10 +28,7 @@
   tol2,
   return_always,
   keep_log_eval = FALSE) {
-  if(!is.na(seed) && !is.null(seed)) {
-    set.seed(seed)
-  }
-
+  
   if (is.null(neff))
     neff <- nrow(samples_4_iter)
 
