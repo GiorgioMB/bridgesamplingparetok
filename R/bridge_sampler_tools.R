@@ -79,7 +79,7 @@
 
                   
 #--------------------------------------------------------------------------
-# functions for t-Distribution
+# functions for Student t-Distribution
 #--------------------------------------------------------------------------
                   
 .estimate_df <- function(data) {
