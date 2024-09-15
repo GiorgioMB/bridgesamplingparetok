@@ -12,7 +12,6 @@
   cores,
   repetitions,
   packages,
-  seed,
   varlist,
   envir,
   rcppFile,
@@ -28,10 +27,6 @@
   keep_log_eval = FALSE) {
   
   # Set seed if provided
-  if(!is.na(seed) && !is.null(seed)) {
-    set.seed(seed)
-  }
-  
   if (is.null(neff))
     neff <- nrow(samples_4_iter)
   
