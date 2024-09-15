@@ -1,4 +1,5 @@
-
+#' Internal bridge sampler with warped standard normal proposal
+#' @keywords internal
 .bridge.sampler.warp3 <- function(
   samples_4_fit, # matrix with already transformed samples for fitting the
                  # proposal (rows are samples), colnames are "trans_x" where
