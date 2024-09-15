@@ -41,7 +41,7 @@
   V_tmp <- cov(samples_4_fit)
   V <- as.matrix(nearPD(V_tmp)$mat) # Ensure V is positive-definite
 
-  df <- .estimate_df(samples_4_fit)
+  df <- .estimate_df(samples_4_fit, m, V)
   print(df)
   # Sampling and density computation using Student t-distribution
   q12 <- mvtnorm::dmvt(samples_4_iter, delta = m, sigma = V, df = df, log = TRUE)
