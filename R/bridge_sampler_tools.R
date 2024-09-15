@@ -76,3 +76,19 @@
   
   return(out)
 }
+
+                  
+#--------------------------------------------------------------------------
+# functions for t-Distribution
+#--------------------------------------------------------------------------
+                  
+estimate_df <- function(data) {
+  kurt <- moments::kurtosis(data)  
+  if (kurt > 3) {
+    df <- 6 / (kurt - 3) + 4
+  } else {
+    df <- 100
+  }
+  return(df)
+}
+
