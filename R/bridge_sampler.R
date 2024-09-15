@@ -188,12 +188,10 @@
 #'@importFrom stats qnorm pnorm dnorm median cov var
 #'@export
 bridge_sampler <- function(samples, num_splits, ...) {
-  # Check if the object has more than one class
   if (length(class(samples)) > 1) {
-    # Use only the first class
     class(samples) <- class(samples)[1]
   }
-  # Now dispatch the method based on the first class
+  print(class(samples))
   UseMethod("bridge_sampler", samples)
 }
 
