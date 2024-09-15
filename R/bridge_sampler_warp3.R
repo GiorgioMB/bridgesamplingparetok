@@ -1,5 +1,4 @@
-#' Internal bridge sampler with warped standard normal proposal
-#' @keywords internal
+
 .bridge.sampler.warp3 <- function(
   samples_4_fit, # matrix with already transformed samples for fitting the
                  # proposal (rows are samples), colnames are "trans_x" where
@@ -22,7 +21,6 @@
   rcppFile,
   maxiter,
   silent,
-  seed,
   verbose,
   r0,
   pareto_smoothing_all,
@@ -31,9 +29,6 @@
   tol2,
   return_always,
   keep_log_eval = FALSE) {
-  if(!is.na(seed) && !is.null(seed)) {
-    set.seed(seed)
-  }
 
   if (is.null(neff))
     neff <- nrow(samples_4_iter)
