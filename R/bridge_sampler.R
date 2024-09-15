@@ -292,7 +292,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
 
     samples_4_iter <- apply(samples_4_iter_stan, 1, rbind)
 
-    parameters <- paste0("bridgesampling:::x", (seq_len(dim(upars)[1])))
+    parameters <- paste0("x", (seq_len(dim(upars)[1])))
 
     transTypes <- rep("unbounded", length(parameters))
     names(transTypes) <- parameters
@@ -302,14 +302,14 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
     ub <- rep(Inf, length(parameters))
     names(lb) <- names(ub) <- parameters
 
-    colnames(samples_4_iter) <- paste0("bridgesampling:::trans_", parameters)
-    colnames(samples_4_fit) <- paste0("bridgesampling:::trans_", parameters)
+    colnames(samples_4_iter) <- paste0("trans_", parameters)
+    colnames(samples_4_fit) <- paste0("trans_", parameters)
     # run bridge sampling
     if (!is.na(seed)) {
        set.seed(seed)
     }
     if (cores == 1) {
-      bridge_output <- do.call(what = paste0("bridgesampling:::.bridge.sampler.", method),
+      bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                                args = list(samples_4_fit = samples_4_fit,
                                            samples_4_iter = samples_4_iter,  
                                            neff = neff, seed = seed,  
@@ -323,7 +323,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
                                            verbose = verbose, return_always = return_always,
                                            r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
     } else {
-      bridge_output <- do.call(what = paste0("bridgesampling:::.bridge.sampler.", method),
+      bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                                args = list(samples_4_fit = samples_4_fit,
                                            samples_4_iter = samples_4_iter,  
                                            neff = neff, keep_log_eval = keep_log_eval,
@@ -406,9 +406,9 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
     if (!is.na(seed)) {
        set.seed(seed)
     }
-    print(paste0("bridgesampling:::.bridge.sampler.", method))
+    print(paste0(".bridge.sampler.", method))
     print(exists(".bridge.sampler.student", where = globalenv(), inherits = TRUE))
-    bridge_output <- do.call(what = paste0("bridgesampling:::.bridge.sampler.", method),
+    bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                              args = list(samples_4_fit = samples_4_fit, seed = seed,  
                                          samples_4_iter = samples_4_iter, pareto_smoothing_all = pareto_smoothing_all,
                                          neff = neff, log_posterior = log_posterior,  
@@ -522,7 +522,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
      if (!is.na(seed)) {
        set.seed(seed)
      }
-     bridge_output <- do.call(what = paste0("bridgesampling:::.bridge.sampler.", method),
+     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                     args = list(samples_4_fit = samples_4_fit,
                                 samples_4_iter = samples_4_iter,  
                                 neff = neff, return_always = return_always,
@@ -561,7 +561,7 @@ bridge_sampler.stanreg <-
     sf <- samples$stanfit
     chains <- ncol(sf)
     if (chains > 1) df <- sapply(1:chains, FUN = function(j)
-      sub("\\.csv$", paste0("bridgesampling:::_", j, ".csv"), df))
+      sub("\\.csv$", paste0("_", j, ".csv"), df))
     samples_list <- lapply(df, FUN = function(f) {
       d <- read.csv(f, comment.char = "#")
       excl <- c("lp__", "accept_stat__", "stepsize__" ,"treedepth__",
