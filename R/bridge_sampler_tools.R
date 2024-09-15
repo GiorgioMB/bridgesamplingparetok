@@ -82,13 +82,20 @@
 # functions for t-Distribution
 #--------------------------------------------------------------------------
                   
-.estimate_df <- function(data) {
-  kurt <- moments::kurtosis(data)  
-  if (kurt > 3) {
-    df <- 6 / (kurt - 3) + 4
+estimate_df <- function(data) {
+  # Ensure that the moments package is available
+  if (!requireNamespace("moments", quietly = TRUE)) {
+    stop("The 'moments' package is needed for this function to work. Please install it using install.packages('moments')")
+  }
+  
+  kurt_values <- apply(data, 2, moments::kurtosis)
+  avg_kurtosis <- mean(kurt_values)
+  if (avg_kurtosis > 3) {
+    df <- 6 / (avg_kurtosis - 3) + 4
   } else {
-    df <- 100
+    df <- 100 
   }
   return(df)
 }
+
 
