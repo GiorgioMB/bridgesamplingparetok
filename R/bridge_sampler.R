@@ -407,6 +407,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
        set.seed(seed)
     }
     print(paste0(".bridge.sampler.", method))
+    print(exists(".bridge.sampler.student", where = globalenv(), inherits = TRUE))
     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                              args = list(samples_4_fit = samples_4_fit, seed = seed,  
                                          samples_4_iter = samples_4_iter, pareto_smoothing_all = pareto_smoothing_all,
