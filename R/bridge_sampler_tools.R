@@ -82,7 +82,7 @@
 # functions for t-Distribution
 #--------------------------------------------------------------------------
                   
-estimate_df <- function(data) {
+.estimate_df <- function(data) {
   # Ensure that the moments package is available
   if (!requireNamespace("moments", quietly = TRUE)) {
     stop("The 'moments' package is needed for this function to work. Please install it using install.packages('moments')")
