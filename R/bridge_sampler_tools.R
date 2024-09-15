@@ -93,7 +93,7 @@
   if (avg_kurtosis > 3) {
     df <- 6 / (avg_kurtosis - 3) + 4
   } else {
-    df <- 100 
+    df <- Inf 
   }
   return(df)
 }
