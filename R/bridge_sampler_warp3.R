@@ -240,7 +240,7 @@
     }
     
     if (niter[i] == maxiter)
-      warning("logml could not be estimated within maxiter, returning NA.", call. = FALSE)
+      warning("logml could not be estimated within maxiter.", call. = FALSE)
   }
 
   if (repetitions == 1) {
