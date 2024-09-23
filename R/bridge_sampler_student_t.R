@@ -143,6 +143,7 @@
       }
       pareto_k_numi[[i]] <- NA
       pareto_k_deni[[i]] <- NA
+      pareto_k_inv_deni[[i]] <- NA
     }
       
     if (niter[i] == maxiter)
