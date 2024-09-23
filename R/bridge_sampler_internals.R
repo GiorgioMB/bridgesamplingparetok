@@ -273,11 +273,12 @@
   ## Convert brob objects to numeric
   numi_numeric <- as.numeric(numi)
   deni_numeric <- as.numeric(deni)
+  inv_deni_numeric <- 1 / deni_numeric
   ## Run diagnostic calculations in parallel for both numi and deni
-  results <- lapply(list(numi_numeric, deni_numeric), .compute_diagnostic)
+  results <- lapply(list(numi_numeric, deni_numeric, inv_deni_numeric), .compute_diagnostic)
 
   ## Name the results for clarity
-  names(results) <- c("numi", "deni")
+  names(results) <- c("numi", "deni", "inv_deni")
   
   ## Return the results
   return(results)
