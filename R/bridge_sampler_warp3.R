@@ -197,6 +197,7 @@
   std_logmls <- numeric(repetitions)
   pareto_k_numi <- list()
   pareto_k_deni <- list()
+  pareto_k_inv_deni <- list()
   numi <- list()
   deni <- list()
   # run iterative updating scheme to compute log of marginal likelihood
@@ -228,12 +229,14 @@
       }
       pareto_k_numi[[i]] <- tmp$pareto_k$numi
       pareto_k_deni[[i]] <- tmp$pareto_k$deni
+      pareto_k_inv_deni[[i]] <- tmp$pareto_k$inv_deni
     } else {
       if(verbose){
         print("There was an error computing the pareto_k diagnostic")
       }
       pareto_k_numi[[i]] <- NA
       pareto_k_deni[[i]] <- NA
+      pareto_k_inv_deni[[i]] <- NA
     }
     
     if (niter[i] == maxiter)
@@ -243,11 +246,12 @@
   if (repetitions == 1) {
     out <- list(logml = logml, niter = niter, method = "warp3", q11 = q11,
                 q12 = q12, q21 = q21[[1]], q22 = q22[[1]], pareto_k_numi = pareto_k_numi,
-                pareto_k_deni = pareto_k_deni, mcse_logml = std_logmls)
+                pareto_k_deni = pareto_k_deni, pareto_k_inv_deni = pareto_k_inv_deni, mcse_logml = std_logmls)
     class(out) <- "bridge"
   } else if (repetitions > 1) {
     out <- list(logml = logml, niter = niter, method = "warp3", repetitions = repetitions,
-                pareto_k_numi = pareto_k_numi, pareto_k_deni = pareto_k_deni, mcse_logml = std_logmls)
+                pareto_k_numi = pareto_k_numi, pareto_k_deni = pareto_k_deni, pareto_k_inv_deni = pareto_k_inv_deni,
+                mcse_logml = std_logmls)
     class(out) <- "bridge_list"
   }
 
