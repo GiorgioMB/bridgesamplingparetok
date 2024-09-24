@@ -348,7 +348,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
   ##If only one permutation is considered
   if (length(result) == 1) {
     return(result[[1]])  ## Return the single element directly
-  } else if (length(result) > 100) {
+  } else if (length(result) >= 50) {
     logmls <- unlist(lapply(result, function(x) x$logml))
     max_logml <- max(logmls)
     exponentiated_diff <- exp(logmls - max_logml)
@@ -359,6 +359,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
     result$diagnostics <- pareto_vals
   } else {
     tmp <- result
+    result <- list()
     result$logmls <- tmp
     warning("Diagnostics couldn't be computed")
     result$diagnostics <- NA
@@ -453,6 +454,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
     result$diagnostics <- pareto_vals
   } else {
     tmp <- result
+    result <- list()
     result$logmls <- tmp
     warning("Diagnostics couldn't be computed")
     result$diagnostics <- NA
@@ -589,6 +591,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
     result$diagnostics <- pareto_vals
   } else {
     tmp <- result
+    result <- list()
     result$logmls <- tmp
     warning("Diagnostics couldn't be computed")
     result$diagnostics <- NA
