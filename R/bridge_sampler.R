@@ -208,7 +208,7 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method =
         file.remove("cmdstanr_log_eval.csv")
     }
     if (is.na(seed) & verbose) {
-       print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
+       warning("Not setting the seed will yield different results when compared to the original bridgesampling")
     }
    draws <- samples$unconstrain_draws(format = "matrix")
    parameters <- colnames(draws)
@@ -242,7 +242,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
     }
   # cores > 1 only for unix:
   if (is.na(seed) & verbose) {
-       print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
+       warning("Not setting the seed will yield different results when compared to the original bridgesampling")
     }
   if (!(.Platform$OS.type == "unix") & (cores != 1)) {
     warning("cores > 1 only possible on Unix/MacOs. Uses 'core = 1' instead.", call. = FALSE)
@@ -369,7 +369,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
   # split samples in two parts
   nr <- nrow(samples[[1]])
   if (is.na(seed) & verbose) {
-       print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
+       warning("Not setting the seed will yield different results when compared to the original bridgesampling")
     }
   if (num_splits %% 2 != 0) {
   stop("Error: num_splits is not divisible by 2")
@@ -481,7 +481,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
                                 param_types = rep("real", ncol(samples)),
                                 silent = FALSE, verbose = FALSE, seed = NA) {
   if (is.na(seed) & verbose) {
-       print("Warning, not setting the seed will yield different results when compared to the original bridgesampling")
+       warning("Not setting the seed will yield different results when compared to the original bridgesampling")
     }
   if (num_splits %% 2 != 0) {
   stop("Error: num_splits is not divisible by 2")
