@@ -267,8 +267,12 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
   result <- list()
   # Generate permutations
   permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits, total_perms)
-
+  counter <- 1
   for (perm in permutations) {
+    if (verbose == TRUE) {
+      cat("Starting permutation number:", counter, "\n")
+    }
+    counter <- counter + 1
     samples4fit_index <- perm[[1]]
     samples_4_fit <- apply(upars[, samples4fit_index, , drop = FALSE], 1, rbind)
 
@@ -381,7 +385,12 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
   }
   permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits, total_perms)
   result <- list()
+  counter <- 1
   for (perm in permutations) {
+    if (verbose == TRUE) {
+      cat("Starting permutation number:", counter, "\n")
+    }
+    counter <- counter + 1
     samples4fit_index <- perm[[1]] 
     samples_4_fit_tmp <- samples[samples4fit_index,,drop=FALSE]
     samples_4_fit_tmp <- do.call("rbind", samples_4_fit_tmp)
@@ -525,7 +534,12 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
   nr <- nrow(samples)
   permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits, total_perms)
   result <- list()
+  counter <- 1
   for (perm in permutations) {
+     if (verbose == TRUE) {
+       cat("Starting permutation number:", counter, "\n")
+     }
+     counter <- counter + 1
      samples4fit_index <- perm[[1]]
      samples_4_fit <- theta_t[samples4fit_index, ,drop = FALSE]
      samples4iter_index <- perm[[2]]
