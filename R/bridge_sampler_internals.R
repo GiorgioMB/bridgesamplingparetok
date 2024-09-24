@@ -265,7 +265,7 @@
   out
 }
 
-.pareto_k_diagnostic <- function(numi, deni, l1) {
+.pareto_k_diagnostic <- function(numi, deni) {
   ## Check if parallel is present
   if (!requireNamespace("parallel", quietly = TRUE)) {
     stop("The parallel package is required but not installed.")
@@ -273,13 +273,12 @@
   ## Convert brob objects to numeric
   numi_numeric <- as.numeric(numi)
   deni_numeric <- as.numeric(deni)
-  l1_numeric <- as.numeric(l1)
   inv_deni_numeric <- 1 / deni_numeric
   ## Run diagnostic calculations in parallel for both numi and deni
-  results <- lapply(list(numi_numeric, deni_numeric, l1_numeric, inv_deni_numeric), .compute_diagnostic)
+  results <- lapply(list(numi_numeric, deni_numeric, inv_deni_numeric), .compute_diagnostic)
 
   ## Name the results for clarity
-  names(results) <- c("numi", "deni", "l1", "inv_deni")
+  names(results) <- c("numi", "deni", "inv_deni")
   
   ## Return the results
   return(results)
@@ -421,7 +420,7 @@
   }
   if (i >= maxiter) {
     if (return_always == TRUE){
-      pareto_k <- .pareto_k_diagnostic(numi, deni, l1)
+      pareto_k <- .pareto_k_diagnostic(numi, deni)
       return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_logml = std_logml))
     } else {
       pareto_k <- list(numi = NA, deni = NA, inv_deni = NA)
