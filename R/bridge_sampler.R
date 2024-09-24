@@ -344,6 +344,15 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
   ##If only one permutation is considered
   if (length(result) == 1) {
     return(result[[1]])  ## Return the single element directly
+  } else {
+    logmls <- unlist(lapply(result, function(x) x$logml))
+    max_logml <- max(logmls)
+    exponentiated_diff <- exp(logmls - max_logml)
+    pareto_vals <- .compute_diagnostic(exponentiated_diff)
+    tmp <- result
+    result <- list()
+    result$logmls <- tmp
+    result$diagnostics <- pareto_vals
   }
   return(result)
 }
@@ -419,7 +428,16 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
   }
   if (length(result) == 1) {
     return(result[[1]])  ## Return the single element directly
-  }  
+  } else {
+    logmls <- unlist(lapply(result, function(x) x$logml))
+    max_logml <- max(logmls)
+    exponentiated_diff <- exp(logmls - max_logml)
+    pareto_vals <- .compute_diagnostic(exponentiated_diff)
+    tmp <- result
+    result <- list()
+    result$logmls <- tmp
+    result$diagnostics <- pareto_vals
+  }
   return(result)
 }
 
@@ -536,6 +554,15 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
   }
   if (length(result) == 1) {
     return(result[[1]])  ## Return the single element directly
+  } else {
+    logmls <- unlist(lapply(result, function(x) x$logml))
+    max_logml <- max(logmls)
+    exponentiated_diff <- exp(logmls - max_logml)
+    pareto_vals <- .compute_diagnostic(exponentiated_diff)
+    tmp <- result
+    result <- list()
+    result$logmls <- tmp
+    result$diagnostics <- pareto_vals
   }
   return(result)
 }
