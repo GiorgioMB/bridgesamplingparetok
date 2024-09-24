@@ -144,6 +144,7 @@
   std_logmls <- numeric(repetitions)
   pareto_k_numi <- list()
   pareto_k_deni <- list()
+  pareto_k_l1 <- list()
   pareto_k_inv_deni <- list()
   numi <- list()
   deni <- list()
@@ -175,6 +176,7 @@
       }
       pareto_k_numi[[i]] <- tmp$pareto_k$numi
       pareto_k_deni[[i]] <- tmp$pareto_k$deni
+      pareto_k_l1[[i]] <- tmp$pareto_k$l1
       pareto_k_inv_deni[[i]] <- tmp$pareto_k$inv_deni
     } else {
       if(verbose){
@@ -182,6 +184,7 @@
       }
       pareto_k_numi[[i]] <- NA
       pareto_k_deni[[i]] <- NA
+      pareto_k_l1[[i]] <- NA
       pareto_k_inv_deni[[i]] <- NA
     }
       
@@ -192,11 +195,12 @@
   if (repetitions == 1) {
     out <- list(logml = logml, niter = niter, method = "normal", q11 = q11, numi = numi, deni = deni,
               q12 = q12, q21 = q21[[1]], q22 = q22[[1]], pareto_k_numi = pareto_k_numi,
-              pareto_k_deni = pareto_k_deni, pareto_k_inv_deni = pareto_k_inv_deni, mcse_logml = std_logmls)
+              pareto_k_deni = pareto_k_deni, pareto_k_l1 = pareto_k_l1, pareto_k_inv_deni = pareto_k_inv_deni, mcse_logml = std_logmls)
     class(out) <- "bridge"
   } else if (repetitions > 1) {
     out <- list(logml = logml, niter = niter, method = "normal", repetitions = repetitions, numi = numi, deni = deni,
-              pareto_k_numi = pareto_k_numi, pareto_k_deni = pareto_k_deni, pareto_k_inv_deni = pareto_k_inv_deni, mcse_logml = std_logmls)
+              pareto_k_numi = pareto_k_numi, pareto_k_deni = pareto_k_deni, pareto_k_l1 = pareto_k_l1, pareto_k_inv_deni = pareto_k_inv_deni, 
+              mcse_logml = std_logmls)
     class(out) <- "bridge_list"
   }
 
