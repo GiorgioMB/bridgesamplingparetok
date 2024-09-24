@@ -59,9 +59,9 @@
   }
   
   if(verbose) {
-    print("summary(q12): (log_dens of proposal (i.e., with dmvnorm) for posterior samples)")
+    print("summary(q12): (log_dens of proposal (i.e., with mvtnorm) for posterior samples)")
     print(summary(q12))
-    print("summary(q22): (log_dens of proposal (i.e., with dmvnorm) for generated samples)")
+    print("summary(q22): (log_dens of proposal (i.e., with mvtnorm) for generated samples)")
     print(lapply(q22, summary))
     print("summary(q11): (log_dens of posterior (i.e., with log_posterior) for posterior samples)")
     print(summary(q11))
