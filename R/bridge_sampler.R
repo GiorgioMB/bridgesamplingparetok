@@ -443,7 +443,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
   }
   if (length(result) == 1) {
     return(result[[1]])  ## Return the single element directly
-  } else if (length(result) > 100) {
+  } else if (length(result) >= 50) {
     logmls <- unlist(lapply(result, function(x) x$logml))
     max_logml <- max(logmls)
     exponentiated_diff <- exp(logmls - max_logml)
@@ -580,7 +580,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
   }
   if (length(result) == 1) {
     return(result[[1]])  ## Return the single element directly
-  } else if (length(result) > 100) {
+  } else if (length(result) >= 50) {
     logmls <- unlist(lapply(result, function(x) x$logml))
     max_logml <- max(logmls)
     exponentiated_diff <- exp(logmls - max_logml)
