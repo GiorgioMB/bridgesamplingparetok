@@ -423,7 +423,7 @@
       pareto_k <- .pareto_k_diagnostic(numi, deni)
       return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_logml = std_logml))
     } else {
-      pareto_k <- list(numi = NA, deni = NA)
+      pareto_k <- list(numi = NA, deni = NA, inv_deni = NA)
       return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_logml = std_logml))
     }
   }
