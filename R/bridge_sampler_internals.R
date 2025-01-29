@@ -304,7 +304,7 @@
 
 .run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L, pareto_smoothing_last,
                                   method, maxiter, silent, pareto_smoothing_all,
-                                  criterion, neff, return_always, verbose) {
+                                  criterion, neff, return_always, verbose, calculate_covariance = FALSE) {
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
   
@@ -398,7 +398,11 @@
     criterion_val <- switch(criterion, "r" = abs((r - rold)/r),
                             "logml" = abs((logml - logmlold)/logml))
     i <- i + 1
-    var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni))
+    if (calculate_covariance == TRUE){
+      var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni))
+    } else {
+      var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2
+    }
     var_r <- var_r / length(numi)
     # Compute variance in log scale by match the variance of a
     # log-normal approximation
@@ -413,7 +417,11 @@
     mean_deni <- mean(as.numeric(deni))
     r <- mean_numi/mean_deni
     logml <- log(r) + lstar
-    var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni))
+    if (calculate_covariance == TRUE){
+      var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni))
+    } else {
+      var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2
+    }
     var_r <- var_r / length(numi)
     var_logml <- log(1 + var_r / r^2)
     std_logml <- sqrt(var_logml)
