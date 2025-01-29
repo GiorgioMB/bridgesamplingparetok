@@ -28,6 +28,7 @@
   tol1,
   tol2,
   return_always,
+  calculate_covariance = FALSE,
   keep_log_eval = FALSE) {
 
   if (is.null(neff))
@@ -205,7 +206,7 @@
     tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
                                  r0 = r0, tol = tol1, L = L, method = "warp3", pareto_smoothing_all = pareto_smoothing_all,
                                  maxiter = maxiter, silent = silent, pareto_smoothing_last = pareto_smoothing_all, verbose = verbose,
-                                 criterion = "r", neff = neff, return_always=return_always)
+                                 criterion = "r", neff = neff, return_always=return_always, calculate_covariance = calculate_covariance)
     if (is.na(tmp$logml) & !is.null(tmp$r_vals)) {
       warning("logml could not be estimated within maxiter, rerunning with adjusted starting value. \nEstimate might be more variable than usual.", call. = FALSE)
       lr <- length(tmp$r_vals)
@@ -214,7 +215,7 @@
       tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]], 
                                    r0 = r0_2, tol = tol2, L = L, method = "warp3", pareto_smoothing_last = pareto_smoothing_last,
                                    maxiter = maxiter, silent = silent, pareto_smoothing_all = pareto_smoothing_all, verbose = verbose,
-                                   criterion = "logml", neff = neff, return_always=return_always)
+                                   criterion = "logml", neff = neff, return_always=return_always, calculate_covariance = calculate_covariance)
       tmp$niter <- maxiter + tmp$niter
     }
 
