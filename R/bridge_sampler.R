@@ -811,7 +811,7 @@ bridge_sampler.MCMC_refClass <- function(samples,
                         packages = "nimble",
                         maxiter = maxiter,
                         silent = silent,
-                        calculate_covariance = calculate_covariance
+                        calculate_covariance = calculate_covariance,
                         verbose = verbose)
 
   return(out)
