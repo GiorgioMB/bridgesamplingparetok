@@ -401,7 +401,7 @@
     if (calculate_covariance == TRUE){
       var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni))
     } else {
-      var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2
+      var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2)
     }
     var_r <- var_r / length(numi)
     # Compute variance in log scale by match the variance of a
@@ -420,7 +420,7 @@
     if (calculate_covariance == TRUE){
       var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni))
     } else {
-      var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2
+      var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2)
     }
     var_r <- var_r / length(numi)
     var_logml <- log(1 + var_r / r^2)
