@@ -346,25 +346,35 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
     file.remove("rstan_log_eval.csv")
   }
   ##If only one permutation is considered
-  if (length(result) == 1) {
-    return(result[[1]])  ## Return the single element directly
-  } else if (length(result) >= 50) {
-    logmls <- unlist(lapply(result, function(x) x$logml))
-    max_logml <- max(logmls)
-    exponentiated_diff <- exp(logmls - max_logml)
-    pareto_vals <- .compute_diagnostic(exponentiated_diff)
+  tryCatch({
+    if (length(result) == 1) {
+      return(result[[1]])  ## Return the single element directly
+    } else if (length(result) >= 50) {
+      logmls <- unlist(lapply(result, function(x) x$logml))
+      max_logml <- max(logmls)
+      exponentiated_diff <- exp(logmls - max_logml)
+      pareto_vals <- .compute_diagnostic(exponentiated_diff)
+      tmp <- result
+      result <- list()
+      result$logmls <- tmp
+      result$diagnostics <- pareto_vals
+    } else {
+      tmp <- result
+      result <- list()
+      result$logmls <- tmp
+      warning("Diagnostics couldn't be computed")
+      result$diagnostics <- NA
+    }
+    return(result)
+  }, error = function(e) {
+    # Fallback to the "else" branch if an error occurs anywhere
     tmp <- result
     result <- list()
     result$logmls <- tmp
-    result$diagnostics <- pareto_vals
-  } else {
-    tmp <- result
-    result <- list()
-    result$logmls <- tmp
-    warning("Diagnostics couldn't be computed")
+    warning("Diagnostics couldn't be computed due to error: ", conditionMessage(e))
     result$diagnostics <- NA
-  }
-  return(result)
+    return(result)
+  })
 }
 
 #' @rdname bridge_sampler
@@ -441,25 +451,35 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, num_s
                                          r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
     result <- append(result, list(bridge_output))
   }
-  if (length(result) == 1) {
-    return(result[[1]])  ## Return the single element directly
-  } else if (length(result) >= 50) {
-    logmls <- unlist(lapply(result, function(x) x$logml))
-    max_logml <- max(logmls)
-    exponentiated_diff <- exp(logmls - max_logml)
-    pareto_vals <- .compute_diagnostic(exponentiated_diff)
+  tryCatch({
+    if (length(result) == 1) {
+      return(result[[1]])  ## Return the single element directly
+    } else if (length(result) >= 50) {
+      logmls <- unlist(lapply(result, function(x) x$logml))
+      max_logml <- max(logmls)
+      exponentiated_diff <- exp(logmls - max_logml)
+      pareto_vals <- .compute_diagnostic(exponentiated_diff)
+      tmp <- result
+      result <- list()
+      result$logmls <- tmp
+      result$diagnostics <- pareto_vals
+    } else {
+      tmp <- result
+      result <- list()
+      result$logmls <- tmp
+      warning("Diagnostics couldn't be computed")
+      result$diagnostics <- NA
+    }
+    return(result)
+  }, error = function(e) {
+    # Fallback to the "else" branch if an error occurs anywhere
     tmp <- result
     result <- list()
     result$logmls <- tmp
-    result$diagnostics <- pareto_vals
-  } else {
-    tmp <- result
-    result <- list()
-    result$logmls <- tmp
-    warning("Diagnostics couldn't be computed")
+    warning("Diagnostics couldn't be computed due to error: ", conditionMessage(e))
     result$diagnostics <- NA
-  }
-  return(result)
+    return(result)
+  })
 }
 
 
@@ -578,25 +598,35 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
     
                                   
   }
-  if (length(result) == 1) {
-    return(result[[1]])  ## Return the single element directly
-  } else if (length(result) >= 50) {
-    logmls <- unlist(lapply(result, function(x) x$logml))
-    max_logml <- max(logmls)
-    exponentiated_diff <- exp(logmls - max_logml)
-    pareto_vals <- .compute_diagnostic(exponentiated_diff)
+  tryCatch({
+    if (length(result) == 1) {
+      return(result[[1]])  ## Return the single element directly
+    } else if (length(result) >= 50) {
+      logmls <- unlist(lapply(result, function(x) x$logml))
+      max_logml <- max(logmls)
+      exponentiated_diff <- exp(logmls - max_logml)
+      pareto_vals <- .compute_diagnostic(exponentiated_diff)
+      tmp <- result
+      result <- list()
+      result$logmls <- tmp
+      result$diagnostics <- pareto_vals
+    } else {
+      tmp <- result
+      result <- list()
+      result$logmls <- tmp
+      warning("Diagnostics couldn't be computed")
+      result$diagnostics <- NA
+    }
+    return(result)
+  }, error = function(e) {
+    # Fallback to the "else" branch if an error occurs anywhere
     tmp <- result
     result <- list()
     result$logmls <- tmp
-    result$diagnostics <- pareto_vals
-  } else {
-    tmp <- result
-    result <- list()
-    result$logmls <- tmp
-    warning("Diagnostics couldn't be computed")
+    warning("Diagnostics couldn't be computed due to error: ", conditionMessage(e))
     result$diagnostics <- NA
-  }
-  return(result)
+    return(result)
+  })
 }
 
 #' @rdname bridge_sampler
