@@ -27,6 +27,7 @@
   tol1,
   tol2,
   return_always,
+  use_ess = FALSE,
   calculate_covariance = FALSE,
   keep_log_eval = FALSE) {
   
@@ -151,7 +152,7 @@
   # run iterative updating scheme to compute log of marginal likelihood
   for (i in seq_len(repetitions)) {
     tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
-                                 r0 = r0, tol = tol1, L = NULL, method = "normal",pareto_smoothing_all = pareto_smoothing_all,
+                                 r0 = r0, tol = tol1, L = NULL, method = "normal",pareto_smoothing_all = pareto_smoothing_all, use_ess = use_ess,
                                  maxiter = maxiter, silent = silent, pareto_smoothing_last = pareto_smoothing_last, verbose = verbose,
                                  criterion = "r", neff = neff, return_always = return_always, calculate_covariance = calculate_covariance)
     if (!is.null(tmp$r_vals)) {
@@ -159,7 +160,7 @@
       lr <- length(tmp$r_vals)
       # use geometric mean as starting value
       r0_2 <- sqrt(tmp$r_vals[[lr - 1]] * tmp$r_vals[[lr]])
-      tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
+      tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]], use_ess = use_ess,
                                    r0 = r0_2, tol = tol2, L = NULL, method = "normal", pareto_smoothing_all = pareto_smoothing_all, verbose = verbose,
                                    maxiter = maxiter, silent = silent, return_always = return_always, pareto_smoothing_last = pareto_smoothing_last,
                                    criterion = "logml", neff = neff, calculate_covariance = calculate_covariance)
@@ -192,7 +193,7 @@
 
   if (repetitions == 1) {
     out <- list(logml = logml, niter = niter, method = "normal", q11 = q11, numi = numi, deni = deni,
-              q12 = q12, q21 = q21[[1]], q22 = q22[[1]], pareto_k_numi = pareto_k_numi,
+              q12 = q12, q21 = q21[[1]], q22 = q22[[1]], pareto_k_numi = pareto_k_numi, 
               pareto_k_deni = pareto_k_deni, pareto_k_inv_deni = pareto_k_inv_deni, mcse_logml = std_logmls)
     class(out) <- "bridge"
   } else if (repetitions > 1) {
