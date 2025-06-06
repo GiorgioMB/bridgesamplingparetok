@@ -666,14 +666,14 @@ bridge_sampler.stanreg <-
     }
 
     if (cores == 1) {
-      bridge_output <- bridge_sampler(samples = samples, log_posterior = .stan_log_posterior, use_ess = use_ess
+      bridge_output <- bridge_sampler(samples = samples, log_posterior = .stan_log_posterior, use_ess = use_ess,
                                       data = list(stanfit = sf), lb = lb, ub = ub, seed = seed, pareto_smoothing_last = pareto_smoothing_last,
                                       repetitions = repetitions, method = method, cores = cores, pareto_smoothing_all = pareto_smoothing_all,
                                       use_neff = use_neff, packages = "rstan", total_perms = total_perms, calculate_covariance = calculate_covariance,
                                       maxiter = maxiter, silent = silent, num_splits = num_splits, return_always = return_always,
                                       verbose = verbose)
     } else {
-      bridge_output <- bridge_sampler(samples = samples, use_ess= use_ess
+      bridge_output <- bridge_sampler(samples = samples, use_ess= use_ess,
                                       log_posterior = .stan_log_posterior, pareto_smoothing_all = pareto_smoothing_all,
                                       data = list(stanfit = sf), lb = lb, ub = ub, pareto_smoothing_last = pareto_smoothing_last,
                                       repetitions = repetitions, varlist = "stanfit", seed = seed,
