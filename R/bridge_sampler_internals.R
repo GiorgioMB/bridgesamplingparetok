@@ -304,7 +304,8 @@
 
 .run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L, pareto_smoothing_last,
                                   method, maxiter, silent, pareto_smoothing_all,
-                                  criterion, neff, return_always, verbose, calculate_covariance = FALSE) {
+                                  criterion, neff, return_always, verbose, 
+                                  use_ess = FALSE, calculate_covariance = FALSE) {
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
   
@@ -389,7 +390,11 @@
     mean_numi <- mean(as.numeric(numi))
     mean_deni <- mean(as.numeric(deni))
     var_numi <- var(as.numeric(numi))
-    var_deni <- var(as.numeric(deni))
+    if (use_ess == TRUE){
+      var_deni <- var(as.numeric(deni)) * length(deni) / posterior::ess_basic(as.numeric(deni))
+    } else {
+      var_deni <- var(as.numeric(deni))
+    }
     cov_numi_deni <- cov(as.numeric(numi), as.numeric(deni))
     r <- mean_numi/mean_deni
     r_vals <- c(r_vals, r)
