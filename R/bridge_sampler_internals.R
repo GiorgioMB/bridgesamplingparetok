@@ -391,7 +391,7 @@
     mean_deni <- mean(as.numeric(deni))
     var_numi <- var(as.numeric(numi))
     if (use_ess == TRUE){
-      var_deni <- var(as.numeric(deni)) * length(deni) / posterior::ess_basic(as.numeric(deni))
+      var_deni <- var(as.numeric(deni)) * length(deni) / posterior::ess_mean(as.numeric(deni))
     } else {
       var_deni <- var(as.numeric(deni))
     }
