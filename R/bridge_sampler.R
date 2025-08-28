@@ -26,6 +26,9 @@
 #'@param ub named vector with upper bounds for parameters.
 #'@param repetitions number of repetitions.
 #'@param method either \code{"normal"} or \code{"warp3"}.
+#'@param use_ess Boolean. If \code{TRUE}, the effective sample size (ESS) is used in
+#'  the weighting of the iterative scheme instead of the raw number of samples.
+#'  This corrects for autocorrelation in MCMC draws. Default is \code{FALSE}.
 #'@param cores number of cores used for evaluating \code{log_posterior}. On
 #'  unix-like systems (where \code{.Platform$OS.type == "unix"} evaluates to
 #'  \code{TRUE}; e.g., Linux and Mac OS) forking via \code{\link{mclapply}} is
@@ -196,8 +199,8 @@ bridge_sampler <- function(samples, ...) {
 bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
                                    repetitions = 1, method = "normal", cores = 1,
                                    use_neff = TRUE, maxiter = 1000, silent = FALSE,
-                                   verbose = FALSE, ...) {
-    # cores > 1 only for unix:
+                                   use_ess = FALSE, verbose = FALSE, ...) {
+  # cores > 1 only for unix:
   if (!(.Platform$OS.type == "unix") & (cores != 1)) {
     warning("cores > 1 only possible on Unix/MacOs. Uses 'core = 1' instead.", call. = FALSE)
     cores <- 1L
@@ -256,7 +259,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                              args = list(samples_4_fit = samples_4_fit,
                                          samples_4_iter = samples_4_iter,
-                                         neff = neff,
+                                         neff = neff, use_ess = use_ess,
                                          log_posterior = .stan_log_posterior,
                                          data = list(stanfit = stanfit_model),
                                          lb = lb, ub = ub,
@@ -270,7 +273,7 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                              args = list(samples_4_fit = samples_4_fit,
                                          samples_4_iter = samples_4_iter,
-                                         neff = neff,
+                                         neff = neff, use_ess = use_ess,
                                          log_posterior = .stan_log_posterior,
                                          data = list(stanfit = stanfit_model),
                                          lb = lb, ub = ub,
@@ -295,7 +298,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., 
                                      method = "normal", cores = 1, use_neff = TRUE,
                                      packages = NULL, varlist = NULL, envir = .GlobalEnv,
                                      rcppFile = NULL, maxiter = 1000, silent = FALSE,
-                                     verbose = FALSE) {
+                                     verbose = FALSE, use_ess = FALSE) {
   # split samples in two parts
   nr <- nrow(samples[[1]])
   samples4fit_index <- seq_len(nr) %in% seq_len(round(nr/2))
@@ -337,7 +340,7 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., 
   out <- do.call(what = paste0(".bridge.sampler.", method),
                  args = list(samples_4_fit = samples_4_fit,
                              samples_4_iter = samples_4_iter,
-                             neff = neff,
+                             neff = neff, use_ess = use_ess,
                              log_posterior = log_posterior,
                              "..." = ..., data = data,
                              lb = lb, ub = ub,
@@ -361,7 +364,7 @@ bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
                                 cores = 1, use_neff = TRUE,
                                 packages = NULL, varlist = NULL,
                                 envir = .GlobalEnv, rcppFile = NULL,
-                                maxiter = 1000,
+                                maxiter = 1000, use_ess = FALSE,
                                 param_types = rep("real", ncol(samples)),
                                 silent = FALSE, verbose = FALSE) {
   samples <- as.matrix(samples)
@@ -374,7 +377,7 @@ bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
                                   cores = cores, use_neff = use_neff,
                                   packages = packages, varlist = varlist,
                                   envir = envir, rcppFile = rcppFile,
-                                  maxiter = maxiter,
+                                  maxiter = maxiter, use_ess = use_ess,
                                   param_types = param_types,
                                   silent = silent, verbose = verbose)
   return(bridge_output)
@@ -388,7 +391,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ...,
                                 cores = 1, use_neff = TRUE,
                                 packages = NULL, varlist = NULL,
                                 envir = .GlobalEnv, rcppFile = NULL,
-                                maxiter = 1000,
+                                maxiter = 1000, use_ess = FALSE,
                                 param_types = rep("real", ncol(samples)),
                                 silent = FALSE, verbose = FALSE) {
 
@@ -438,7 +441,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ...,
   out <- do.call(what = paste0(".bridge.sampler.", method),
                  args = list(samples_4_fit = samples_4_fit,
                              samples_4_iter = samples_4_iter,
-                             neff = neff,
+                             neff = neff, use_ess = use_ess,
                              log_posterior = log_posterior,
                              "..." = ..., data = data,
                              lb = lb, ub = ub,
@@ -458,7 +461,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ...,
 #' @importFrom utils read.csv
 bridge_sampler.stanreg <-
   function(samples, repetitions = 1, method = "normal", cores = 1,
-           use_neff = TRUE, maxiter = 1000, silent = FALSE,
+           use_neff = TRUE, maxiter = 1000, silent = FALSE, use_ess = FALSE,
            verbose = FALSE, ...) {
     df <- eval(samples$call$diagnostic_file)
     if (is.null(df))
@@ -488,14 +491,14 @@ bridge_sampler.stanreg <-
 
     if (cores == 1) {
       bridge_output <- bridge_sampler(samples = samples, log_posterior = .stan_log_posterior,
-                                      data = list(stanfit = sf), lb = lb, ub = ub,
+                                      data = list(stanfit = sf), lb = lb, ub = ub, use_ess = use_ess,
                                       repetitions = repetitions, method = method, cores = cores,
                                       use_neff = use_neff, packages = "rstan",
                                       maxiter = maxiter, silent = silent,
                                       verbose = verbose)
     } else {
       bridge_output <- bridge_sampler(samples = samples,
-                                      log_posterior = .stan_log_posterior,
+                                      log_posterior = .stan_log_posterior, use_ess = use_ess,
                                       data = list(stanfit = sf), lb = lb, ub = ub,
                                       repetitions = repetitions, varlist = "stanfit",
                                       envir = sys.frame(sys.nframe()), method = method,
@@ -509,7 +512,7 @@ bridge_sampler.stanreg <-
 #' @rdname bridge_sampler
 #' @export
 bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL,
-                                 lb = NULL, ub = NULL, repetitions = 1,
+                                 lb = NULL, ub = NULL, repetitions = 1, use_ess = FALSE,
                                  method = "normal", cores = 1, use_neff = TRUE,
                                  packages = NULL, varlist = NULL,
                                  envir = .GlobalEnv, rcppFile = NULL,
@@ -527,7 +530,7 @@ bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data
                         method = method, cores = cores, use_neff = use_neff,
                         packages = packages, varlist = varlist, envir = envir,
                         rcppFile = rcppFile, maxiter = maxiter, silent = silent,
-                        verbose = verbose)
+                        verbose = verbose, use_ess = use_ess)
 
   return(out)
 
@@ -538,7 +541,7 @@ bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data
 bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL,
                                    lb = NULL, ub = NULL, repetitions = 1,
                                    method = "normal", cores = 1, use_neff = TRUE,
-                                   packages = NULL, varlist = NULL,
+                                   packages = NULL, varlist = NULL, use_ess = FALSE,
                                    envir = .GlobalEnv, rcppFile = NULL,
                                    maxiter = 1000, silent = FALSE, verbose = FALSE) {
 
@@ -552,7 +555,7 @@ bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., da
                         method = method, cores = cores, use_neff = use_neff,
                         packages = packages, varlist = varlist, envir = envir,
                         rcppFile = rcppFile, maxiter = maxiter, silent = silent,
-                        verbose = verbose)
+                        verbose = verbose, use_ess = use_ess)
 
   return(out)
 
@@ -567,6 +570,7 @@ bridge_sampler.MCMC_refClass <- function(samples,
                                   use_neff = TRUE,
                                   maxiter = 1000,
                                   silent = FALSE,
+                                  use_ess = FALSE,
                                   verbose = FALSE,
                                   ...) {
   if (!requireNamespace("nimble")) stop("package nimble required")
@@ -654,6 +658,7 @@ bridge_sampler.MCMC_refClass <- function(samples,
                         data = NULL,
                         lb = .nimble_bounds(mcmc_samples[[1]],
                                             nimble_model, "lower"),
+                        use_ess = use_ess,
                         ub = .nimble_bounds(mcmc_samples[[1]],
                                             nimble_model, "upper"),
                         repetitions = repetitions,
@@ -668,4 +673,3 @@ bridge_sampler.MCMC_refClass <- function(samples,
   return(out)
 
 }
-
