@@ -116,21 +116,33 @@
 #'  Due to the way \code{rstan} currently works, parallel computations with
 #'  \code{stanfit} and \code{stanreg} objects only work with forking (i.e., NOT
 #'  on Windows). }
-#'@return if \code{repetitions = 1}, returns a list of class \code{"bridge"}
-#'  with components: \itemize{ \item \code{logml}: estimate of log marginal
-#'  likelihood. \item \code{niter}: number of iterations of the iterative
-#'  updating scheme. \item \code{method}: bridge sampling method that was used
-#'  to obtain the estimate. \item \code{q11}: log posterior evaluations for
-#'  posterior samples. \item \code{q12}: log proposal evaluations for posterior
-#'  samples. \item \code{q21}: log posterior evaluations for samples from
-#'  proposal. \item \code{q22}: log proposal evaluations for samples from
-#'  proposal. } if \code{repetitions > 1}, returns a list of class
-#'  \code{"bridge_list"} with components: \itemize{ \item \code{logml}: numeric
-#'  vector with estimates of log marginal likelihood. \item \code{niter}:
-#'  numeric vector with number of iterations of the iterative updating scheme
-#'  for each repetition. \item \code{method}: bridge sampling method that was
-#'  used to obtain the estimates. \item \code{repetitions}: number of
-#'  repetitions. }
+#'@return If \code{repetitions = 1}, returns a list of class \code{"bridge"}
+#'  with components:
+#'  \itemize{
+#'    \item \code{logml}: estimate of the log marginal likelihood.
+#'    \item \code{mcse_logml}: Monte Carlo standard error of \code{logml}
+#'          (computed on the log-scale).
+#'    \item \code{niter}: number of iterations of the iterative
+#'          updating scheme.
+#'    \item \code{method}: bridge sampling method that was used
+#'          to obtain the estimate.
+#'    \item \code{q11}: log posterior evaluations for posterior samples.
+#'    \item \code{q12}: log proposal evaluations for posterior samples.
+#'    \item \code{q21}: log posterior evaluations for samples from the proposal.
+#'    \item \code{q22}: log proposal evaluations for samples from the proposal.
+#'  }
+#'  If \code{repetitions > 1}, returns a list of class \code{"bridge_list"}
+#'  with components:
+#'  \itemize{
+#'    \item \code{logml}: numeric vector of log marginal likelihood estimates.
+#'    \item \code{mcse_logml}: numeric vector of Monte Carlo standard errors
+#'          (on the log-scale), one per repetition.
+#'    \item \code{niter}: numeric vector with the number of iterations of the
+#'          iterative updating scheme for each repetition.
+#'    \item \code{method}: bridge sampling method that was used to obtain
+#'          the estimates.
+#'    \item \code{repetitions}: number of repetitions.
+#' }
 #'@section Warning: Note that the results depend strongly on the parameter
 #'  priors. Therefore, it is strongly advised to think carefully about the
 #'  priors before calculating marginal likelihoods. For example, the prior
