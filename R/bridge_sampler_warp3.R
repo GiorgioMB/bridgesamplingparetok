@@ -188,7 +188,7 @@
 
   logml <- numeric(repetitions)
   niter <- numeric(repetitions)
-  std_logmls <- numeric(repetitions)
+  mcse_logmls <- numeric(repetitions)
   # run iterative updating scheme to compute log of marginal likelihood
   for (i in seq_len(repetitions)) {
     tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
@@ -209,17 +209,17 @@
 
     logml[i] <- tmp$logml
     niter[i] <- tmp$niter
-    std_logmls[i] <- tmp$std_logml
+    mcse_logmls[i] <- tmp$mcse_logml
     if (niter[i] == maxiter)
       warning("logml could not be estimated within maxiter, returning NA.", call. = FALSE)
   }
 
   if (repetitions == 1) {
     out <- list(logml = logml, niter = niter, method = "warp3", q11 = q11,
-                q12 = q12, q21 = q21[[1]], q22 = q22[[1]], mcse_logml = std_logmls)
+                q12 = q12, q21 = q21[[1]], q22 = q22[[1]], mcse_logml = mcse_logmls)
     class(out) <- "bridge"
   } else if (repetitions > 1) {
-    out <- list(logml = logml, niter = niter, method = "warp3", repetitions = repetitions, mcse_logml = std_logmls)
+    out <- list(logml = logml, niter = niter, method = "warp3", repetitions = repetitions, mcse_logml = mcse_logmls)
     class(out) <- "bridge_list"
   }
 
