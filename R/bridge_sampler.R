@@ -121,7 +121,7 @@
 #'  \itemize{
 #'    \item \code{logml}: estimate of the log marginal likelihood.
 #'    \item \code{mcse_logml}: Monte Carlo standard error of \code{logml}
-#'          (computed on the log-scale).
+#'          on the log-scale (Micaletto & Vehtari, 2025).
 #'    \item \code{niter}: number of iterations of the iterative
 #'          updating scheme.
 #'    \item \code{method}: bridge sampling method that was used
@@ -136,7 +136,7 @@
 #'  \itemize{
 #'    \item \code{logml}: numeric vector of log marginal likelihood estimates.
 #'    \item \code{mcse_logml}: numeric vector of Monte Carlo standard errors
-#'          (on the log-scale), one per repetition.
+#'          on the log-scale (Micaletto & Vehtari, 2025), one per repetition.
 #'    \item \code{niter}: numeric vector with the number of iterations of the
 #'          iterative updating scheme for each repetition.
 #'    \item \code{method}: bridge sampling method that was used to obtain
@@ -185,6 +185,10 @@
 #'  Meng, X.-L., & Schilling, S. (2002). Warp bridge sampling. \emph{Journal of
 #'  Computational and Graphical Statistics, 11(3)}, 552-586.
 #'  \doi{10.1198/106186002457}
+#'
+#'  Micaletto, G., & Vehtari, A. (2025). Monte Carlo standard errors for bridge
+#'  sampling marginal likelihood estimation. \emph{arXiv preprint},
+#'  arXiv:2508.14487. \url{https://arxiv.org/abs/2508.14487}
 #'
 #'  Overstall, A. M., & Forster, J. J. (2010). Default Bayesian model
 #'  determination methods for generalised linear mixed models.
