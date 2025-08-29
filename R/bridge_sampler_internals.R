@@ -284,7 +284,6 @@
     } else {
       var_deni <- var(as.numeric(deni))
     }
-    cov_numi_deni <- cov(as.numeric(numi), as.numeric(deni))
     r <- mean_numi/mean_deni
     r_vals <- c(r_vals, r)
     logml <- log(r) + lstar
@@ -299,13 +298,13 @@
     ## log-normal approximation
     ## https://en.wikipedia.org/wiki/Log-normal_distribution#Arithmetic_moments
     var_logml <- log(1 + var_r / r^2)
-    std_logml <- sqrt(var_logml)
+    mcse_logml <- sqrt(var_logml)
   }
 
   if (i >= maxiter) {
-    return(list(logml = NA, niter = i-1, r_vals = r_vals, std_logml = std_logml))
+    return(list(logml = NA, niter = i-1, r_vals = r_vals, mcse_logml = mcse_logml))
   }
 
-  return(list(logml = logml, niter = i-1, std_logml = std_logml))
+  return(list(logml = logml, niter = i-1, mcse_logml = mcse_logml))
 
 }
