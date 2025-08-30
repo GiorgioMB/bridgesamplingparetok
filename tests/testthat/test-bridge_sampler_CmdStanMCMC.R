@@ -7,7 +7,9 @@ testthat::test_that("bridge_sampler() works for CmdStanMCMC and matches analytic
   testthat::skip_if_not_installed("posterior")
 
   # Require a working CmdStan toolchain
-  if (!cmdstanr::cmdstan_available()) testthat::skip("CmdStan is not available.")
+  if (!file.exists(cmdstanr::cmdstan_path())) {
+    testthat::skip("CmdStan is not installed in the expected path for cmdstanr.")
+  }
 
   set.seed(123)
 
