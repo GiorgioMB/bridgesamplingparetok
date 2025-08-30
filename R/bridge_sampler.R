@@ -191,6 +191,8 @@ bridge_sampler <- function(samples, ...) {
    UseMethod("bridge_sampler", samples)
 }
 
+#' @rdname bridge_sampler
+#' @export
 bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method = "normal", 
                                        cores = 1, use_neff = TRUE, maxiter = 1000, 
                                        silent = FALSE, verbose = FALSE, use_ess = FALSE, ...) {
