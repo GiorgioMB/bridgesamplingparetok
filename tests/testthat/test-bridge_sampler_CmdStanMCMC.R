@@ -53,7 +53,7 @@ testthat::test_that("bridge_sampler() works for CmdStanMCMC and matches analytic
   )
 
   # Bridge sampling using the S3 method for CmdStanMCMC
-  bs <- bridgesampling::bridge_sampler(fit, data = data_list, silent = TRUE)
+  bs <- bridgesampling::bridge_sampler(fit)
   testthat::expect_s3_class(fit, "CmdStanMCMC")
   testthat::expect_true(is.list(bs))
   testthat::expect_true(is.finite(bs$logml))
