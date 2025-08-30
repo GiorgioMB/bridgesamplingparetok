@@ -12,7 +12,9 @@ testthat::test_that(".cmdstan_log_posterior matches lp__ from CmdStanMCMC and ha
   }
   .cmdstan_log_posterior <- get(".cmdstan_log_posterior", envir = asNamespace(pkg))
 
-  if (!cmdstanr::cmdstan_available()) testthat::skip("CmdStan is not available.")
+  if (!file.exists(cmdstanr::cmdstan_path())) {
+    testthat::skip("CmdStan is not installed in the expected path for cmdstanr.")
+  }
 
   set.seed(321)
   N     <- 40L
