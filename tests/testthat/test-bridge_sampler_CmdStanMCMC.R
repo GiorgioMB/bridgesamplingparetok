@@ -91,6 +91,6 @@ testthat::test_that("bridge_sampler() works for CmdStanMCMC and matches analytic
     iter_sampling = 2000,
     refresh = 0
   )
-  bs2 <- bridgesampling::bridge_sampler(fit2, data = data_list, silent = TRUE)
+  bs2 <- bridgesampling::bridge_sampler(fit2, silent = TRUE)
   testthat::expect_true(is.finite(bs2$logml))
 })
