@@ -67,7 +67,11 @@ testthat::test_that(".cmdstan_log_posterior matches lp__ and is wired the same w
 
   # q11 are the posterior log-densities for the iterative half, should match lp__
   testthat::expect_equal(length(bs_out$q11), length(idx_iter))
-  testthat::expect_equal(bs_out$q11, lp_vec_all[idx_iter], tolerance = 1e-6)
+  testthat::expect_equal(
+    unname(bs_out$q11),
+    unname(lp_vec_all[idx_iter]),
+    tolerance = 1e-6
+  )
 
   # The helper is applied row-wise to unconstrained parameters, with `data = fit`.
   upars <- fit$unconstrain_draws(format = "matrix")
@@ -79,7 +83,11 @@ testthat::test_that(".cmdstan_log_posterior matches lp__ and is wired the same w
 
   testthat::expect_type(direct_vals, "double")
   testthat::expect_length(direct_vals, length(take))
-  testthat::expect_equal(direct_vals, lp_vec_all[take], tolerance = 1e-6)
+  testthat::expect_equal(
+    unname(direct_vals),
+    unname(lp_vec_all[take]),
+    tolerance = 1e-6
+  )
 
   # Basic input validation
   testthat::expect_error(.cmdstan_log_posterior(fit = "not-a-fit", data = list()),
