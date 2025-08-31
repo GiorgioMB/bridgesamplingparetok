@@ -35,7 +35,7 @@ testthat::test_that("bridge_sampler() works for CmdStanMCMC and basic sanity che
 
   tf <- withr::local_tempfile(fileext = ".stan")
   writeLines(stan_code, tf)
-  mod <- cmdstanr::cmdstan_model(tf, quiet = TRUE)
+  mod <- cmdstanr::cmdstan_model(tf, quiet = TRUE, force_recompile = TRUE)
 
   fit <- mod$sample(
     data = data_list,
