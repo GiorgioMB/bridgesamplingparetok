@@ -66,7 +66,7 @@ testthat::test_that("bridge_sampler() works for CmdStanMCMC and basic sanity che
   testthat::expect_true(is.finite(bs2$logml))
 })
 
-testthat::test_that("CmdStanMCMC bridge estimate roughly agrees with rstan (if available)", {
+testthat::test_that("CmdStanMCMC bridge estimate roughly agrees with rstan", {
   testthat::skip_on_cran()
   testthat::skip_if_not_installed("cmdstanr")
   testthat::skip_if_not_installed("bridgesampling")
