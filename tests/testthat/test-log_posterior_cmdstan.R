@@ -51,26 +51,16 @@ testthat::test_that(".cmdstan_log_posterior matches lp__ from CmdStanMCMC and ha
   writeLines(stan_code, tf)
 
   # Compile with graceful skip on failure (collect the real compiler error)
-  mod <- tryCatch({
-    cmdstanr::cmdstan_model(tf, quiet = TRUE, force_recompile = TRUE)
-  }, error = function(e) {
-    testthat::skip(paste("CmdStan model failed to compile on this system:", conditionMessage(e)))
-  })
+  mod <-  cmdstanr::cmdstan_model(tf, quiet = TRUE, force_recompile = TRUE)
 
   # Sample with graceful skip on failure
-  fit <- tryCatch({
-    mod$sample(
+  fit <-mod$sample(
       data = data_list,
       seed = 404,
       chains = 2,
       parallel_chains = 2,
       iter_warmup = 300,
-      iter_sampling = 800,
-      refresh = 0
-    )
-  }, error = function(e) {
-    testthat::skip(paste("Sampling failed on this system:", conditionMessage(e)))
-  })
+      iter_sampling = 800)
 
   # Extract CmdStan's lp__
   draws_df <- fit$draws(variables = "lp__", format = "df")
