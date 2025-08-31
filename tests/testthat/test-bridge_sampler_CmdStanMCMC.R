@@ -47,8 +47,8 @@ testthat::test_that("bridge_sampler() works for CmdStanMCMC and matches analytic
     seed = 202,
     chains = 2,
     parallel_chains = 2,
-    iter_warmup = 500,
-    iter_sampling = 1000,
+    iter_warmup = 5000,
+    iter_sampling = 10000,
     refresh = 0
   )
 
