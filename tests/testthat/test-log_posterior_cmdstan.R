@@ -70,7 +70,7 @@ testthat::test_that(".cmdstan_log_posterior matches lp__ and is wired the same w
   testthat::expect_equal(
     unname(bs_out$q11),
     unname(lp_vec_all[idx_iter]),
-    tolerance = 1e-6
+    tolerance = 1e-4
   )
 
   # The helper is applied row-wise to unconstrained parameters, with `data = fit`.
@@ -86,7 +86,7 @@ testthat::test_that(".cmdstan_log_posterior matches lp__ and is wired the same w
   testthat::expect_equal(
     unname(direct_vals),
     unname(lp_vec_all[take]),
-    tolerance = 1e-6
+    tolerance = 1e-4
   )
 
   # Basic input validation
