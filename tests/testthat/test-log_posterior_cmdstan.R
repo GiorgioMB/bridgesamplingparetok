@@ -52,7 +52,7 @@ testthat::test_that(".cmdstan_log_posterior matches lp__ from CmdStanMCMC and ha
 
   # Compile with graceful skip on failure (collect the real compiler error)
   mod <- tryCatch({
-    cmdstanr::cmdstan_model(tf, quiet = TRUE)
+    cmdstanr::cmdstan_model(tf, quiet = TRUE, force_recompile = TRUE)
   }, error = function(e) {
     testthat::skip(paste("CmdStan model failed to compile on this system:", conditionMessage(e)))
   })
