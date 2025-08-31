@@ -105,9 +105,9 @@ testthat::test_that("CmdStanMCMC bridge estimate roughly agrees with rstan (if a
   fit_cs <- mod_cs$sample(
     data = data_list,
     seed = 777,
-    chains = 2,
-    parallel_chains = 2,
-    iter_warmup = 1500,
+    chains = 4,
+    parallel_chains = 4,
+    iter_warmup = 10000,
     iter_sampling = 3000,
     refresh = 0
   )
@@ -117,7 +117,7 @@ testthat::test_that("CmdStanMCMC bridge estimate roughly agrees with rstan (if a
   sm <- rstan::stan_model(model_code = stan_code)
   fit_rs <- rstan::sampling(
     sm, data = data_list, seed = 777,
-    chains = 2, iter = 4500, warmup = 1500, refresh = 0
+    chains = 4, iter = 10000, warmup = 3000, refresh = 0
   )
   bs_rstan <- bridgesampling::bridge_sampler(fit_rs, silent = TRUE)
   testthat::expect_true(is.finite(bs_rstan$logml))
