@@ -40,7 +40,10 @@
 #'  FALSE, the nominal sample size  is used instead. If \code{samples} is a
 #'  \code{matrix}, it is assumed that the \code{matrix} contains the samples of
 #'  one chain in order. If \code{samples} come from more than one chain, we
-#'  recommend to use an \code{mcmc.list} object for optimal performance.
+#'  recommend to use an \code{mcmc.list} object for optimal performance. By default 
+#'  this uses \code{posterior::ess_mean()} if the \pkg{posterior} package is
+#'  installed and the global option \code{bridgesampling.use_posterior_ess} is 
+#'  \code{TRUE}; otherwise it falls back to \code{coda::effectiveSize()}.
 #'@param packages character vector with names of packages needed for evaluating
 #'  \code{log_posterior} in parallel (only relevant if \code{cores > 1} and
 #'  \code{.Platform$OS.type != "unix"}).
@@ -298,20 +301,7 @@ bridge_sampler.stanfit <- function(
   }
   samples_4_iter_tmp <- coda::as.mcmc.list(samples_4_iter_tmp)
 
-  if (use_neff) {
-    neff <- tryCatch(
-      median(coda::effectiveSize(samples_4_iter_tmp)),
-      error = function(e) {
-        warning(
-          "effective sample size cannot be calculated, has been replaced by number of samples.",
-          call. = FALSE
-        )
-        return(NULL)
-      }
-    )
-  } else {
-    neff <- NULL
-  }
+  neff <- .bs_compute_neff(samples_4_iter, use_neff)
 
   samples_4_iter <- apply(samples_4_iter_stan, 1, rbind)
 
@@ -438,24 +428,7 @@ bridge_sampler.mcmc.list <- function(
   )
 
   # compute effective sample size
-  if (use_neff) {
-    samples_4_iter_tmp <- coda::mcmc.list(lapply(
-      samples_4_iter_tmp,
-      coda::mcmc
-    ))
-    neff <- tryCatch(
-      median(coda::effectiveSize(samples_4_iter_tmp)),
-      error = function(e) {
-        warning(
-          "effective sample size cannot be calculated, has been replaced by number of samples.",
-          call. = FALSE
-        )
-        return(NULL)
-      }
-    )
-  } else {
-    neff <- NULL
-  }
+  neff <- .bs_compute_neff(samples_4_iter, use_neff)
 
   # convert to matrix
   samples_4_iter <- do.call("rbind", samples_4_iter_tmp)
@@ -596,20 +569,7 @@ bridge_sampler.matrix <- function(
   samples_4_iter <- theta_t[!samples4fit_index, , drop = FALSE]
 
   # compute effective sample size
-  if (use_neff) {
-    neff <- tryCatch(
-      median(coda::effectiveSize(coda::mcmc(samples_4_iter))),
-      error = function(e) {
-        warning(
-          "effective sample size cannot be calculated, has been replaced by number of samples.",
-          call. = FALSE
-        )
-        return(NULL)
-      }
-    )
-  } else {
-    neff <- NULL
-  }
+  neff <- .bs_compute_neff(samples_4_iter, use_neff)
 
   out <- do.call(
     what = paste0(".bridge.sampler.", method),
