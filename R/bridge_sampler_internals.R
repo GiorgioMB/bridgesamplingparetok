@@ -8,6 +8,58 @@
   ((th - md + pi) %% (2 * pi)) - pi + md
 }
 
+# Helper function to compute effective sample size for iterative scheme
+# - samples_4_iter: numeric matrix of draws (rows = iterations, cols = parameters)
+# - use_neff: logical, whether to use ESS instead of raw n
+# Behavior:
+#   * if use_neff = FALSE: return nrow(samples_4_iter)
+#   * else:
+#       1) try posterior::ess_mean() if:
+#          - option bridgesampling.use_posterior_ess is TRUE (default), AND
+#          - package 'posterior' is installed
+#       2) if that fails or is disabled, fall back to coda::effectiveSize()
+#       3) if everything fails or returns non-finite, fall back to nrow()
+.bs_compute_neff <- function(samples_4_iter, use_neff) {
+  n <- nrow(samples_4_iter)
+
+  if (!use_neff) {
+    return(n)
+  }
+
+  neff <- NA_real_
+
+  # 1) Try posterior::ess_mean() if allowed and available
+  if (getOption("bridgesampling.use_posterior_ess", TRUE) &&
+      requireNamespace("posterior", quietly = TRUE)) {
+
+    neff <- tryCatch(
+      {
+        draws <- posterior::as_draws_matrix(samples_4_iter)
+        as.numeric(median(posterior::ess_mean(draws)))
+      },
+      error = function(e) NA_real_
+    )
+  }
+
+  # 2) If posterior path not used or failed, fall back to coda
+  if (!is.finite(neff) || neff <= 0) {
+    # Keep existing behavior as close as possible
+    mcmc_obj <- coda::mcmc(samples_4_iter)
+    neff <- tryCatch(
+      {
+        as.numeric(median(coda::effectiveSize(mcmc_obj)))
+      },
+      error = function(e) NA_real_
+    )
+  }
+
+  # 3) Final safety net: raw sample size
+  if (!is.finite(neff) || neff <= 0) {
+    neff <- n
+  }
+
+  neff
+}
 
 #### for matrix method ######
 
