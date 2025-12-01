@@ -43,6 +43,7 @@
 
   # 2) If posterior path not used or failed, fall back to coda
   if (!is.finite(neff) || neff <= 0) {
+    message("Posterior ESS failed or unavailable, using coda::effectiveSize()")
     # Keep existing behavior as close as possible
     mcmc_obj <- coda::mcmc(samples_4_iter)
     neff <- tryCatch(
@@ -55,6 +56,7 @@
 
   # 3) Final safety net: raw sample size
   if (!is.finite(neff) || neff <= 0) {
+    message("ESS computations failed, using nrow(samples)")
     neff <- n
   }
 
