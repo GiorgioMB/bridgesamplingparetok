@@ -309,7 +309,7 @@
   maxiter,
   silent,
   criterion,
-  neff,
+  ess,
   use_ess
 ) {
   ### run iterative updating scheme (using "optimal" bridge function,
@@ -327,15 +327,15 @@
   #   l1, l2,
   #   r0, tol, L,
   #   method, maxiter, silent,
-  #   criterion, neff,
+  #   criterion, ess,
   #   file = "iterative_scheme.rda"
   # )
 
   lstar <- median(l1)
   n.1 <- length(l1)
   n.2 <- length(l2)
-  s1 <- neff / (neff + n.2)
-  s2 <- n.2 / (neff + n.2)
+  s1 <- ess / (ess + n.2)
+  s2 <- n.2 / (ess + n.2)
   r <- r0
   r_vals <- r
   logml <- log(r) + lstar
