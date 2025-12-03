@@ -33,7 +33,7 @@
 #'  \code{\link{.GlobalEnv}}. For other systems (e.g., Windows)
 #'  \code{\link{makeCluster}} is used and further arguments specified below will
 #'  be used.
-#'@param use_neff Logical. If \code{TRUE}, the effective sample size (compared
+#'@param use_ess Logical. If \code{TRUE}, the effective sample size (compared
 #'  to the nominal sample size) is used in the optimal bridge function and in
 #'  the iterative scheme's uncertainty calculations (making MCSE computation
 #'  take into account autocorrelation in MCMC samples). Default is TRUE. If
@@ -219,7 +219,7 @@ bridge_sampler.CmdStanMCMC <- function(
   repetitions = 1,
   method = "normal",
   cores = 1,
-  use_neff = TRUE,
+  use_ess = TRUE,
   maxiter = 1000,
   silent = FALSE,
   verbose = FALSE,
@@ -242,7 +242,7 @@ bridge_sampler.CmdStanMCMC <- function(
     log_posterior = .cmdstan_log_posterior,
     cores = cores,
     data = samples,
-    use_neff = use_neff,
+    use_ess = use_ess,
     verbose = verbose
   )
 
@@ -257,7 +257,7 @@ bridge_sampler.stanfit <- function(
   repetitions = 1,
   method = "normal",
   cores = 1,
-  use_neff = TRUE,
+  use_ess = TRUE,
   maxiter = 1000,
   silent = FALSE,
   verbose = FALSE,
@@ -301,7 +301,7 @@ bridge_sampler.stanfit <- function(
   }
   samples_4_iter_tmp <- coda::as.mcmc.list(samples_4_iter_tmp)
 
-  neff <- .bs_compute_neff(samples_4_iter, use_neff)
+  neff <- .bs_compute_neff(samples_4_iter, use_ess)
 
   samples_4_iter <- apply(samples_4_iter_stan, 1, rbind)
 
@@ -326,7 +326,7 @@ bridge_sampler.stanfit <- function(
         samples_4_fit = samples_4_fit,
         samples_4_iter = samples_4_iter,
         neff = neff,
-        use_ess = use_neff,
+        use_ess = use_ess,
         log_posterior = .stan_log_posterior,
         data = list(stanfit = stanfit_model),
         lb = lb,
@@ -351,7 +351,7 @@ bridge_sampler.stanfit <- function(
         samples_4_fit = samples_4_fit,
         samples_4_iter = samples_4_iter,
         neff = neff,
-        use_ess = use_neff,
+        use_ess = use_ess,
         log_posterior = .stan_log_posterior,
         data = list(stanfit = stanfit_model),
         lb = lb,
@@ -389,7 +389,7 @@ bridge_sampler.mcmc.list <- function(
   param_types = rep("real", ncol(samples[[1]])),
   method = "normal",
   cores = 1,
-  use_neff = TRUE,
+  use_ess = TRUE,
   packages = NULL,
   varlist = NULL,
   envir = .GlobalEnv,
@@ -428,7 +428,7 @@ bridge_sampler.mcmc.list <- function(
   )
 
   # compute effective sample size
-  neff <- .bs_compute_neff(samples_4_iter, use_neff)
+  neff <- .bs_compute_neff(samples_4_iter, use_ess)
 
   # convert to matrix
   samples_4_iter <- do.call("rbind", samples_4_iter_tmp)
@@ -440,7 +440,7 @@ bridge_sampler.mcmc.list <- function(
       samples_4_fit = samples_4_fit,
       samples_4_iter = samples_4_iter,
       neff = neff,
-      use_ess = use_neff,
+      use_ess = use_ess,
       log_posterior = log_posterior,
       "..." = ...,
       data = data,
@@ -478,7 +478,7 @@ bridge_sampler.mcmc <- function(
   repetitions = 1,
   method = "normal",
   cores = 1,
-  use_neff = TRUE,
+  use_ess = TRUE,
   packages = NULL,
   varlist = NULL,
   envir = .GlobalEnv,
@@ -499,7 +499,7 @@ bridge_sampler.mcmc <- function(
     repetitions = repetitions,
     method = method,
     cores = cores,
-    use_neff = use_neff,
+    use_ess = use_ess,
     packages = packages,
     varlist = varlist,
     envir = envir,
@@ -524,7 +524,7 @@ bridge_sampler.matrix <- function(
   repetitions = 1,
   method = "normal",
   cores = 1,
-  use_neff = TRUE,
+  use_ess = TRUE,
   packages = NULL,
   varlist = NULL,
   envir = .GlobalEnv,
@@ -569,7 +569,7 @@ bridge_sampler.matrix <- function(
   samples_4_iter <- theta_t[!samples4fit_index, , drop = FALSE]
 
   # compute effective sample size
-  neff <- .bs_compute_neff(samples_4_iter, use_neff)
+  neff <- .bs_compute_neff(samples_4_iter, use_ess)
 
   out <- do.call(
     what = paste0(".bridge.sampler.", method),
@@ -577,7 +577,7 @@ bridge_sampler.matrix <- function(
       samples_4_fit = samples_4_fit,
       samples_4_iter = samples_4_iter,
       neff = neff,
-      use_ess = use_neff,
+      use_ess = use_ess,
       log_posterior = log_posterior,
       "..." = ...,
       data = data,
@@ -611,7 +611,7 @@ bridge_sampler.stanreg <-
     repetitions = 1,
     method = "normal",
     cores = 1,
-    use_neff = TRUE,
+    use_ess = TRUE,
     maxiter = 1000,
     silent = FALSE,
     verbose = FALSE,
@@ -670,7 +670,7 @@ bridge_sampler.stanreg <-
         repetitions = repetitions,
         method = method,
         cores = cores,
-        use_neff = use_neff,
+        use_ess = use_ess,
         packages = "rstan",
         maxiter = maxiter,
         silent = silent,
@@ -688,7 +688,7 @@ bridge_sampler.stanreg <-
         envir = sys.frame(sys.nframe()),
         method = method,
         cores = cores,
-        use_neff = use_neff,
+        use_ess = use_ess,
         packages = "rstan",
         maxiter = maxiter,
         silent = silent,
@@ -710,7 +710,7 @@ bridge_sampler.rjags <- function(
   repetitions = 1,
   method = "normal",
   cores = 1,
-  use_neff = TRUE,
+  use_ess = TRUE,
   packages = NULL,
   varlist = NULL,
   envir = .GlobalEnv,
@@ -735,7 +735,7 @@ bridge_sampler.rjags <- function(
     repetitions = repetitions,
     method = method,
     cores = cores,
-    use_neff = use_neff,
+    use_ess = use_ess,
     packages = packages,
     varlist = varlist,
     envir = envir,
@@ -760,7 +760,7 @@ bridge_sampler.runjags <- function(
   repetitions = 1,
   method = "normal",
   cores = 1,
-  use_neff = TRUE,
+  use_ess = TRUE,
   packages = NULL,
   varlist = NULL,
   envir = .GlobalEnv,
@@ -783,7 +783,7 @@ bridge_sampler.runjags <- function(
     repetitions = repetitions,
     method = method,
     cores = cores,
-    use_neff = use_neff,
+    use_ess = use_ess,
     packages = packages,
     varlist = varlist,
     envir = envir,
@@ -803,7 +803,7 @@ bridge_sampler.MCMC_refClass <- function(
   repetitions = 1,
   method = "normal",
   cores = 1,
-  use_neff = TRUE,
+  use_ess = TRUE,
   maxiter = 1000,
   silent = FALSE,
   verbose = FALSE,
@@ -907,7 +907,7 @@ bridge_sampler.MCMC_refClass <- function(
     repetitions = repetitions,
     method = method,
     cores = cores,
-    use_neff = use_neff,
+    use_ess = use_ess,
     packages = "nimble",
     maxiter = maxiter,
     silent = silent,
