@@ -1,11 +1,11 @@
-test_that(".bs_compute_neff uses posterior when available and enabled", {
+test_that(".bs_compute_ess uses posterior when available and enabled", {
   skip_if_not_installed("posterior")
 
   set.seed(123)
   # Simple correlated chain to make ESS less than n
   draws <- cbind(theta = cumsum(rnorm(2000)))
 
-  fn <- getFromNamespace(".bs_compute_neff", "bridgesampling")
+  fn <- getFromNamespace(".bs_compute_ess", "bridgesampling")
 
   old_opts <- options(bridgesampling.use_posterior_ess = TRUE)
   on.exit(options(old_opts), add = TRUE)
@@ -18,11 +18,11 @@ test_that(".bs_compute_neff uses posterior when available and enabled", {
   expect_equal(neff, expected)
 })
 
-test_that(".bs_compute_neff falls back to coda when posterior is disabled", {
+test_that(".bs_compute_ess falls back to coda when posterior is disabled", {
   set.seed(123)
   draws <- cbind(theta = cumsum(rnorm(2000)))
 
-  fn <- getFromNamespace(".bs_compute_neff", "bridgesampling")
+  fn <- getFromNamespace(".bs_compute_ess", "bridgesampling")
 
   old_opts <- options(bridgesampling.use_posterior_ess = FALSE)
   on.exit(options(old_opts), add = TRUE)
@@ -35,11 +35,11 @@ test_that(".bs_compute_neff falls back to coda when posterior is disabled", {
   expect_equal(neff, expected)
 })
 
-test_that(".bs_compute_neff returns n when use_neff = FALSE", {
+test_that(".bs_compute_ess returns n when use_neff = FALSE", {
   set.seed(123)
   draws <- cbind(theta = rnorm(100))
 
-  fn <- getFromNamespace(".bs_compute_neff", "bridgesampling")
+  fn <- getFromNamespace(".bs_compute_ess", "bridgesampling")
 
   neff <- fn(draws, use_neff = FALSE)
 
