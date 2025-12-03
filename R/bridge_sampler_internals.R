@@ -10,19 +10,19 @@
 
 # Helper function to compute effective sample size for iterative scheme
 # - samples_4_iter: numeric matrix of draws (rows = iterations, cols = parameters)
-# - use_neff: logical, whether to use ESS instead of raw n
+# - use_ess: logical, whether to use ESS instead of raw n
 # Behavior:
-#   * if use_neff = FALSE: return nrow(samples_4_iter)
+#   * if use_ess = FALSE: return nrow(samples_4_iter)
 #   * else:
 #       1) try posterior::ess_mean() if:
 #          - option bridgesampling.use_posterior_ess is TRUE (default), AND
 #          - package 'posterior' is installed
 #       2) if that fails or is disabled, fall back to coda::effectiveSize()
 #       3) if everything fails or returns non-finite, fall back to nrow()
-.bs_compute_neff <- function(samples_4_iter, use_neff) {
+.bs_compute_neff <- function(samples_4_iter, use_ess) {
   n <- nrow(samples_4_iter)
 
-  if (!use_neff) {
+  if (!use_ess) {
     return(n)
   }
 
