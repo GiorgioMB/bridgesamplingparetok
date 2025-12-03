@@ -301,7 +301,7 @@ bridge_sampler.stanfit <- function(
   }
   samples_4_iter_tmp <- coda::as.mcmc.list(samples_4_iter_tmp)
 
-  neff <- .bs_compute_neff(samples_4_iter, use_ess)
+  ess <- .bs_compute_ess(samples_4_iter, use_ess)
 
   samples_4_iter <- apply(samples_4_iter_stan, 1, rbind)
 
@@ -325,7 +325,7 @@ bridge_sampler.stanfit <- function(
       args = list(
         samples_4_fit = samples_4_fit,
         samples_4_iter = samples_4_iter,
-        neff = neff,
+        ess = ess,
         use_ess = use_ess,
         log_posterior = .stan_log_posterior,
         data = list(stanfit = stanfit_model),
@@ -350,7 +350,7 @@ bridge_sampler.stanfit <- function(
       args = list(
         samples_4_fit = samples_4_fit,
         samples_4_iter = samples_4_iter,
-        neff = neff,
+        ess = ess,
         use_ess = use_ess,
         log_posterior = .stan_log_posterior,
         data = list(stanfit = stanfit_model),
@@ -428,7 +428,7 @@ bridge_sampler.mcmc.list <- function(
   )
 
   # compute effective sample size
-  neff <- .bs_compute_neff(samples_4_iter, use_ess)
+  ess <- .bs_compute_ess(samples_4_iter, use_ess)
 
   # convert to matrix
   samples_4_iter <- do.call("rbind", samples_4_iter_tmp)
@@ -439,7 +439,7 @@ bridge_sampler.mcmc.list <- function(
     args = list(
       samples_4_fit = samples_4_fit,
       samples_4_iter = samples_4_iter,
-      neff = neff,
+      ess = ess,
       use_ess = use_ess,
       log_posterior = log_posterior,
       "..." = ...,
@@ -569,14 +569,14 @@ bridge_sampler.matrix <- function(
   samples_4_iter <- theta_t[!samples4fit_index, , drop = FALSE]
 
   # compute effective sample size
-  neff <- .bs_compute_neff(samples_4_iter, use_ess)
+  ess <- .bs_compute_ess(samples_4_iter, use_ess)
 
   out <- do.call(
     what = paste0(".bridge.sampler.", method),
     args = list(
       samples_4_fit = samples_4_fit,
       samples_4_iter = samples_4_iter,
-      neff = neff,
+      ess = ess,
       use_ess = use_ess,
       log_posterior = log_posterior,
       "..." = ...,
