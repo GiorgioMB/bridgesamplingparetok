@@ -19,20 +19,20 @@
 #          - package 'posterior' is installed
 #       2) if that fails or is disabled, fall back to coda::effectiveSize()
 #       3) if everything fails or returns non-finite, fall back to nrow()
-.bs_compute_neff <- function(samples_4_iter, use_ess) {
+.bs_compute_ess <- function(samples_4_iter, use_ess) {
   n <- nrow(samples_4_iter)
 
   if (!use_ess) {
     return(n)
   }
 
-  neff <- NA_real_
+  ess <- NA_real_
 
   # 1) Try posterior::ess_mean() if allowed and available
   if (getOption("bridgesampling.use_posterior_ess", TRUE) &&
       requireNamespace("posterior", quietly = TRUE)) {
 
-    neff <- tryCatch(
+    ess <- tryCatch(
       {
         draws <- posterior::as_draws_matrix(samples_4_iter)
         as.numeric(median(posterior::ess_mean(draws)))
@@ -42,11 +42,11 @@
   }
 
   # 2) If posterior path not used or failed, fall back to coda
-  if (!is.finite(neff) || neff <= 0) {
+  if (!is.finite(ess) || ess <= 0) {
     message("Posterior ESS failed or unavailable, using coda::effectiveSize()")
     # Keep existing behavior as close as possible
     mcmc_obj <- coda::mcmc(samples_4_iter)
-    neff <- tryCatch(
+    ess <- tryCatch(
       {
         as.numeric(median(coda::effectiveSize(mcmc_obj)))
       },
@@ -55,12 +55,12 @@
   }
 
   # 3) Final safety net: raw sample size
-  if (!is.finite(neff) || neff <= 0) {
+  if (!is.finite(ess) || ess <= 0) {
     message("ESS computations failed, using nrow(samples)")
-    neff <- n
+    ess <- n
   }
 
-  neff
+  ess
 }
 
 #### for matrix method ######
