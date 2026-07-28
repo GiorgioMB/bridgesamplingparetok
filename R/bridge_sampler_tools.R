@@ -21,6 +21,31 @@
   lst
 }
 
+# The internal samplers always call log_posterior() with the extra
+# `keep_log_eval` argument, which the package's own Stan helpers
+# (.stan_log_posterior, .cmdstan_log_posterior) accept. User-supplied
+# log_posterior functions follow the documented two-argument interface
+# log_posterior(samples.row, data) and would fail with
+# "unused argument (keep_log_eval = FALSE)". Wrap those so the internal
+# call convention works for both; functions that take `keep_log_eval`
+# or `...` are returned unchanged.
+# `log_posterior` may also be given as the name of a function (the
+# convention used with `varlist` / `rcppFile` for parallel runs); it is
+# resolved in `envir` when possible so the same check applies, and left
+# untouched when it is only defined on the workers.
+.wrap_log_posterior <- function(log_posterior, envir = parent.frame()) {
+  if (is.character(log_posterior)) {
+    resolved <- tryCatch(get(log_posterior, envir = envir, mode = "function"),
+                         error = function(e) NULL)
+    if (is.null(resolved)) return(log_posterior)
+    log_posterior <- resolved
+  }
+  if (!is.function(log_posterior)) return(log_posterior)
+  fmls <- names(formals(log_posterior))
+  if ("keep_log_eval" %in% fmls || "..." %in% fmls) return(log_posterior)
+  function(s.row, data, keep_log_eval = FALSE, ...) log_posterior(s.row, data, ...)
+}
+
 .stan_log_posterior <- function(s.row, data, keep_log_eval) {
   out <- tryCatch(rstan::log_prob(object = data$stanfit, upars = s.row), error = function(e) -Inf)
   if (is.na(out)) out <- -Inf

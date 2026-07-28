@@ -53,6 +53,9 @@
   alpha_score     = 0.5) {
 
   proposal_fit <- match.arg(proposal_fit)
+  # keep the original name (if given as one) for clusterExport below
+  log_posterior_name <- if (is.character(log_posterior)) log_posterior else NULL
+  log_posterior <- .wrap_log_posterior(log_posterior, envir = envir)
   alpha_score_input <- alpha_score
   if (!is.null(alpha_score) &&
       !(is.numeric(alpha_score) && length(alpha_score) == 1L &&
@@ -256,8 +259,8 @@
         parallel::clusterExport(cl = cl, varlist = "rcppFile", envir = parent.frame())
         parallel::clusterCall(cl = cl, "require", package = "Rcpp", character.only = TRUE)
         parallel::clusterEvalQ(cl = cl, Rcpp::sourceCpp(file = rcppFile))
-      } else if (is.character(log_posterior)) {
-        parallel::clusterExport(cl = cl, varlist = log_posterior, envir = envir)
+      } else if (!is.null(log_posterior_name)) {
+        parallel::clusterExport(cl = cl, varlist = log_posterior_name, envir = envir)
       }
   
       q11 <- parallel::parRapply(cl = cl, x = .invTransform2Real(samples_4_iter, lb, ub, param_types), log_posterior,

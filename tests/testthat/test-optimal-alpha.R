@@ -1,4 +1,4 @@
-context("closed-form optimal alpha for the hybrid covariance")
+context("closed-form optimal alpha for the hybrid_arith covariance")
 
 # Exposed-but-internal: refer to the dotted helper directly.
 .opt <- bridgesampling:::.optimal_alpha_score
@@ -111,11 +111,11 @@ test_that("bridge_sampler with proposal_fit = 'hybrid', alpha_score = NULL works
   out <- suppressWarnings(bridge_sampler(
     samples = pr$Theta, log_posterior = log_density,
     data = NULL, lb = lb, ub = ub, method = "normal", silent = TRUE,
-    gradients = pr$G, proposal_fit = "hybrid", alpha_score = NULL
+    gradients = pr$G, proposal_fit = "hybrid_arith", alpha_score = NULL
   ))
 
   info <- out$proposal_fit_info
-  expect_equal(info$proposal_fit, "hybrid")
+  expect_equal(info$proposal_fit, "hybrid_arith")
   expect_null(info$alpha_score_input)
   expect_true(is.finite(info$alpha_score_used))
   expect_gte(info$alpha_score_used, 0)
@@ -143,7 +143,7 @@ test_that("bridge_sampler hybrid alpha=0.5 still records optimal-alpha diagnosti
   out <- suppressWarnings(bridge_sampler(
     samples = pr$Theta, log_posterior = log_density,
     data = NULL, lb = lb, ub = ub, method = "normal", silent = TRUE,
-    gradients = pr$G, proposal_fit = "hybrid", alpha_score = 0.5
+    gradients = pr$G, proposal_fit = "hybrid_arith", alpha_score = 0.5
   ))
 
   info <- out$proposal_fit_info
@@ -193,7 +193,7 @@ test_that("bridge_sampler rejects malformed alpha_score", {
     suppressWarnings(bridge_sampler(
       samples = pr$Theta, log_posterior = log_density,
       data = NULL, lb = lb, ub = ub, method = "normal", silent = TRUE,
-      gradients = pr$G, proposal_fit = "hybrid", alpha_score = 1.5
+      gradients = pr$G, proposal_fit = "hybrid_arith", alpha_score = 1.5
     )),
     "alpha_score"
   )
@@ -201,7 +201,7 @@ test_that("bridge_sampler rejects malformed alpha_score", {
     suppressWarnings(bridge_sampler(
       samples = pr$Theta, log_posterior = log_density,
       data = NULL, lb = lb, ub = ub, method = "normal", silent = TRUE,
-      gradients = pr$G, proposal_fit = "hybrid", alpha_score = "auto"
+      gradients = pr$G, proposal_fit = "hybrid_arith", alpha_score = "auto"
     )),
     "alpha_score"
   )

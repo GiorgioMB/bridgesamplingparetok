@@ -27,7 +27,9 @@
   calculate_covariance = FALSE,
   use_ess = FALSE,
   keep_log_eval = FALSE) {
-  
+
+  log_posterior <- .wrap_log_posterior(log_posterior, envir = envir)
+
   # Set seed if provided
   if (is.null(neff))
     neff <- nrow(samples_4_iter)
