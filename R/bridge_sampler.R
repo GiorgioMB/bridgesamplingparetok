@@ -203,19 +203,76 @@ bridge_sampler <- function(samples, num_splits, ...) {
 #' @export
 bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method = "normal", cores = 1, keep_log_eval = FALSE,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2, calculate_covariance = FALSE,
-                                      total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, 
-                                       pareto_smoothing_last = FALSE, use_ess = FALSE, ...) {
+                                      total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE,
+                                       pareto_smoothing_last = FALSE, use_ess = FALSE,
+                                      ## Score-matching proposal-fit options (prototype).
+                                      ## proposal_fit:
+                                      ##   "sample" (default, classic MLE)
+                                      ##   "score"  (Sigma^-1 = E[s s^T], gradient-only)
+                                      ##   "hybrid" (convex combo via alpha_score)
+                                      ## alpha_score: weight on score-matched estimator in [0,1]
+                                      ##   when proposal_fit = "hybrid".
+                                      proposal_fit = "sample",
+                                      alpha_score  = 0.5,
+                                      ## iter_subset: optional integer vector passed to
+                                      ## posterior::subset_draws(iteration = ...) to restrict
+                                      ## which post-warmup iterations are used in the bridge
+                                      ## estimator. NULL (default) = use all post-warmup draws.
+                                      ## Useful for computing multiple iter_sampling levels
+                                      ## from a single MCMC fit at the maximum level.
+                                      iter_subset = NULL,
+                                      ...) {
     if(file.exists("cmdstanr_log_eval.csv")) {
         file.remove("cmdstanr_log_eval.csv")
     }
     if (is.na(seed) & verbose) {
        warning("Not setting the seed will yield different results when compared to the original bridgesampling")
     }
-   draws <- samples$unconstrain_draws(format = "matrix")
+   if (is.null(iter_subset)) {
+     draws <- samples$unconstrain_draws(format = "matrix")
+   } else {
+     ## Subset constrained draws by iteration, then unconstrain. The first
+     ## argument below is the constrained draws object (default
+     ## format="draws_array"); subset_draws preserves chain structure.
+     draws_arr <- samples$draws(inc_warmup = FALSE)
+     draws_sub <- posterior::subset_draws(draws_arr, iteration = iter_subset)
+     draws <- samples$unconstrain_draws(draws = draws_sub, format = "matrix")
+   }
    parameters <- colnames(draws)
    lb <- rep(-Inf, length(parameters))
    ub <- rep(Inf, length(parameters))
    names(lb) <- names(ub) <- parameters
+
+   ## When requested, compute posterior score (gradient of log_prob)
+   ## at every unconstrained draw. grad_log_prob is exposed by
+   ## cmdstanr's init_model_methods(); the caller is expected to have
+   ## invoked samples$init_model_methods() already.
+   gradients <- NULL
+   if (proposal_fit %in% c("score", "hybrid", "hybrid_arith")) {
+     gradients <- tryCatch({
+       gm <- matrix(NA_real_, nrow = nrow(draws), ncol = ncol(draws),
+                    dimnames = list(NULL, parameters))
+       for (i in seq_len(nrow(draws))) {
+         g <- tryCatch(samples$grad_log_prob(unconstrained_variables = draws[i, ]),
+                       error = function(e) rep(NA_real_, ncol(draws)))
+         gm[i, ] <- as.numeric(g)
+       }
+       n_bad <- sum(!stats::complete.cases(gm))
+       if (n_bad > 0) {
+         warning(sprintf("%d of %d draws had non-finite gradients; ",
+                         n_bad, nrow(gm)),
+                 "they are retained (NaN) but may hurt the score-matched fit.",
+                 call. = FALSE)
+       }
+       gm
+     }, error = function(e) {
+       warning("grad_log_prob failed (", conditionMessage(e),
+               "); falling back to proposal_fit = 'sample'.", call. = FALSE)
+       NULL
+     })
+     if (is.null(gradients)) proposal_fit <- "sample"
+   }
+
    bridge_out <- bridge_sampler.matrix(samples = draws, num_splits = num_splits, total_perms = total_perms,
                         ..., pareto_smoothing_all = pareto_smoothing_all, pareto_smoothing_last = pareto_smoothing_last,
                         return_always = return_always, calculate_covariance = calculate_covariance,
@@ -223,7 +280,10 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method =
                         method = method, log_posterior = .cmdstan_log_posterior,
                         cores = cores, seed = seed, data = samples,
                         use_neff = use_neff, keep_log_eval = keep_log_eval,
-                        verbose = verbose, use_ess = use_ess)
+                        verbose = verbose, use_ess = use_ess,
+                        gradients    = gradients,
+                        proposal_fit = proposal_fit,
+                        alpha_score  = alpha_score)
    if (!keep_log_eval && file.exists("cmdstanr_log_eval.csv")) {
     file.remove("cmdstanr_log_eval.csv")
    }
@@ -237,8 +297,19 @@ bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method =
 bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep_log_eval = FALSE,
                                       repetitions = 1, method = "normal", cores = 1, calculate_covariance = FALSE,
                                       use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2,
-                                      total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE, 
-                                      pareto_smoothing_last = FALSE, use_ess = FALSE, ...) {
+                                      total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE,
+                                      pareto_smoothing_last = FALSE, use_ess = FALSE,
+                                      ## Score-matching proposal-fit options (mirrors the
+                                      ## bridge_sampler.CmdStanMCMC method).
+                                      ## proposal_fit:
+                                      ##   "sample" (default, classic MLE)
+                                      ##   "score"  (Sigma^-1 = E[s s^T], gradient-only)
+                                      ##   "hybrid" (convex combo via alpha_score)
+                                      ## alpha_score: weight on score-matched estimator in [0,1]
+                                      ##   when proposal_fit = "hybrid".
+                                      proposal_fit = "sample",
+                                      alpha_score  = 0.5,
+                                      ...) {
   if(file.exists("rstan_log_eval.csv")) {
         file.remove("rstan_log_eval.csv")
     }
@@ -308,6 +379,40 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
 
     colnames(samples_4_iter) <- paste0("trans_", parameters)
     colnames(samples_4_fit) <- paste0("trans_", parameters)
+
+    ## Score-matching gradients for the proposal fit. samples_4_fit rows
+    ## are unconstrained parameter draws (lb=-Inf, ub=Inf above), so
+    ## rstan::grad_log_prob with adjust_transform=TRUE returns the
+    ## posterior score on the same scale.
+    gradients_4_fit <- NULL
+    if (proposal_fit %in% c("score", "hybrid", "hybrid_arith")) {
+      gradients_4_fit <- tryCatch({
+        gm <- matrix(NA_real_, nrow = nrow(samples_4_fit),
+                     ncol = ncol(samples_4_fit),
+                     dimnames = list(NULL, colnames(samples_4_fit)))
+        for (ii in seq_len(nrow(samples_4_fit))) {
+          g <- tryCatch(rstan::grad_log_prob(object = stanfit_model,
+                                             upars = samples_4_fit[ii, ],
+                                             adjust_transform = TRUE),
+                        error = function(e) rep(NA_real_, ncol(samples_4_fit)))
+          gm[ii, ] <- as.numeric(g)
+        }
+        n_bad <- sum(!stats::complete.cases(gm))
+        if (n_bad > 0) {
+          warning(sprintf("%d of %d draws had non-finite gradients; ",
+                          n_bad, nrow(gm)),
+                  "they are retained (NaN) but may hurt the score-matched fit.",
+                  call. = FALSE)
+        }
+        gm
+      }, error = function(e) {
+        warning("rstan::grad_log_prob failed (", conditionMessage(e),
+                "); falling back to proposal_fit = 'sample'.", call. = FALSE)
+        NULL
+      })
+      if (is.null(gradients_4_fit)) proposal_fit <- "sample"
+    }
+
     # run bridge sampling
     if (!is.na(seed)) {
        set.seed(seed)
@@ -325,7 +430,10 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
                                            repetitions = repetitions, cores = cores, use_ess = use_ess,
                                            packages = "rstan", maxiter = maxiter, silent = silent,
                                            verbose = verbose, return_always = return_always,
-                                           r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
+                                           r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4,
+                                           gradients_4_fit = gradients_4_fit,
+                                           proposal_fit    = proposal_fit,
+                                           alpha_score     = alpha_score))
     } else {
       bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                                args = list(samples_4_fit = samples_4_fit,
@@ -340,7 +448,10 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
                                            envir = sys.frame(sys.nframe()), return_always = return_always,
                                            cores = cores, packages = "rstan", maxiter = maxiter,
                                            silent = silent, verbose = verbose, calculate_covariance = calculate_covariance,
-                                           r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
+                                           r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4,
+                                           gradients_4_fit = gradients_4_fit,
+                                           proposal_fit    = proposal_fit,
+                                           alpha_score     = alpha_score))
     }
     result <- append(result, list(bridge_output))
   }
@@ -522,7 +633,15 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
                                 envir = .GlobalEnv, rcppFile = NULL,
                                 maxiter = 1000, return_always = FALSE, use_ess = FALSE,
                                 param_types = rep("real", ncol(samples)), calculate_covariance = FALSE,
-                                silent = FALSE, verbose = FALSE, seed = NA) {
+                                silent = FALSE, verbose = FALSE, seed = NA,
+                                ## Score-matching proposal-fit prototype:
+                                ## gradients: optional nrow(samples) x ncol(samples) matrix of
+                                ##   posterior score vectors s_i = grad log p(theta_i) on the
+                                ##   unconstrained scale. Only consumed for proposal_fit != "sample"
+                                ##   and only when ALL lb/ub are infinite (cmdstanr path).
+                                gradients    = NULL,
+                                proposal_fit = "sample",
+                                alpha_score  = 0.5) {
   if (is.na(seed) & verbose) {
        warning("Not setting the seed will yield different results when compared to the original bridgesampling")
     }
@@ -554,6 +673,24 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
   theta_t <- tmp$theta_t
   transTypes <- tmp$transTypes
 
+  # Validate gradients against transformation: chain-rule correction for
+  # non-identity transTypes is not implemented, so only use gradients if
+  # all dimensions are "unbounded" (i.e. cmdstanr-style lb=-Inf, ub=Inf).
+  gradients_ok <- !is.null(gradients) && proposal_fit != "sample"
+  if (gradients_ok) {
+    if (!all(transTypes == "unbounded")) {
+      warning("proposal_fit != 'sample' with bounded parameters is not ",
+              "implemented (requires Jacobian correction of gradients); ",
+              "falling back to sample covariance.", call. = FALSE)
+      gradients_ok <- FALSE
+    } else if (nrow(gradients) != nrow(samples) ||
+               ncol(gradients) != ncol(samples)) {
+      warning("gradients dimensions do not match samples; ",
+              "falling back to sample covariance.", call. = FALSE)
+      gradients_ok <- FALSE
+    }
+  }
+
   # split samples for proposal/iterative scheme
   nr <- nrow(samples)
   permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), num_splits, total_perms)
@@ -568,6 +705,9 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
      samples_4_fit <- theta_t[samples4fit_index, ,drop = FALSE]
      samples4iter_index <- perm[[2]]
      samples_4_iter <- theta_t[samples4iter_index, , drop = FALSE]
+     gradients_4_fit <- if (gradients_ok) {
+       gradients[samples4fit_index, , drop = FALSE]
+     } else NULL
    
      # compute effective sample size
      if (use_neff) {
@@ -595,7 +735,10 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ..., num
                                 packages = packages, varlist = varlist, envir = envir,
                                 rcppFile = rcppFile, maxiter = maxiter,
                                 silent = silent, verbose = verbose, calculate_covariance = calculate_covariance,
-                                r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
+                                r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4,
+                                gradients_4_fit = gradients_4_fit,
+                                proposal_fit    = proposal_fit,
+                                alpha_score     = alpha_score))
       result <- append(result, list(bridge_output))
     
                                   

@@ -1,4 +1,35 @@
                        ***********************************
+                       ** bridgesampling VERSION 1.1-6 **
+                       ***********************************
+
+                    Changes in bridgesampling Version 1.1-6
+                    (development)
+
+  Significant User Visible Changes and New Features
+
+  o bridge_sampler() with proposal_fit = "hybrid" now accepts
+    alpha_score = NULL, which triggers the closed-form Ledoit-Wolf
+    optimal mixing weight a* = (V_n - C_{n,score}) / gamma_frob to be
+    computed per fit (see Ledoit & Wolf 2004, J. Multivariate
+    Analysis 88). The chosen alpha and its plug-in breakdown
+    (alpha_star, alpha_star_scalar, V_n, C_n_score, gamma_frob) are
+    returned in out$proposal_fit_info on every gradient-using call,
+    so users running with a fixed alpha get the optimal value as a
+    free diagnostic.
+
+  Bugfixes
+
+  o The score-matching covariance estimator now uses *centred*
+    scores: Sigma_score^{-1} = n^{-1} sum_i (s_i - bar s)(s_i - bar
+    s)^T, replacing the uncentred crossprod(G)/n form. The previous
+    estimator retained an O(bar s bar s^T) finite-sample bias even
+    though E_pi[s] = 0 in the population; the fix removes that bias
+    and is exactly the score-matching estimator of Hyvarinen (2005).
+    Effect on logml is O(1/n) for typical posteriors.
+
+
+
+                       ***********************************
                        ** bridgesampling VERSION 1.1-5 **
                        ***********************************
 
@@ -240,4 +271,3 @@
 
   o If log_prob() returns NA, these values are replaced with -Inf on the log
     scale (which assumes a likelihood of 0). With warning.
-

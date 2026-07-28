@@ -289,11 +289,10 @@
   if (!requireNamespace("posterior", quietly = TRUE)) {
     stop("The posterior package is required but not installed.")
   }
-  ## Attempt to Fit the tail of a Generalized Pareto Distribution
+  ## Pareto-k diagnostics of the bridge weights (khat, min_ss,
+  ## khat_threshold, convergence_rate).
   tryCatch({
-    diag <- posterior::pareto_diags(weights, tail = 'right', r_eff = 1)
-    ## Return the diagnostics data
-    return(diag)
+    posterior::pareto_diags(weights, tail = 'right', r_eff = 1)
   }, error = function(e) {
     ## Return NA if an error occurs
     warning("An error occurred during GPD fitting: ", conditionMessage(e))
@@ -363,17 +362,26 @@
     if (any(is.na(as.numeric(numi))) ||
         any(is.na(as.numeric((deni))))) {
       warning("NA value in iterative scheme, returning NA.\n Try rerunning with more samples.", call. = FALSE)
-      return(list(logml = NA, niter = i))
+      # Return a structurally complete result so that downstream
+      # std_logmls[i] <- tmp$std_logml etc. don't error with
+      # "replacement has length zero".
+      return(list(logml = NA_real_, niter = i,
+                  numi = numi, deni = deni,
+                  pareto_k = list(numi = NA, deni = NA, inv_deni = NA),
+                  std_logml = NA_real_))
     }
     if (any(is.infinite(as.numeric(numi))) ||
         any(is.infinite(as.numeric((deni))))) {
       warning("Infinite value in iterative scheme, returning NA.\n Try rerunning with more samples.", call. = FALSE)
-      return(list(logml = NA, niter = i))
+      return(list(logml = NA_real_, niter = i,
+                  numi = numi, deni = deni,
+                  pareto_k = list(numi = NA, deni = NA, inv_deni = NA),
+                  std_logml = NA_real_))
     }
     ##Do pareto smoothing 
     if (pareto_smoothing_all == TRUE) {
-      is_deni_constant <- posterior:::is_constant(as.numeric(deni))
-      is_numi_constant <- posterior:::is_constant(as.numeric(numi))
+      is_deni_constant <- posterior::is_constant(as.numeric(deni))
+      is_numi_constant <- posterior::is_constant(as.numeric(numi))
       
       # Check if either condition is TRUE and raise an error with a specific message
       if (is_deni_constant || is_numi_constant) {
@@ -402,6 +410,14 @@
     logml_vals <- c(logml_vals, logml)
     criterion_val <- switch(criterion, "r" = abs((r - rold)/r),
                             "logml" = abs((logml - logmlold)/logml))
+    if (!is.finite(criterion_val)) {
+      warning("Non-finite criterion in iterative scheme, returning NA.\n Try rerunning with more samples.",
+              call. = FALSE)
+      return(list(logml = NA_real_, niter = i,
+                  numi = numi, deni = deni,
+                  pareto_k = list(numi = NA, deni = NA, inv_deni = NA),
+                  std_logml = NA_real_))
+    }
     i <- i + 1
     if (calculate_covariance == TRUE){
       var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni))

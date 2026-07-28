@@ -30,7 +30,14 @@
   return_always,
   use_ess = FALSE,
   calculate_covariance = FALSE,
-  keep_log_eval = FALSE) {
+  keep_log_eval = FALSE,
+  ## Score-matching proposal-fit options that the dispatcher
+  ## (`bridge_sampler.matrix`) always passes through. They are ignored
+  ## by warp3 (which has its own affine-transform-then-iterate scheme),
+  ## and only listed here so R does not raise "unused arguments".
+  gradients_4_fit = NULL,
+  proposal_fit = "sample",
+  alpha_score = 0.5) {
 
   if (is.null(neff))
     neff <- nrow(samples_4_iter)
@@ -247,12 +254,15 @@
 
   if (repetitions == 1) {
     out <- list(logml = logml, niter = niter, method = "warp3", q11 = q11,
-                q12 = q12, q21 = q21[[1]], q22 = q22[[1]], pareto_k_numi = pareto_k_numi,
+                q12 = q12, q21 = q21[[1]], q22 = q22[[1]],
+                numi = numi, deni = deni,
+                pareto_k_numi = pareto_k_numi,
                 pareto_k_deni = pareto_k_deni, pareto_k_inv_deni = pareto_k_inv_deni, 
                 mcse_logml = std_logmls)
     class(out) <- "bridge"
   } else if (repetitions > 1) {
     out <- list(logml = logml, niter = niter, method = "warp3", repetitions = repetitions,
+                numi = numi, deni = deni,
                 pareto_k_numi = pareto_k_numi, pareto_k_deni = pareto_k_deni,
                 pareto_k_inv_deni = pareto_k_inv_deni, mcse_logml = std_logmls)
     class(out) <- "bridge_list"

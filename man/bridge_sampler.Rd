@@ -2,6 +2,7 @@
 % Please edit documentation in R/bridge_sampler.R
 \name{bridge_sampler}
 \alias{bridge_sampler}
+\alias{bridge_sampler.CmdStanMCMC}
 \alias{bridge_sampler.stanfit}
 \alias{bridge_sampler.mcmc.list}
 \alias{bridge_sampler.mcmc}
@@ -12,40 +13,83 @@
 \alias{bridge_sampler.MCMC_refClass}
 \title{Log Marginal Likelihood via Bridge Sampling}
 \usage{
-bridge_sampler(samples, ...)
+bridge_sampler(samples, num_splits, ...)
+
+\method{bridge_sampler}{CmdStanMCMC}(
+  samples = NULL,
+  repetitions = 1,
+  method = "normal",
+  cores = 1,
+  keep_log_eval = FALSE,
+  use_neff = TRUE,
+  maxiter = 1000,
+  silent = FALSE,
+  num_splits = 2,
+  calculate_covariance = FALSE,
+  total_perms = 1,
+  verbose = FALSE,
+  return_always = FALSE,
+  seed = NA,
+  pareto_smoothing_all = FALSE,
+  pareto_smoothing_last = FALSE,
+  use_ess = FALSE,
+  proposal_fit = "sample",
+  alpha_score = 0.5,
+  iter_subset = NULL,
+  ...
+)
 
 \method{bridge_sampler}{stanfit}(
   samples = NULL,
   stanfit_model = samples,
+  keep_log_eval = FALSE,
   repetitions = 1,
   method = "normal",
   cores = 1,
+  calculate_covariance = FALSE,
   use_neff = TRUE,
   maxiter = 1000,
   silent = FALSE,
+  num_splits = 2,
+  total_perms = 1,
   verbose = FALSE,
+  return_always = FALSE,
+  seed = NA,
+  pareto_smoothing_all = FALSE,
+  pareto_smoothing_last = FALSE,
+  use_ess = FALSE,
+  proposal_fit = "sample",
+  alpha_score = 0.5,
   ...
 )
 
 \method{bridge_sampler}{mcmc.list}(
   samples = NULL,
   log_posterior = NULL,
+  num_splits = 2,
+  total_perms = 1,
   ...,
   data = NULL,
   lb = NULL,
   ub = NULL,
   repetitions = 1,
+  pareto_smoothing_all = FALSE,
   param_types = rep("real", ncol(samples[[1]])),
+  pareto_smoothing_last = FALSE,
   method = "normal",
   cores = 1,
   use_neff = TRUE,
+  use_ess = FALSE,
   packages = NULL,
   varlist = NULL,
   envir = .GlobalEnv,
   rcppFile = NULL,
   maxiter = 1000,
   silent = FALSE,
-  verbose = FALSE
+  calculate_covariance = FALSE,
+  verbose = FALSE,
+  return_always = FALSE,
+  seed = NA
 )
 
 \method{bridge_sampler}{mcmc}(
@@ -55,24 +99,34 @@ bridge_sampler(samples, ...)
   data = NULL,
   lb = NULL,
   ub = NULL,
+  total_perms = 1,
+  num_splits = 2,
   repetitions = 1,
   method = "normal",
   cores = 1,
   use_neff = TRUE,
+  pareto_smoothing_last = FALSE,
   packages = NULL,
   varlist = NULL,
+  pareto_smoothing_all = FALSE,
   envir = .GlobalEnv,
   rcppFile = NULL,
+  use_ess = FALSE,
   maxiter = 1000,
+  return_always = FALSE,
+  calculate_covariance = FALSE,
   param_types = rep("real", ncol(samples)),
   silent = FALSE,
-  verbose = FALSE
+  verbose = FALSE,
+  seed = NA
 )
 
 \method{bridge_sampler}{matrix}(
   samples = NULL,
   log_posterior = NULL,
   ...,
+  num_splits = 2,
+  total_perms = 1,
   data = NULL,
   lb = NULL,
   ub = NULL,
@@ -80,14 +134,23 @@ bridge_sampler(samples, ...)
   method = "normal",
   cores = 1,
   use_neff = TRUE,
+  pareto_smoothing_all = FALSE,
   packages = NULL,
   varlist = NULL,
+  pareto_smoothing_last = FALSE,
   envir = .GlobalEnv,
   rcppFile = NULL,
   maxiter = 1000,
+  return_always = FALSE,
+  use_ess = FALSE,
   param_types = rep("real", ncol(samples)),
+  calculate_covariance = FALSE,
   silent = FALSE,
-  verbose = FALSE
+  verbose = FALSE,
+  seed = NA,
+  gradients = NULL,
+  proposal_fit = "sample",
+  alpha_score = 0.5
 )
 
 \method{bridge_sampler}{stanreg}(
@@ -95,10 +158,18 @@ bridge_sampler(samples, ...)
   repetitions = 1,
   method = "normal",
   cores = 1,
+  num_splits = 2,
+  pareto_smoothing_all = FALSE,
   use_neff = TRUE,
   maxiter = 1000,
   silent = FALSE,
+  total_perms = 1,
+  pareto_smoothing_last = FALSE,
+  use_ess = FALSE,
+  calculate_covariance = FALSE,
   verbose = FALSE,
+  return_always = FALSE,
+  seed = NA,
   ...
 )
 
@@ -107,16 +178,24 @@ bridge_sampler(samples, ...)
   log_posterior = NULL,
   ...,
   data = NULL,
+  num_splits = 2,
+  total_perms = 1,
   lb = NULL,
   ub = NULL,
   repetitions = 1,
+  use_ess = FALSE,
   method = "normal",
   cores = 1,
   use_neff = TRUE,
+  pareto_smoothing_last = FALSE,
   packages = NULL,
   varlist = NULL,
+  return_always = FALSE,
+  calculate_covariance = FALSE,
   envir = .GlobalEnv,
   rcppFile = NULL,
+  seed = NA,
+  pareto_smoothing_all = FALSE,
   maxiter = 1000,
   silent = FALSE,
   verbose = FALSE
@@ -127,16 +206,24 @@ bridge_sampler(samples, ...)
   log_posterior = NULL,
   ...,
   data = NULL,
+  num_splits = 2,
+  total_perms = 1,
   lb = NULL,
   ub = NULL,
   repetitions = 1,
+  calculate_covariance = FALSE,
   method = "normal",
   cores = 1,
   use_neff = TRUE,
+  pareto_smoothing_last = FALSE,
   packages = NULL,
   varlist = NULL,
+  return_always = FALSE,
+  pareto_smoothing_all = FALSE,
   envir = .GlobalEnv,
   rcppFile = NULL,
+  seed = NA,
+  use_ess = FALSE,
   maxiter = 1000,
   silent = FALSE,
   verbose = FALSE
@@ -145,12 +232,20 @@ bridge_sampler(samples, ...)
 \method{bridge_sampler}{MCMC_refClass}(
   samples,
   repetitions = 1,
+  num_splits = 2,
+  total_perms = 1,
   method = "normal",
+  use_ess = FALSE,
   cores = 1,
+  pareto_smoothing_all = FALSE,
   use_neff = TRUE,
   maxiter = 1000,
+  pareto_smoothing_last = FALSE,
   silent = FALSE,
+  seed = NA,
+  calculate_covariance = FALSE,
   verbose = FALSE,
+  return_always = FALSE,
   ...
 )
 }
@@ -162,16 +257,6 @@ parameter names in \code{lb} and \code{ub})  with posterior samples.}
 
 \item{...}{additional arguments passed to \code{log_posterior}. Ignored for
 the \code{stanfit} and \code{stanreg} methods.}
-
-\item{stanfit_model}{for the \code{stanfit} method, an additional object of
-class \code{"stanfit"} with the same model as \code{samples}, which will be
-used for evaluating the \code{log_posterior} (i.e., it does not need to
-contain any samples). The default is to use \code{samples}. In case
-\code{samples} was compiled in a different R session or on another computer
-with a different OS or setup, the \code{samples} model usually cannot be
-used for evaluation. In this case, one can compile the model on the current
-computer with \code{iter = 0} and pass it here (this usually needs to be
-done before \code{samples} is loaded).}
 
 \item{repetitions}{number of repetitions.}
 
@@ -200,6 +285,16 @@ iterations of the updating scheme to the console. Default is FALSE.}
 
 \item{verbose}{Boolean. Should internal debug information be printed to
 console? Default is \code{FALSE}.}
+
+\item{stanfit_model}{for the \code{stanfit} method, an additional object of
+class \code{"stanfit"} with the same model as \code{samples}, which will be
+used for evaluating the \code{log_posterior} (i.e., it does not need to
+contain any samples). The default is to use \code{samples}. In case
+\code{samples} was compiled in a different R session or on another computer
+with a different OS or setup, the \code{samples} model usually cannot be
+used for evaluation. In this case, one can compile the model on the current
+computer with \code{iter = 0} and pass it here (this usually needs to be
+done before \code{samples} is loaded).}
 
 \item{log_posterior}{function or name of function that takes a parameter
 vector and the \code{data} as input and returns the log of the unnormalized
