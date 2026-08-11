@@ -9,6 +9,7 @@
 }
 
 
+
 #### for matrix method ######
 
 .transform2Real <- function(
@@ -18,7 +19,6 @@
   theta_types = rep("real", ncol(theta))
 ) {
   ### transform samples to real line
-
   theta_t <- theta
   transTypes <- character(ncol(theta))
   cn <- colnames(theta)
@@ -55,7 +55,7 @@
 
   for (i in seq_len(ncol(theta))) {
     p <- cn[i]
-
+    
     if (theta_types[[p]] == "circular") {
       transTypes[[p]] <- "circular"
       theta_t[, i] <- .gaplessCircular(theta[, i])
@@ -243,24 +243,26 @@
   out
 }
 
-.run.iterative.scheme <- function(
-  q11,
-  q12,
-  q21,
-  q22,
-  r0,
-  tol,
-  L,
-  method,
-  maxiter,
-  silent,
-  criterion,
-  neff,
-  use_ess
-) {
+.run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L,
+                                  method, maxiter, silent,
+                                  criterion, neff) {
+
   ### run iterative updating scheme (using "optimal" bridge function,
   ### see Meng & Wong, 1996)
+  
+  if (verbose) {
+    cat("Checking for NA and Infinite values:\n")
+    vars <- list(q11 = q11, q12 = q12, q21 = q21, q22 = q22, L = L)
+    for (var_name in names(vars)) {
+        numeric_var <- as.numeric(vars[[var_name]]) 
+      
+        has_na <- any(is.na(numeric_var))
+        cat(sprintf("NA values in %s: %s\n", var_name, ifelse(has_na, "Yes", "No")))
 
+        has_inf <- any(is.infinite(numeric_var))
+        cat(sprintf("Infinite values in %s: %s\n", var_name, ifelse(has_inf, "Yes", "No")))
+    }
+  }
   if (method == "normal") {
     l1 <- q11 - q12 # log(l)
     l2 <- q21 - q22 # log(ltilde)
@@ -276,7 +278,7 @@
   #   criterion, neff,
   #   file = "iterative_scheme.rda"
   # )
-
+  
   lstar <- median(l1)
   n.1 <- length(l1)
   n.2 <- length(l2)
@@ -292,74 +294,36 @@
   i <- 1
 
   while (i <= maxiter && criterion_val > tol) {
-    if (!silent) {
+
+    if (! silent)
       cat(paste0("Iteration: ", i, "\n"))
-    }
 
     rold <- r
     logmlold <- logml
-    numi <- e^(l2 - lstar) / (s1 * e^(l2 - lstar) + s2 * r)
-    deni <- 1 / (s1 * e^(l1 - lstar) + s2 * r)
+    numi <-  e^(l2 - lstar)/(s1 * e^(l2 - lstar) + s2 *  r)
+    deni <- 1/(s1 * e^(l1 - lstar) + s2 * r)
 
-    if (
-      any(is.infinite(as.numeric(numi))) ||
-        any(is.infinite(as.numeric((deni))))
-    ) {
-      warning(
-        "Infinite value in iterative scheme, returning NA.\n Try rerunning with more samples.",
-        call. = FALSE
-      )
-      return(list(logml = NA, niter = i, mcse_logml = NA_real_))
+    if (any(is.infinite(as.numeric(numi))) ||
+        any(is.infinite(as.numeric((deni))))) {
+      warning("Infinite value in iterative scheme, returning NA.\n Try rerunning with more samples.", call. = FALSE)
+      return(list(logml = NA, niter = i))
+
     }
-    mean_numi <- mean(as.numeric(numi))
-    mean_deni <- mean(as.numeric(deni))
-    var_numi <- var(as.numeric(numi))
-    if (use_ess) {
-      var_deni <- tryCatch(
-        var(as.numeric(deni)) *
-          length(deni) /
-          mean(coda::effectiveSize(as.numeric(deni))),
-        error = function(e) {
-          warning(
-            "effective sample size calculation failed in iterative's scheme uncertainty calculation",
-            call. = FALSE
-          )
-          return(var(as.numeric(deni)))
-        }
-      )
-    } else {
-      var_deni <- var(as.numeric(deni))
-    }
-    r <- mean_numi / mean_deni
+
+    r <- (n.1/n.2) * sum(numi)/sum(deni)
     r_vals <- c(r_vals, r)
     logml <- log(r) + lstar
     logml_vals <- c(logml_vals, logml)
-    criterion_val <- switch(
-      criterion,
-      "r" = abs((r - rold) / r),
-      "logml" = abs((logml - logmlold) / logml)
-    )
+    criterion_val <- switch(criterion, "r" = abs((r - rold)/r),
+                            "logml" = abs((logml - logmlold)/logml))
     i <- i + 1
-    var_r <- (mean_numi^2) /
-      (mean_deni^2) *
-      (var_numi / (mean_numi)^2 + var_deni / mean_deni^2)
-    var_r <- var_r / length(numi)
 
-    ## Compute variance in log scale by match the variance of a
-    ## log-normal approximation
-    ## https://en.wikipedia.org/wiki/Log-normal_distribution#Arithmetic_moments
-    var_logml <- log(1 + var_r / r^2)
-    mcse_logml <- sqrt(var_logml)
   }
 
   if (i >= maxiter) {
-    return(list(
-      logml = NA,
-      niter = i - 1,
-      r_vals = r_vals,
-      mcse_logml = mcse_logml
-    ))
+    return(list(logml = NA, niter = i-1, r_vals = r_vals))
   }
 
-  return(list(logml = logml, niter = i - 1, mcse_logml = mcse_logml))
+  return(list(logml = logml, niter = i-1))
+
 }

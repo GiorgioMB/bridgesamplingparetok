@@ -206,61 +206,111 @@
 #'@importFrom stats qnorm pnorm dnorm median cov var
 #'@export
 bridge_sampler <- function(samples, ...) {
-  UseMethod("bridge_sampler", samples)
+   UseMethod("bridge_sampler", samples)
 }
+
+
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.CmdStanMCMC <- function(
-  samples = NULL,
-  repetitions = 1,
-  method = "normal",
-  cores = 1,
-  use_neff = TRUE,
-  maxiter = 1000,
-  silent = FALSE,
-  verbose = FALSE,
-  ...
-) {
-  draws <- samples$unconstrain_draws(format = "matrix")
-  parameters <- colnames(draws)
-  lb <- rep(-Inf, length(parameters))
-  ub <- rep(Inf, length(parameters))
-  names(lb) <- names(ub) <- parameters
-  bridge_out <- bridge_sampler.matrix(
-    samples = draws,
-    ...,
-    maxiter = maxiter,
-    silent = silent,
-    lb = lb,
-    ub = ub,
-    repetitions = repetitions,
-    method = method,
-    log_posterior = .cmdstan_log_posterior,
-    cores = cores,
-    data = samples,
-    use_neff = use_neff,
-    verbose = verbose
-  )
+bridge_sampler.CmdStanMCMC <- function(samples = NULL, repetitions = 1, method = "normal", cores = 1, keep_log_eval = FALSE,
+                                      use_neff = TRUE, maxiter = 1000, silent = FALSE, num_splits = 2, calculate_covariance = FALSE,
+                                      total_perms = 1, verbose = FALSE, return_always = FALSE, seed = NA, pareto_smoothing_all = FALSE,
+                                       pareto_smoothing_last = FALSE, use_ess = FALSE,
+                                      ## Score-matching proposal-fit options (prototype).
+                                      ## proposal_fit:
+                                      ##   "sample" (default, classic MLE)
+                                      ##   "score"  (Sigma^-1 = E[s s^T], gradient-only)
+                                      ##   "hybrid" (convex combo via alpha_score)
+                                      ## alpha_score: weight on score-matched estimator in [0,1]
+                                      ##   when proposal_fit = "hybrid".
+                                      proposal_fit = "sample",
+                                      alpha_score  = 0.5,
+                                      ## iter_subset: optional integer vector passed to
+                                      ## posterior::subset_draws(iteration = ...) to restrict
+                                      ## which post-warmup iterations are used in the bridge
+                                      ## estimator. NULL (default) = use all post-warmup draws.
+                                      ## Useful for computing multiple iter_sampling levels
+                                      ## from a single MCMC fit at the maximum level.
+                                      iter_subset = NULL,
+                                      ...) {
+    if(file.exists("cmdstanr_log_eval.csv")) {
+        file.remove("cmdstanr_log_eval.csv")
+    }
+    if (is.na(seed) & verbose) {
+       warning("Not setting the seed will yield different results when compared to the original bridgesampling")
+    }
+   if (is.null(iter_subset)) {
+     draws <- samples$unconstrain_draws(format = "matrix")
+   } else {
+     ## Subset constrained draws by iteration, then unconstrain. The first
+     ## argument below is the constrained draws object (default
+     ## format="draws_array"); subset_draws preserves chain structure.
+     draws_arr <- samples$draws(inc_warmup = FALSE)
+     draws_sub <- posterior::subset_draws(draws_arr, iteration = iter_subset)
+     draws <- samples$unconstrain_draws(draws = draws_sub, format = "matrix")
+   }
+   parameters <- colnames(draws)
+   lb <- rep(-Inf, length(parameters))
+   ub <- rep(Inf, length(parameters))
+   names(lb) <- names(ub) <- parameters
 
-  return(bridge_out)
+   ## When requested, compute posterior score (gradient of log_prob)
+   ## at every unconstrained draw. grad_log_prob is exposed by
+   ## cmdstanr's init_model_methods(); the caller is expected to have
+   ## invoked samples$init_model_methods() already.
+   gradients <- NULL
+   if (proposal_fit %in% c("score", "hybrid", "hybrid_arith")) {
+     gradients <- tryCatch({
+       gm <- matrix(NA_real_, nrow = nrow(draws), ncol = ncol(draws),
+                    dimnames = list(NULL, parameters))
+       for (i in seq_len(nrow(draws))) {
+         g <- tryCatch(samples$grad_log_prob(unconstrained_variables = draws[i, ]),
+                       error = function(e) rep(NA_real_, ncol(draws)))
+         gm[i, ] <- as.numeric(g)
+       }
+       n_bad <- sum(!stats::complete.cases(gm))
+       if (n_bad > 0) {
+         warning(sprintf("%d of %d draws had non-finite gradients; ",
+                         n_bad, nrow(gm)),
+                 "they are retained (NaN) but may hurt the score-matched fit.",
+                 call. = FALSE)
+       }
+       gm
+     }, error = function(e) {
+       warning("grad_log_prob failed (", conditionMessage(e),
+               "); falling back to proposal_fit = 'sample'.", call. = FALSE)
+       NULL
+     })
+     if (is.null(gradients)) proposal_fit <- "sample"
+   }
+
+   bridge_out <- bridge_sampler.matrix(samples = draws, num_splits = num_splits, total_perms = total_perms,
+                        ..., pareto_smoothing_all = pareto_smoothing_all, pareto_smoothing_last = pareto_smoothing_last,
+                        return_always = return_always, calculate_covariance = calculate_covariance,
+                        lb = lb, ub = ub, repetitions = repetitions,
+                        method = method, log_posterior = .cmdstan_log_posterior,
+                        cores = cores, seed = seed, data = samples,
+                        use_neff = use_neff, keep_log_eval = keep_log_eval,
+                        verbose = verbose, use_ess = use_ess,
+                        gradients    = gradients,
+                        proposal_fit = proposal_fit,
+                        alpha_score  = alpha_score)
+   if (!keep_log_eval && file.exists("cmdstanr_log_eval.csv")) {
+    file.remove("cmdstanr_log_eval.csv")
+   }
+   return(bridge_out)
 }
+   
+   
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.stanfit <- function(
-  samples = NULL,
-  stanfit_model = samples,
-  repetitions = 1,
-  method = "normal",
-  cores = 1,
-  use_neff = TRUE,
-  maxiter = 1000,
-  silent = FALSE,
-  verbose = FALSE,
-  ...
-) {
-  # cores > 1 only for unix:
+bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples,
+                                   repetitions = 1, method = "normal", cores = 1,
+                                   use_neff = TRUE, maxiter = 1000, silent = FALSE,
+                                   verbose = FALSE, ...) {
+    # cores > 1 only for unix:
   if (!(.Platform$OS.type == "unix") & (cores != 1)) {
     warning(
       "cores > 1 only possible on Unix/MacOs. Uses 'core = 1' instead.",
@@ -268,7 +318,6 @@ bridge_sampler.stanfit <- function(
     )
     cores <- 1L
   }
-
   # convert samples into matrix
   if (!requireNamespace("rstan")) {
     stop("package rstan required")
@@ -286,173 +335,152 @@ bridge_sampler.stanfit <- function(
     # for one parameter models
     dim(upars) <- c(1, dim(upars))
   }
-
+  if (num_splits %% 2 != 0) {
+  stop("Error: num_splits is not divisible by 2")
+  }
   nr <- dim(upars)[2]
-  samples4fit_index <- seq_len(nr) %in% seq_len(round(nr / 2)) # split samples in two parts
-  samples_4_fit <- apply(upars[, samples4fit_index, , drop = FALSE], 1, rbind)
+  samples4fit_index <- seq_len(nr) %in% seq_len(round(nr/2)) # split samples in two parts
+  samples_4_fit <- apply(upars[,samples4fit_index,,drop=FALSE], 1, rbind)
 
-  samples_4_iter_stan <- upars[, !samples4fit_index, , drop = FALSE]
+  samples_4_iter_stan <- upars[,!samples4fit_index,,drop=FALSE]
   samples_4_iter_tmp <- vector("list", dim(upars)[3])
   for (i in seq_along(samples_4_iter_tmp)) {
-    samples_4_iter_tmp[[i]] <- coda::as.mcmc(t(samples_4_iter_stan[,, i]))
+    samples_4_iter_tmp[[i]] <- coda::as.mcmc(t(samples_4_iter_stan[,,i]))
   }
   samples_4_iter_tmp <- coda::as.mcmc.list(samples_4_iter_tmp)
 
   if (use_neff) {
-    neff <- tryCatch(
-      median(coda::effectiveSize(samples_4_iter_tmp)),
-      error = function(e) {
-        warning(
-          "effective sample size cannot be calculated, has been replaced by number of samples.",
-          call. = FALSE
-        )
-        return(NULL)
-      }
-    )
+    neff <- tryCatch(median(coda::effectiveSize(samples_4_iter_tmp)), error = function(e) {
+      warning("effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
+      return(NULL)
+    })
   } else {
     neff <- NULL
   }
 
-  samples_4_iter <- apply(samples_4_iter_stan, 1, rbind)
+    samples_4_iter <- apply(samples_4_iter_stan, 1, rbind)
 
-  parameters <- paste0("x", (seq_len(dim(upars)[1])))
+    parameters <- paste0("x", (seq_len(dim(upars)[1])))
 
-  transTypes <- rep("unbounded", length(parameters))
-  names(transTypes) <- parameters
+    transTypes <- rep("unbounded", length(parameters))
+    names(transTypes) <- parameters
 
-  # prepare lb and ub
-  lb <- rep(-Inf, length(parameters))
-  ub <- rep(Inf, length(parameters))
-  names(lb) <- names(ub) <- parameters
+    # prepare lb and ub
+    lb <- rep(-Inf, length(parameters))
+    ub <- rep(Inf, length(parameters))
+    names(lb) <- names(ub) <- parameters
 
-  colnames(samples_4_iter) <- paste0("trans_", parameters)
-  colnames(samples_4_fit) <- paste0("trans_", parameters)
+    colnames(samples_4_iter) <- paste0("trans_", parameters)
+    colnames(samples_4_fit) <- paste0("trans_", parameters)
+
+    ## Score-matching gradients for the proposal fit. samples_4_fit rows
+    ## are unconstrained parameter draws (lb=-Inf, ub=Inf above), so
+    ## rstan::grad_log_prob with adjust_transform=TRUE returns the
+    ## posterior score on the same scale.
+    gradients_4_fit <- NULL
+    if (proposal_fit %in% c("score", "hybrid", "hybrid_arith")) {
+      gradients_4_fit <- tryCatch({
+        gm <- matrix(NA_real_, nrow = nrow(samples_4_fit),
+                     ncol = ncol(samples_4_fit),
+                     dimnames = list(NULL, colnames(samples_4_fit)))
+        for (ii in seq_len(nrow(samples_4_fit))) {
+          g <- tryCatch(rstan::grad_log_prob(object = stanfit_model,
+                                             upars = samples_4_fit[ii, ],
+                                             adjust_transform = TRUE),
+                        error = function(e) rep(NA_real_, ncol(samples_4_fit)))
+          gm[ii, ] <- as.numeric(g)
+        }
+        n_bad <- sum(!stats::complete.cases(gm))
+        if (n_bad > 0) {
+          warning(sprintf("%d of %d draws had non-finite gradients; ",
+                          n_bad, nrow(gm)),
+                  "they are retained (NaN) but may hurt the score-matched fit.",
+                  call. = FALSE)
+        }
+        gm
+      }, error = function(e) {
+        warning("rstan::grad_log_prob failed (", conditionMessage(e),
+                "); falling back to proposal_fit = 'sample'.", call. = FALSE)
+        NULL
+      })
+      if (is.null(gradients_4_fit)) proposal_fit <- "sample"
+    }
 
   # run bridge sampling
   if (cores == 1) {
-    bridge_output <- do.call(
-      what = paste0(".bridge.sampler.", method),
-      args = list(
-        samples_4_fit = samples_4_fit,
-        samples_4_iter = samples_4_iter,
-        neff = neff,
-        use_ess = use_neff,
-        log_posterior = .stan_log_posterior,
-        data = list(stanfit = stanfit_model),
-        lb = lb,
-        ub = ub,
-        param_types = rep("real", ncol(samples_4_fit)),
-        transTypes = transTypes,
-        repetitions = repetitions,
-        cores = cores,
-        packages = "rstan",
-        maxiter = maxiter,
-        silent = silent,
-        verbose = verbose,
-        r0 = 0.5,
-        tol1 = 1e-10,
-        tol2 = 1e-4
-      )
-    )
+    bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
+                             args = list(samples_4_fit = samples_4_fit,
+                                         samples_4_iter = samples_4_iter,
+                                         neff = neff,
+                                         log_posterior = .stan_log_posterior,
+                                         data = list(stanfit = stanfit_model),
+                                         lb = lb, ub = ub,
+                                         param_types = rep("real", ncol(samples_4_fit)),
+                                         transTypes = transTypes,
+                                         repetitions = repetitions, cores = cores,
+                                         packages = "rstan", maxiter = maxiter, silent = silent,
+                                         verbose = verbose,
+                                         r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
   } else {
-    bridge_output <- do.call(
-      what = paste0(".bridge.sampler.", method),
-      args = list(
-        samples_4_fit = samples_4_fit,
-        samples_4_iter = samples_4_iter,
-        neff = neff,
-        use_ess = use_neff,
-        log_posterior = .stan_log_posterior,
-        data = list(stanfit = stanfit_model),
-        lb = lb,
-        ub = ub,
-        param_types = rep("real", ncol(samples_4_fit)),
-        transTypes = transTypes,
-        repetitions = repetitions,
-        varlist = "stanfit",
-        envir = sys.frame(sys.nframe()),
-        cores = cores,
-        packages = "rstan",
-        maxiter = maxiter,
-        silent = silent,
-        verbose = verbose,
-        r0 = 0.5,
-        tol1 = 1e-10,
-        tol2 = 1e-4
-      )
-    )
+    bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
+                             args = list(samples_4_fit = samples_4_fit,
+                                         samples_4_iter = samples_4_iter,
+                                         neff = neff,
+                                         log_posterior = .stan_log_posterior,
+                                         data = list(stanfit = stanfit_model),
+                                         lb = lb, ub = ub,
+                                         param_types = rep("real", ncol(samples_4_fit)),
+                                         transTypes = transTypes,
+                                         repetitions = repetitions, varlist = "stanfit",
+                                         envir = sys.frame(sys.nframe()),
+                                         cores = cores, packages = "rstan", maxiter = maxiter,
+                                         silent = silent, verbose = verbose,
+                                         r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
   }
 
   return(bridge_output)
+
 }
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.mcmc.list <- function(
-  samples = NULL,
-  log_posterior = NULL,
-  ...,
-  data = NULL,
-  lb = NULL,
-  ub = NULL,
-  repetitions = 1,
-  param_types = rep("real", ncol(samples[[1]])),
-  method = "normal",
-  cores = 1,
-  use_neff = TRUE,
-  packages = NULL,
-  varlist = NULL,
-  envir = .GlobalEnv,
-  rcppFile = NULL,
-  maxiter = 1000,
-  silent = FALSE,
-  verbose = FALSE
-) {
+bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., data = NULL,
+                                     lb = NULL, ub = NULL, repetitions = 1,
+                                     param_types = rep("real", ncol(samples[[1]])),
+                                     method = "normal", cores = 1, use_neff = TRUE,
+                                     packages = NULL, varlist = NULL, envir = .GlobalEnv,
+                                     rcppFile = NULL, maxiter = 1000, silent = FALSE,
+                                     verbose = FALSE) {
   # split samples in two parts
   nr <- nrow(samples[[1]])
-  samples4fit_index <- seq_len(nr) %in% seq_len(round(nr / 2))
-  samples_4_fit_tmp <- samples[samples4fit_index, , drop = FALSE]
+  samples4fit_index <- seq_len(nr) %in% seq_len(round(nr/2))
+  samples_4_fit_tmp <- samples[samples4fit_index,,drop=FALSE]
   samples_4_fit_tmp <- do.call("rbind", samples_4_fit_tmp)
 
   # check lb and ub
-  if (!is.numeric(lb)) {
+  if (!is.numeric(lb))
     stop("lb needs to be numeric", call. = FALSE)
-  }
-  if (!is.numeric(ub)) {
+  if (!is.numeric(ub))
     stop("ub needs to be numeric", call. = FALSE)
-  }
-  if (!all(colnames(samples_4_fit_tmp) %in% names(lb))) {
+  if (!all(colnames(samples_4_fit_tmp) %in% names(lb)))
     stop("lb does not contain all parameters.", call. = FALSE)
-  }
-  if (!all(colnames(samples_4_fit_tmp) %in% names(ub))) {
+  if (!all(colnames(samples_4_fit_tmp) %in% names(ub)))
     stop("ub does not contain all parameters.", call. = FALSE)
-  }
 
   # transform parameters to real line
   tmp <- .transform2Real(samples_4_fit_tmp, lb, ub)
   samples_4_fit <- tmp$theta_t
   transTypes <- tmp$transTypes
-  samples_4_iter_tmp <- lapply(
-    samples[!samples4fit_index, , drop = FALSE],
-    function(x) .transform2Real(x, lb = lb, ub = ub)$theta_t
-  )
+  samples_4_iter_tmp <- lapply(samples[!samples4fit_index,,drop=FALSE],
+                               function(x) .transform2Real(x, lb = lb, ub = ub)$theta_t)
 
   # compute effective sample size
   if (use_neff) {
-    samples_4_iter_tmp <- coda::mcmc.list(lapply(
-      samples_4_iter_tmp,
-      coda::mcmc
-    ))
-    neff <- tryCatch(
-      median(coda::effectiveSize(samples_4_iter_tmp)),
-      error = function(e) {
-        warning(
-          "effective sample size cannot be calculated, has been replaced by number of samples.",
-          call. = FALSE
-        )
-        return(NULL)
-      }
-    )
+    samples_4_iter_tmp <- coda::mcmc.list(lapply(samples_4_iter_tmp, coda::mcmc))
+    neff <- tryCatch(median(coda::effectiveSize(samples_4_iter_tmp)), error = function(e) {
+      warning("effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
+      return(NULL)
+    })
   } else {
     neff <- NULL
   }
@@ -461,108 +489,65 @@ bridge_sampler.mcmc.list <- function(
   samples_4_iter <- do.call("rbind", samples_4_iter_tmp)
 
   # run bridge sampling
-  out <- do.call(
-    what = paste0(".bridge.sampler.", method),
-    args = list(
-      samples_4_fit = samples_4_fit,
-      samples_4_iter = samples_4_iter,
-      neff = neff,
-      use_ess = use_neff,
-      log_posterior = log_posterior,
-      "..." = ...,
-      data = data,
-      lb = lb,
-      ub = ub,
-      transTypes = transTypes,
-      repetitions = repetitions,
-      cores = cores,
-      packages = packages,
-      varlist = varlist,
-      envir = envir,
-      param_types = param_types,
-      rcppFile = rcppFile,
-      maxiter = maxiter,
-      silent = silent,
-      verbose = verbose,
-      r0 = 0.5,
-      tol1 = 1e-10,
-      tol2 = 1e-4
-    )
-  )
+  out <- do.call(what = paste0(".bridge.sampler.", method),
+                 args = list(samples_4_fit = samples_4_fit,
+                             samples_4_iter = samples_4_iter,
+                             neff = neff,
+                             log_posterior = log_posterior,
+                             "..." = ..., data = data,
+                             lb = lb, ub = ub,
+                             transTypes = transTypes,
+                             repetitions = repetitions, cores = cores,
+                             packages = packages, varlist = varlist, envir = envir,
+                             param_types = param_types,
+                             rcppFile = rcppFile, maxiter = maxiter,
+                             silent = silent, verbose = verbose,
+                             r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
 
   return(out)
+
 }
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.mcmc <- function(
-  samples = NULL,
-  log_posterior = NULL,
-  ...,
-  data = NULL,
-  lb = NULL,
-  ub = NULL,
-  repetitions = 1,
-  method = "normal",
-  cores = 1,
-  use_neff = TRUE,
-  packages = NULL,
-  varlist = NULL,
-  envir = .GlobalEnv,
-  rcppFile = NULL,
-  maxiter = 1000,
-  param_types = rep("real", ncol(samples)),
-  silent = FALSE,
-  verbose = FALSE
-) {
+bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
+                                data = NULL, lb = NULL, ub = NULL,
+                                repetitions = 1, method = "normal",
+                                cores = 1, use_neff = TRUE,
+                                packages = NULL, varlist = NULL,
+                                envir = .GlobalEnv, rcppFile = NULL,
+                                maxiter = 1000,
+                                param_types = rep("real", ncol(samples)),
+                                silent = FALSE, verbose = FALSE) {
   samples <- as.matrix(samples)
-  bridge_output <- bridge_sampler(
-    samples = samples,
-    log_posterior = log_posterior,
-    ...,
-    data = data,
-    lb = lb,
-    ub = ub,
-    repetitions = repetitions,
-    method = method,
-    cores = cores,
-    use_neff = use_neff,
-    packages = packages,
-    varlist = varlist,
-    envir = envir,
-    rcppFile = rcppFile,
-    maxiter = maxiter,
-    param_types = param_types,
-    silent = silent,
-    verbose = verbose
-  )
+  bridge_output <- bridge_sampler(samples = samples,
+                                  log_posterior = log_posterior,
+                                  ...,
+                                  data = data, lb = lb, ub = ub,
+                                  repetitions = repetitions,
+                                  method = method,
+                                  cores = cores, use_neff = use_neff,
+                                  packages = packages, varlist = varlist,
+                                  envir = envir, rcppFile = rcppFile,
+                                  maxiter = maxiter,
+                                  param_types = param_types,
+                                  silent = silent, verbose = verbose)
   return(bridge_output)
 }
 
 #' @export
 #' @rdname bridge_sampler
-bridge_sampler.matrix <- function(
-  samples = NULL,
-  log_posterior = NULL,
-  ...,
-  data = NULL,
-  lb = NULL,
-  ub = NULL,
-  repetitions = 1,
-  method = "normal",
-  cores = 1,
-  use_neff = TRUE,
-  packages = NULL,
-  varlist = NULL,
-  envir = .GlobalEnv,
-  rcppFile = NULL,
-  maxiter = 1000,
-  param_types = rep("real", ncol(samples)),
-  silent = FALSE,
-  verbose = FALSE
-) {
-  # see Meng & Wong (1996), equation 4.1
+bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ...,
+                                data = NULL, lb = NULL, ub = NULL,
+                                repetitions = 1, method = "normal",
+                                cores = 1, use_neff = TRUE,
+                                packages = NULL, varlist = NULL,
+                                envir = .GlobalEnv, rcppFile = NULL,
+                                maxiter = 1000,
+                                param_types = rep("real", ncol(samples)),
+                                silent = FALSE, verbose = FALSE) {
 
+  # see Meng & Wong (1996), equation 4.1
   # Check simplex computation
   is_simplex_param <- param_types == "simplex"
   if (any(is_simplex_param)) {
@@ -589,74 +574,66 @@ bridge_sampler.matrix <- function(
   theta_t <- tmp$theta_t
   transTypes <- tmp$transTypes
 
+  # Validate gradients against transformation: chain-rule correction for
+  # non-identity transTypes is not implemented, so only use gradients if
+  # all dimensions are "unbounded" (i.e. cmdstanr-style lb=-Inf, ub=Inf).
+  gradients_ok <- !is.null(gradients) && proposal_fit != "sample"
+  if (gradients_ok) {
+    if (!all(transTypes == "unbounded")) {
+      warning("proposal_fit != 'sample' with bounded parameters is not ",
+              "implemented (requires Jacobian correction of gradients); ",
+              "falling back to sample covariance.", call. = FALSE)
+      gradients_ok <- FALSE
+    } else if (nrow(gradients) != nrow(samples) ||
+               ncol(gradients) != ncol(samples)) {
+      warning("gradients dimensions do not match samples; ",
+              "falling back to sample covariance.", call. = FALSE)
+      gradients_ok <- FALSE
+    }
+  }
+
   # split samples for proposal/iterative scheme
   nr <- nrow(samples)
-  samples4fit_index <- seq_len(nr) %in% seq_len(round(nr / 2)) # split samples in two parts
-  samples_4_fit <- theta_t[samples4fit_index, , drop = FALSE]
+  samples4fit_index <- seq_len(nr) %in% seq_len(round(nr/2)) # split samples in two parts
+  samples_4_fit <- theta_t[samples4fit_index, ,drop = FALSE]
   samples_4_iter <- theta_t[!samples4fit_index, , drop = FALSE]
 
   # compute effective sample size
   if (use_neff) {
-    neff <- tryCatch(
-      median(coda::effectiveSize(coda::mcmc(samples_4_iter))),
-      error = function(e) {
-        warning(
-          "effective sample size cannot be calculated, has been replaced by number of samples.",
-          call. = FALSE
-        )
-        return(NULL)
-      }
-    )
+    neff <- tryCatch(median(coda::effectiveSize(coda::mcmc(samples_4_iter))),
+                     error = function(e) {
+                       warning("effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
+                       return(NULL)
+                     })
   } else {
     neff <- NULL
   }
 
-  out <- do.call(
-    what = paste0(".bridge.sampler.", method),
-    args = list(
-      samples_4_fit = samples_4_fit,
-      samples_4_iter = samples_4_iter,
-      neff = neff,
-      use_ess = use_neff,
-      log_posterior = log_posterior,
-      "..." = ...,
-      data = data,
-      lb = lb,
-      ub = ub,
-      transTypes = transTypes,
-      param_types = param_types,
-      repetitions = repetitions,
-      cores = cores,
-      packages = packages,
-      varlist = varlist,
-      envir = envir,
-      rcppFile = rcppFile,
-      maxiter = maxiter,
-      silent = silent,
-      verbose = verbose,
-      r0 = 0.5,
-      tol1 = 1e-10,
-      tol2 = 1e-4
-    )
-  )
+  out <- do.call(what = paste0(".bridge.sampler.", method),
+                 args = list(samples_4_fit = samples_4_fit,
+                             samples_4_iter = samples_4_iter,
+                             neff = neff,
+                             log_posterior = log_posterior,
+                             "..." = ..., data = data,
+                             lb = lb, ub = ub,
+                             transTypes = transTypes,
+                             param_types = param_types,
+                             repetitions = repetitions, cores = cores,
+                             packages = packages, varlist = varlist, envir = envir,
+                             rcppFile = rcppFile, maxiter = maxiter,
+                             silent = silent, verbose = verbose,
+                             r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
   return(out)
+
 }
 
 #' @rdname bridge_sampler
 #' @export
 #' @importFrom utils read.csv
 bridge_sampler.stanreg <-
-  function(
-    samples,
-    repetitions = 1,
-    method = "normal",
-    cores = 1,
-    use_neff = TRUE,
-    maxiter = 1000,
-    silent = FALSE,
-    verbose = FALSE,
-    ...
-  ) {
+  function(samples, repetitions = 1, method = "normal", cores = 1,
+           use_neff = TRUE, maxiter = 1000, silent = FALSE,
+           verbose = FALSE, ...) {
     df <- eval(samples$call$diagnostic_file)
     if (is.null(df)) {
       stop(
@@ -701,157 +678,87 @@ bridge_sampler.stanreg <-
     }
 
     if (cores == 1) {
-      bridge_output <- bridge_sampler(
-        samples = samples,
-        log_posterior = .stan_log_posterior,
-        data = list(stanfit = sf),
-        lb = lb,
-        ub = ub,
-        repetitions = repetitions,
-        method = method,
-        cores = cores,
-        use_neff = use_neff,
-        packages = "rstan",
-        maxiter = maxiter,
-        silent = silent,
-        verbose = verbose
-      )
+      bridge_output <- bridge_sampler(samples = samples, log_posterior = .stan_log_posterior,
+                                      data = list(stanfit = sf), lb = lb, ub = ub,
+                                      repetitions = repetitions, method = method, cores = cores,
+                                      use_neff = use_neff, packages = "rstan",
+                                      maxiter = maxiter, silent = silent,
+                                      verbose = verbose)
     } else {
-      bridge_output <- bridge_sampler(
-        samples = samples,
-        log_posterior = .stan_log_posterior,
-        data = list(stanfit = sf),
-        lb = lb,
-        ub = ub,
-        repetitions = repetitions,
-        varlist = "stanfit",
-        envir = sys.frame(sys.nframe()),
-        method = method,
-        cores = cores,
-        use_neff = use_neff,
-        packages = "rstan",
-        maxiter = maxiter,
-        silent = silent,
-        verbose = verbose
-      )
+      bridge_output <- bridge_sampler(samples = samples,
+                                      log_posterior = .stan_log_posterior,
+                                      data = list(stanfit = sf), lb = lb, ub = ub,
+                                      repetitions = repetitions, varlist = "stanfit",
+                                      envir = sys.frame(sys.nframe()), method = method,
+                                      cores = cores, use_neff = use_neff,
+                                      packages = "rstan", maxiter = maxiter,
+                                      silent = silent, verbose = verbose)
     }
     return(bridge_output)
   }
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.rjags <- function(
-  samples = NULL,
-  log_posterior = NULL,
-  ...,
-  data = NULL,
-  lb = NULL,
-  ub = NULL,
-  repetitions = 1,
-  method = "normal",
-  cores = 1,
-  use_neff = TRUE,
-  packages = NULL,
-  varlist = NULL,
-  envir = .GlobalEnv,
-  rcppFile = NULL,
-  maxiter = 1000,
-  silent = FALSE,
-  verbose = FALSE
-) {
+bridge_sampler.rjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL,
+                                 lb = NULL, ub = NULL, repetitions = 1,
+                                 method = "normal", cores = 1, use_neff = TRUE,
+                                 packages = NULL, varlist = NULL,
+                                 envir = .GlobalEnv, rcppFile = NULL,
+                                 maxiter = 1000, silent = FALSE, verbose = FALSE) {
+
+
   # convert to mcmc.list
   samples <- coda::as.mcmc(samples)
   cn <- coda::varnames(samples)
   samples <- samples[, cn != "deviance", drop = FALSE]
 
   # run bridge sampling
-  out <- bridge_sampler(
-    samples = samples,
-    log_posterior = log_posterior,
-    ...,
-    data = data,
-    lb = lb,
-    ub = ub,
-    repetitions = repetitions,
-    method = method,
-    cores = cores,
-    use_neff = use_neff,
-    packages = packages,
-    varlist = varlist,
-    envir = envir,
-    rcppFile = rcppFile,
-    maxiter = maxiter,
-    silent = silent,
-    verbose = verbose
-  )
+  out <- bridge_sampler(samples = samples, log_posterior = log_posterior, ...,
+                        data = data, lb = lb, ub = ub, repetitions = repetitions,
+                        method = method, cores = cores, use_neff = use_neff,
+                        packages = packages, varlist = varlist, envir = envir,
+                        rcppFile = rcppFile, maxiter = maxiter, silent = silent,
+                        verbose = verbose)
 
   return(out)
 }
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.runjags <- function(
-  samples = NULL,
-  log_posterior = NULL,
-  ...,
-  data = NULL,
-  lb = NULL,
-  ub = NULL,
-  repetitions = 1,
-  method = "normal",
-  cores = 1,
-  use_neff = TRUE,
-  packages = NULL,
-  varlist = NULL,
-  envir = .GlobalEnv,
-  rcppFile = NULL,
-  maxiter = 1000,
-  silent = FALSE,
-  verbose = FALSE
-) {
+bridge_sampler.runjags <- function(samples = NULL, log_posterior = NULL, ..., data = NULL,
+                                   lb = NULL, ub = NULL, repetitions = 1,
+                                   method = "normal", cores = 1, use_neff = TRUE,
+                                   packages = NULL, varlist = NULL,
+                                   envir = .GlobalEnv, rcppFile = NULL,
+                                   maxiter = 1000, silent = FALSE, verbose = FALSE) {
+
+
   # convert to mcmc.list
   samples <- coda::as.mcmc.list(samples)
 
   # run bridge sampling
-  out <- bridge_sampler(
-    samples = samples,
-    log_posterior = log_posterior,
-    ...,
-    data = data,
-    lb = lb,
-    ub = ub,
-    repetitions = repetitions,
-    method = method,
-    cores = cores,
-    use_neff = use_neff,
-    packages = packages,
-    varlist = varlist,
-    envir = envir,
-    rcppFile = rcppFile,
-    maxiter = maxiter,
-    silent = silent,
-    verbose = verbose
-  )
+  out <- bridge_sampler(samples = samples, log_posterior = log_posterior, ...,
+                        data = data, lb = lb, ub = ub, repetitions = repetitions,
+                        method = method, cores = cores, use_neff = use_neff,
+                        packages = packages, varlist = varlist, envir = envir,
+                        rcppFile = rcppFile, maxiter = maxiter, silent = silent,
+                        verbose = verbose)
 
   return(out)
 }
 
 #' @rdname bridge_sampler
 #' @export
-bridge_sampler.MCMC_refClass <- function(
-  samples,
-  repetitions = 1,
-  method = "normal",
-  cores = 1,
-  use_neff = TRUE,
-  maxiter = 1000,
-  silent = FALSE,
-  verbose = FALSE,
-  ...
-) {
-  if (!requireNamespace("nimble")) {
-    stop("package nimble required")
-  }
+bridge_sampler.MCMC_refClass <- function(samples,
+                                  repetitions = 1,
+                                  method = "normal",
+                                  cores = 1,
+                                  use_neff = TRUE,
+                                  maxiter = 1000,
+                                  silent = FALSE,
+                                  verbose = FALSE,
+                                  ...) {
+  if (!requireNamespace("nimble")) stop("package nimble required")
 
   ## functions for nimble support
   .log_posterior_nimble <- ".log_posterior_nimble <- nimble::nimbleFunction(
@@ -933,26 +840,26 @@ bridge_sampler.MCMC_refClass <- function(
   )
 
   # wrapper to match required format for log_posterior
-  log_posterior <- function(x, data) {
+  log_posterior <- function(x, data, keep_log_eval) {
     clog_posterior$run(x)
   }
 
-  out <- bridge_sampler(
-    samples = samples_mcmc_list,
-    log_posterior = log_posterior,
-    ...,
-    data = NULL,
-    lb = .nimble_bounds(mcmc_samples[[1]], nimble_model, "lower"),
-    ub = .nimble_bounds(mcmc_samples[[1]], nimble_model, "upper"),
-    repetitions = repetitions,
-    method = method,
-    cores = cores,
-    use_neff = use_neff,
-    packages = "nimble",
-    maxiter = maxiter,
-    silent = silent,
-    verbose = verbose
-  )
+  out <- bridge_sampler(samples = samples_mcmc_list,
+                        log_posterior = log_posterior,
+                        ...,
+                        data = NULL,
+                        lb = .nimble_bounds(mcmc_samples[[1]],
+                                            nimble_model, "lower"),
+                        ub = .nimble_bounds(mcmc_samples[[1]],
+                                            nimble_model, "upper"),
+                        repetitions = repetitions,
+                        method = method,
+                        cores = cores,
+                        use_neff = use_neff,
+                        packages = "nimble",
+                        maxiter = maxiter,
+                        silent = silent,
+                        verbose = verbose)
 
   return(out)
 }

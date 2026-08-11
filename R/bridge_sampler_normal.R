@@ -19,15 +19,17 @@
   varlist,
   envir,
   rcppFile,
+  pareto_smoothing_all,
+  pareto_smoothing_last,
   maxiter,
   silent,
   verbose,
   use_ess,
   r0,
   tol1,
-  tol2
-) {
-  if (is.null(neff)) {
+  tol2) {
+
+  if (is.null(neff))
     neff <- nrow(samples_4_iter)
   }
 
@@ -35,7 +37,149 @@
 
   # get mean & covariance matrix and generate samples from proposal
   m <- apply(samples_4_fit, 2, mean)
-  V_tmp <- cov(samples_4_fit)
+  V_sample <- cov(samples_4_fit)
+
+  use_gradients <- !is.null(gradients_4_fit) && proposal_fit != "sample"
+  if (use_gradients) {
+    if (nrow(gradients_4_fit) != nrow(samples_4_fit) ||
+        ncol(gradients_4_fit) != ncol(samples_4_fit)) {
+      warning("gradients_4_fit dims do not match samples_4_fit; ",
+              "falling back to sample covariance.", call. = FALSE)
+      use_gradients <- FALSE
+    }
+  }
+
+  ## Initialise proposal_fit_info; populated below if gradients are used.
+  ## combiner records how V_sample and V_score were combined:
+  ##   "none"       : proposal_fit = "sample" (V = V_sample)
+  ##   "score_only" : proposal_fit = "score"  (V = V_score)
+  ##   "arithmetic" : proposal_fit = "hybrid" (V = (1-a) V_n + a V_score)
+  ##   "geometric"  : proposal_fit = "hybrid_geom" (V = V_n # V_score)
+  ##   "geometric_fallback_arithmetic" : "hybrid_geom" path took the
+  ##                  PSD fallback inside .geometric_mean_psd().
+  proposal_fit_info <- list(
+    proposal_fit       = proposal_fit,
+    combiner           = NA_character_,
+    alpha_score_input  = alpha_score_input,
+    alpha_score_used   = NA_real_,
+    alpha_star         = NA_real_,
+    alpha_star_scalar  = NA_real_,
+    V_n                = NA_real_,
+    C_n_score          = NA_real_,
+    gamma_frob         = NA_real_,
+    scores_centered    = NA
+  )
+
+  if (use_gradients) {
+    ## Score-matching estimate of inverse covariance using *centred*
+    ## scores (s_i - bar s)(s_i - bar s)^T. The uncentred form retains an
+    ## O(bar s bar s^T) finite-sample bias even though E_pi[s] = 0.
+    finite_rows <- stats::complete.cases(gradients_4_fit) &
+                   apply(is.finite(gradients_4_fit), 1, all)
+    if (sum(finite_rows) < ncol(gradients_4_fit) + 1L) {
+      warning(sprintf(
+        "only %d of %d gradient rows finite (need > ncol = %d); ",
+        sum(finite_rows), nrow(gradients_4_fit), ncol(gradients_4_fit)),
+        "falling back to sample covariance.", call. = FALSE)
+      use_gradients <- FALSE
+    } else {
+      G_raw      <- gradients_4_fit[finite_rows, , drop = FALSE]
+      G          <- sweep(G_raw, 2L, colMeans(G_raw), check.margin = FALSE)
+      Prec_score <- crossprod(G) / nrow(G)
+      Prec_score <- as.matrix(nearPD(Prec_score)$mat)
+      V_score    <- tryCatch(chol2inv(chol(Prec_score)),
+                             error = function(e) solve(Prec_score))
+      proposal_fit_info$scores_centered <- TRUE
+    }
+  }
+  if (use_gradients) {
+    if (proposal_fit == "score") {
+      V_tmp <- V_score
+      proposal_fit_info$alpha_score_used <- 1
+      proposal_fit_info$combiner         <- "score_only"
+    } else if (proposal_fit == "hybrid") {
+      ## Matrix geometric mean of V_sample and V_score (Seyboldt-
+      ## Carlson-Carpenter 2026, dense Fisher-divergence-optimal
+      ## combiner). Default combiner since 2026-05. No alpha; the
+      ## geometric mean is uniquely determined by the two PSD inputs.
+      ## We pre-nearPD V_sample here so .geometric_mean_psd() sees
+      ## two PSD matrices; the Prec_score branch above already
+      ## nearPD'd V_score.
+      V_sample_pd <- as.matrix(nearPD(V_sample)$mat)
+      V_tmp <- .geometric_mean_psd(V_sample_pd, V_score)
+      proposal_fit_info$alpha_score_used <- NA_real_
+      proposal_fit_info$combiner <-
+        if (isTRUE(attr(V_tmp, "fallback"))) "geometric_fallback_arithmetic"
+        else                                  "geometric"
+      attr(V_tmp, "fallback") <- NULL
+      if (verbose) {
+        cat(sprintf("[proposal_fit=hybrid] combiner = %s\n",
+                    proposal_fit_info$combiner))
+      }
+    } else { # "hybrid_arith"
+      if (is.null(alpha_score)) {
+        ## Closed-form Ledoit-Wolf optimal alpha. The helper recomputes
+        ## Sigma_n and Sigma_score on the same finite-row subset so that
+        ## V_n / C_n_score / gamma_frob are exactly consistent with the
+        ## V_sample and V_score used here.
+        Theta_fit <- samples_4_fit[finite_rows, , drop = FALSE]
+        opt <- .optimal_alpha_score(samples_4_fit   = Theta_fit,
+                                    gradients_4_fit = G_raw,
+                                    Sigma_n         = V_sample,
+                                    Sigma_score     = V_score,
+                                    include_scalar_baseline = TRUE)
+        a <- opt$alpha_star
+        proposal_fit_info$alpha_star        <- opt$alpha_star
+        proposal_fit_info$alpha_star_scalar <- opt$alpha_star_scalar
+        proposal_fit_info$V_n               <- opt$V_n
+        proposal_fit_info$C_n_score         <- opt$C_n_score
+        proposal_fit_info$gamma_frob        <- opt$gamma_frob
+        if (verbose)
+          cat(sprintf("[proposal_fit=hybrid_arith] alpha_star = %.4f (scalar %.4f)\n",
+                      opt$alpha_star, opt$alpha_star_scalar))
+      } else {
+        a <- max(0, min(1, alpha_score))
+        ## Even with a fixed weight, compute the optimal-alpha breakdown
+        ## as a free diagnostic so callers can compare a vs alpha_star.
+        Theta_fit <- samples_4_fit[finite_rows, , drop = FALSE]
+        opt <- tryCatch(
+          .optimal_alpha_score(samples_4_fit   = Theta_fit,
+                               gradients_4_fit = G_raw,
+                               Sigma_n         = V_sample,
+                               Sigma_score     = V_score,
+                               include_scalar_baseline = TRUE),
+          error = function(e) NULL,
+          warning = function(w) NULL)
+        if (!is.null(opt)) {
+          proposal_fit_info$alpha_star        <- opt$alpha_star
+          proposal_fit_info$alpha_star_scalar <- opt$alpha_star_scalar
+          proposal_fit_info$V_n               <- opt$V_n
+          proposal_fit_info$C_n_score         <- opt$C_n_score
+          proposal_fit_info$gamma_frob        <- opt$gamma_frob
+        }
+      }
+      V_tmp <- a * V_score + (1 - a) * V_sample
+      proposal_fit_info$alpha_score_used <- a
+      proposal_fit_info$combiner         <- "arithmetic"
+    }
+    if (verbose) {
+      cat(sprintf("[proposal_fit=%s] eigenvalue ranges\n", proposal_fit))
+      cat(sprintf("  sample Sigma : %.3g .. %.3g\n",
+                  min(eigen(V_sample, symmetric = TRUE,
+                            only.values = TRUE)$values),
+                  max(eigen(V_sample, symmetric = TRUE,
+                            only.values = TRUE)$values)))
+      cat(sprintf("  score Sigma  : %.3g .. %.3g\n",
+                  min(eigen(V_score, symmetric = TRUE,
+                            only.values = TRUE)$values),
+                  max(eigen(V_score, symmetric = TRUE,
+                            only.values = TRUE)$values)))
+    }
+  } else {
+    V_tmp <- V_sample
+    proposal_fit_info$alpha_score_used <- 0
+    proposal_fit_info$combiner         <- "none"
+  }
   V <- as.matrix(nearPD(V_tmp)$mat) # make sure that V is positive-definite
 
   # sample from multivariate normal distribution and evaluate for posterior samples and generated samples
@@ -51,99 +195,49 @@
   # evaluate log of likelihood times prior for posterior samples and generated samples
   q21 <- vector(mode = "list", length = repetitions)
   if (cores == 1) {
-    q11 <- apply(
-      .invTransform2Real(samples_4_iter, lb, ub, param_types),
-      1,
-      log_posterior,
-      data = data,
-      ...
-    ) +
-      .logJacobian(samples_4_iter, transTypes, lb, ub)
+    q11 <- apply(.invTransform2Real(samples_4_iter, lb, ub, param_types), 1, log_posterior,
+                 data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
     for (i in seq_len(repetitions)) {
-      q21[[i]] <- apply(
-        .invTransform2Real(gen_samples[[i]], lb, ub, param_types),
-        1,
-        log_posterior,
-        data = data,
-        ...
-      ) +
-        .logJacobian(gen_samples[[i]], transTypes, lb, ub)
+      q21[[i]] <- apply(.invTransform2Real(gen_samples[[i]], lb, ub, param_types), 1, log_posterior,
+                        data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
     }
   } else if (cores > 1) {
-    if (.Platform$OS.type == "unix") {
-      split1 <- .split_matrix(
-        matrix = .invTransform2Real(samples_4_iter, lb, ub, param_types),
-        cores = cores
-      )
-      q11 <- parallel::mclapply(
-        split1,
-        FUN = function(x) apply(x, 1, log_posterior, data = data, ...),
-        mc.preschedule = FALSE,
-        mc.cores = cores
-      )
+    if ( .Platform$OS.type == "unix") {
+      split1 <- .split_matrix(matrix=.invTransform2Real(samples_4_iter, lb, ub, param_types), cores=cores)
+      q11 <- parallel::mclapply(split1, FUN =
+                                  function(x) apply(x, 1, log_posterior, data = data, ...),
+                                  mc.preschedule = FALSE,
+                                  mc.cores = cores)
       q11 <- unlist(q11) + .logJacobian(samples_4_iter, transTypes, lb, ub)
       for (i in seq_len(repetitions)) {
-        split2 <- .split_matrix(
-          matrix = .invTransform2Real(gen_samples[[i]], lb, ub, param_types),
-          cores = cores
-        )
-        q21[[i]] <- parallel::mclapply(
-          split2,
-          FUN = function(x) apply(x, 1, log_posterior, data = data, ...),
-          mc.preschedule = FALSE,
-          mc.cores = cores
-        )
-        q21[[i]] <- unlist(q21[[i]]) +
-          .logJacobian(gen_samples[[i]], transTypes, lb, ub)
+        split2 <- .split_matrix(matrix=.invTransform2Real(gen_samples[[i]], lb, ub, param_types), cores = cores)
+        q21[[i]] <- parallel::mclapply(split2, FUN =
+                                  function(x) apply(x, 1, log_posterior, data = data, ...),
+                                  mc.preschedule = FALSE,
+                                  mc.cores = cores)
+        q21[[i]] <- unlist(q21[[i]]) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
       }
     } else {
-      cl <- parallel::makeCluster(cores, useXDR = FALSE)
-      sapply(packages, function(x) {
-        parallel::clusterCall(
-          cl = cl,
-          "require",
-          package = x,
-          character.only = TRUE
-        )
-      })
-      parallel::clusterExport(cl = cl, varlist = varlist, envir = envir)
+    cl <- parallel::makeCluster(cores, useXDR = FALSE)
+    sapply(packages, function(x) parallel::clusterCall(cl = cl, "require", package = x,
+                                                       character.only = TRUE))
+    parallel::clusterExport(cl = cl, varlist = varlist, envir = envir)
 
-      if (!is.null(rcppFile)) {
-        parallel::clusterExport(
-          cl = cl,
-          varlist = "rcppFile",
-          envir = parent.frame()
-        )
-        parallel::clusterCall(
-          cl = cl,
-          "require",
-          package = "Rcpp",
-          character.only = TRUE
-        )
-        parallel::clusterEvalQ(cl = cl, Rcpp::sourceCpp(file = rcppFile))
-      } else if (is.character(log_posterior)) {
-        parallel::clusterExport(cl = cl, varlist = log_posterior, envir = envir)
-      }
+    if ( ! is.null(rcppFile)) {
+      parallel::clusterExport(cl = cl, varlist = "rcppFile", envir = parent.frame())
+      parallel::clusterCall(cl = cl, "require", package = "Rcpp", character.only = TRUE)
+      parallel::clusterEvalQ(cl = cl, Rcpp::sourceCpp(file = rcppFile))
+    } else if (is.character(log_posterior)) {
+      parallel::clusterExport(cl = cl, varlist = log_posterior, envir = envir)
+    }
 
-      q11 <- parallel::parRapply(
-        cl = cl,
-        x = .invTransform2Real(samples_4_iter, lb, ub, param_types),
-        log_posterior,
-        data = data,
-        ...
-      ) +
-        .logJacobian(samples_4_iter, transTypes, lb, ub)
-      for (i in seq_len(repetitions)) {
-        q21[[i]] <- parallel::parRapply(
-          cl = cl,
-          x = .invTransform2Real(gen_samples[[i]], lb, ub, param_types),
-          log_posterior,
-          data = data,
-          ...
-        ) +
-          .logJacobian(gen_samples[[i]], transTypes, lb, ub)
-      }
-      parallel::stopCluster(cl)
+    q11 <- parallel::parRapply(cl = cl, x = .invTransform2Real(samples_4_iter, lb, ub, param_types), log_posterior,
+                               data = data, ...) + .logJacobian(samples_4_iter, transTypes, lb, ub)
+    for (i in seq_len(repetitions)) {
+      q21[[i]] <- parallel::parRapply(cl = cl, x = .invTransform2Real(gen_samples[[i]], lb, ub, param_types), log_posterior,
+                                      data = data, ...) + .logJacobian(gen_samples[[i]], transTypes, lb, ub)
+    }
+    parallel::stopCluster(cl)
     }
   }
   if (verbose) {
@@ -224,81 +318,36 @@
   }
   logml <- numeric(repetitions)
   niter <- numeric(repetitions)
-  mcse_logmls <- numeric(repetitions)
   # run iterative updating scheme to compute log of marginal likelihood
   for (i in seq_len(repetitions)) {
-    tmp <- .run.iterative.scheme(
-      q11 = q11,
-      q12 = q12,
-      q21 = q21[[i]],
-      q22 = q22[[i]],
-      r0 = r0,
-      tol = tol1,
-      L = NULL,
-      method = "normal",
-      maxiter = maxiter,
-      silent = silent,
-      use_ess = use_ess,
-      criterion = "r",
-      neff = neff
-    )
+    tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
+                                 r0 = r0, tol = tol1, L = NULL, method = "normal",
+                                 maxiter = maxiter, silent = silent,
+                                 criterion = "r", neff = neff)
     if (is.na(tmp$logml) & !is.null(tmp$r_vals)) {
-      warning(
-        "logml could not be estimated within maxiter, rerunning with adjusted starting value. \nEstimate might be more variable than usual.",
-        call. = FALSE
-      )
+      warning("logml could not be estimated within maxiter, rerunning with adjusted starting value. \nEstimate might be more variable than usual.", call. = FALSE)
       lr <- length(tmp$r_vals)
       # use geometric mean as starting value
       r0_2 <- sqrt(tmp$r_vals[[lr - 1]] * tmp$r_vals[[lr]])
-      tmp <- .run.iterative.scheme(
-        q11 = q11,
-        q12 = q12,
-        q21 = q21[[i]],
-        q22 = q22[[i]],
-        r0 = r0_2,
-        tol = tol2,
-        L = NULL,
-        method = "normal",
-        maxiter = maxiter,
-        silent = silent,
-        use_ess = use_ess,
-        criterion = "logml",
-        neff = neff
-      )
+      tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]],
+                                   r0 = r0_2, tol = tol2, L = NULL, method = "normal",
+                                   maxiter = maxiter, silent = silent,
+                                   criterion = "logml", neff = neff)
       tmp$niter <- maxiter + tmp$niter
     }
-
     logml[i] <- tmp$logml
     mcse_logmls[i] <- tmp$mcse_logml
     niter[i] <- tmp$niter
-    if (niter[i] == maxiter) {
-      warning(
-        "logml could not be estimated within maxiter, returning NA.",
-        call. = FALSE
-      )
-    }
+    if (niter[i] == maxiter)
+      warning("logml could not be estimated within maxiter, returning NA.", call. = FALSE)
   }
 
   if (repetitions == 1) {
-    out <- list(
-      logml = logml,
-      niter = niter,
-      method = "normal",
-      q11 = q11,
-      q12 = q12,
-      q21 = q21[[1]],
-      q22 = q22[[1]],
-      mcse_logml = mcse_logmls
-    )
+    out <- list(logml = logml, niter = niter, method = "normal", q11 = q11,
+                q12 = q12, q21 = q21[[1]], q22 = q22[[1]])
     class(out) <- "bridge"
   } else if (repetitions > 1) {
-    out <- list(
-      logml = logml,
-      niter = niter,
-      method = "normal",
-      repetitions = repetitions,
-      mcse_logml = mcse_logmls
-    )
+    out <- list(logml = logml, niter = niter, method = "normal", repetitions = repetitions)
     class(out) <- "bridge_list"
   }
 

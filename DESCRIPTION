@@ -1,7 +1,7 @@
 Package: bridgesampling
 Type: Package
 Title: Bridge Sampling for Marginal Likelihoods and Bayes Factors
-Version: 1.2-1
+Version: 1.2-2
 Authors@R: c(person(given="Quentin F.", family="Gronau", role=c("aut", "cre"),
              email="Quentin.F.Gronau@gmail.com",
              comment=c(ORCID="0000-0001-5510-6943")),
@@ -15,8 +15,8 @@ Authors@R: c(person(given="Quentin F.", family="Gronau", role=c("aut", "cre"),
              person("Ben", "Goodrich", role = c("ctb")),
              person("Kees", "Mulder", role = c("ctb")),
              person("Perry", "de Valpine", role = c("ctb")),
-             person(given="Aki", family="Vehtari", role = c("ctb")),
-             person(given="Giorgio", family="Micaletto", role = c("ctb"))
+             person("Aki", "Vehtari", role = c("ctb")),
+             person("Giorgio", "Micaletto", role = c("ctb"))
              )
 Depends:
     R (>= 3.0.0)
@@ -31,6 +31,8 @@ Imports:
     utils,
     methods
 Suggests:
+    posterior,
+    cmdstanr (>= 0.6.0),
     testthat,
     Rcpp,
     RcppEigen,
@@ -44,8 +46,7 @@ Suggests:
     rstan,
     rstanarm,
     nimble,
-    MCMCpack,
-    cmdstanr (>= 0.6.0)
+    MCMCpack
 Description: Provides functions for estimating marginal likelihoods, Bayes
     factors, posterior model probabilities, and normalizing constants in general,
     via different versions of bridge sampling (Meng & Wong, 1996, 
