@@ -39,6 +39,18 @@ bridge_sampler(samples, num_splits, ...)
   ...
 )
 
+\method{bridge_sampler}{CmdStanMCMC}(
+  samples = NULL,
+  repetitions = 1,
+  method = "normal",
+  cores = 1,
+  use_neff = TRUE,
+  maxiter = 1000,
+  silent = FALSE,
+  verbose = FALSE,
+  ...
+)
+
 \method{bridge_sampler}{stanfit}(
   samples = NULL,
   stanfit_model = samples,
@@ -270,12 +282,14 @@ used. Hence elements needed for evaluation should be in the
 \code{\link{makeCluster}} is used and further arguments specified below will
 be used.}
 
-\item{use_neff}{Boolean which determines whether the effective sample size is
-used in the optimal bridge function. Default is TRUE. If FALSE, the number
-of samples is used instead. If \code{samples} is a \code{matrix}, it is
-assumed that the \code{matrix} contains the samples of one chain in order.
-If \code{samples} come from more than one chain, we recommend to use an
-\code{mcmc.list} object for optimal performance.}
+\item{use_neff}{Logical. If \code{TRUE}, the effective sample size (compared
+to the nominal sample size) is used in the optimal bridge function and in
+the iterative scheme's uncertainty calculations (making MCSE computation
+take into account autocorrelation in MCMC samples). Default is TRUE. If
+FALSE, the nominal sample size  is used instead. If \code{samples} is a
+\code{matrix}, it is assumed that the \code{matrix} contains the samples of
+one chain in order. If \code{samples} come from more than one chain, we
+recommend to use an \code{mcmc.list} object for optimal performance.}
 
 \item{maxiter}{maximum number of iterations for the iterative updating scheme.
 Default is 1,000 to avoid infinite loops.}
@@ -338,21 +352,33 @@ will be exported to the nodes). Default is \code{\link{.GlobalEnv}}.}
 (will be compiled on all cores).}
 }
 \value{
-if \code{repetitions = 1}, returns a list of class \code{"bridge"}
- with components: \itemize{ \item \code{logml}: estimate of log marginal
- likelihood. \item \code{niter}: number of iterations of the iterative
- updating scheme. \item \code{method}: bridge sampling method that was used
- to obtain the estimate. \item \code{q11}: log posterior evaluations for
- posterior samples. \item \code{q12}: log proposal evaluations for posterior
- samples. \item \code{q21}: log posterior evaluations for samples from
- proposal. \item \code{q22}: log proposal evaluations for samples from
- proposal. } if \code{repetitions > 1}, returns a list of class
- \code{"bridge_list"} with components: \itemize{ \item \code{logml}: numeric
- vector with estimates of log marginal likelihood. \item \code{niter}:
- numeric vector with number of iterations of the iterative updating scheme
- for each repetition. \item \code{method}: bridge sampling method that was
- used to obtain the estimates. \item \code{repetitions}: number of
- repetitions. }
+If \code{repetitions = 1}, returns a list of class \code{"bridge"}
+ with components:
+ \itemize{
+   \item \code{logml}: estimate of the log marginal likelihood.
+   \item \code{niter}: number of iterations of the iterative
+         updating scheme.
+   \item \code{method}: bridge sampling method that was used
+         to obtain the estimate.
+   \item \code{q11}: log posterior evaluations for posterior samples.
+   \item \code{q12}: log proposal evaluations for posterior samples.
+   \item \code{q21}: log posterior evaluations for samples from the proposal.
+   \item \code{q22}: log proposal evaluations for samples from the proposal.
+   \item \code{mcse_logml}: Monte Carlo standard error of \code{logml}
+         on the log-scale (Micaletto & Vehtari, 2025).
+ }
+ If \code{repetitions > 1}, returns a list of class \code{"bridge_list"}
+ with components:
+ \itemize{
+   \item \code{logml}: numeric vector of log marginal likelihood estimates.
+   \item \code{niter}: numeric vector with the number of iterations of the
+         iterative updating scheme for each repetition.
+   \item \code{method}: bridge sampling method that was used to obtain
+         the estimates.
+   \item \code{repetitions}: number of repetitions.
+   \item \code{mcse_logml}: numeric vector of Monte Carlo standard errors
+         on the log-scale (Micaletto & Vehtari, 2025), one per repetition.
+}
 }
 \description{
 Computes log marginal likelihood via bridge sampling.
@@ -639,11 +665,11 @@ Gronau, Q. F., Singmann, H., & Wagenmakers, E.-J. (2020). bridgesampling: An
  Mathematical Psychology}. \url{https://arxiv.org/abs/1703.05984} \cr
  \code{vignette("bridgesampling_tutorial")}
 
- Gronau, Q. F., Wagenmakers, E.-J., Heck, D. W., & Matzke, D. (2017). \emph{A
- simple method for comparing complex models: Bayesian model comparison for
- hierarchical multinomial processing tree models using Warp-III bridge
- sampling}. Manuscript submitted for publication.
- \url{https://psyarxiv.com/yxhfm}
+ Gronau, Q. F., Wagenmakers, E.-J., Heck, D. W., & Matzke, D. (2019). A
+ Simple Method for Comparing Complex Models: Bayesian Model Comparison for
+ Hierarchical Multinomial Processing Tree Models Using Warp-III Bridge
+ Sampling. \emph{Psychometrika}, 84(1), 261–284.
+ \doi{10.1007/s11336-018-9648-3}
 
  Meng, X.-L., & Wong, W. H. (1996). Simulating ratios of normalizing
  constants via a simple identity: A theoretical exploration. \emph{Statistica
@@ -653,6 +679,10 @@ Gronau, Q. F., Singmann, H., & Wagenmakers, E.-J. (2020). bridgesampling: An
  Meng, X.-L., & Schilling, S. (2002). Warp bridge sampling. \emph{Journal of
  Computational and Graphical Statistics, 11(3)}, 552-586.
  \doi{10.1198/106186002457}
+
+ Micaletto, G., & Vehtari, A. (2025). Monte Carlo standard errors for bridge
+ sampling marginal likelihood estimation. \emph{arXiv preprint},
+ arXiv:2508.14487. \url{https://arxiv.org/abs/2508.14487}
 
  Overstall, A. M., & Forster, J. J. (2010). Default Bayesian model
  determination methods for generalised linear mixed models.
@@ -671,5 +701,5 @@ Quentin F. Gronau and Henrik Singmann. Parallel computing (i.e.,
  \code{cores > 1}) and the \code{stanfit} method use code from \code{rstan}
  by Jiaqing Guo, Jonah Gabry, and Ben Goodrich. Ben Goodrich added the
  \code{stanreg} method. Kees Mulder added methods for simplex and circular
- variables.
+ variables. Giorgio Micaletto and Aki Vehtari added the \code{CmdStanMCMC} method (for \code{cmdstanr}) and calculation of the Monte Carlo Standard Error (MCSE).
 }

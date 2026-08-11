@@ -11,3 +11,5 @@ CONDUCT.md
 
 ^revdep$
 ^\.github$
+NEWS.old
+air.toml

@@ -1,7 +1,7 @@
 Package: bridgesampling
 Type: Package
 Title: Bridge Sampling for Marginal Likelihoods and Bayes Factors
-Version: 1.1-6
+Version: 1.2-2
 Authors@R: c(person(given="Quentin F.", family="Gronau", role=c("aut", "cre"),
              email="Quentin.F.Gronau@gmail.com",
              comment=c(ORCID="0000-0001-5510-6943")),
@@ -57,5 +57,6 @@ Additional_repositories:
 License: GPL (>=2)
 LazyData: true
 RoxygenNote: 7.3.3
+Encoding: UTF-8
 VignetteBuilder: knitr, R.rsp
 URL: https://github.com/quentingronau/bridgesampling
