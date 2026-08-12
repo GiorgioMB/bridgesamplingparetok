@@ -39,18 +39,6 @@ bridge_sampler(samples, num_splits, ...)
   ...
 )
 
-\method{bridge_sampler}{CmdStanMCMC}(
-  samples = NULL,
-  repetitions = 1,
-  method = "normal",
-  cores = 1,
-  use_neff = TRUE,
-  maxiter = 1000,
-  silent = FALSE,
-  verbose = FALSE,
-  ...
-)
-
 \method{bridge_sampler}{stanfit}(
   samples = NULL,
   stanfit_model = samples,
