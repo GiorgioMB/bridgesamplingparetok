@@ -26,10 +26,8 @@
   r0,
   tol1,
   tol2,
-  # Score-matching proposal-fit arguments that bridge_sampler.matrix()
-  # always passes through. warp3 fits its own affine transformation and
-  # ignores them; they are listed here only so that R does not raise an
-  # "unused arguments" error.
+  # Passed through by bridge_sampler.matrix(); warp3 fits its own affine
+  # transformation and ignores them.
   gradients_4_fit = NULL,
   proposal_fit = c("sample", "hybrid")
 ) {

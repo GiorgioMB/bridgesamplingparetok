@@ -71,11 +71,7 @@
 # matrix of draws on the unconstrained scale.
 #
 # Neither rstan::grad_log_prob() nor cmdstanr's $grad_log_prob() accepts
-# more than one draw at a time, so the loop below is unavoidable. Doing
-# it here, once per matrix rather than once per backend, gives both
-# backends the same failure handling and keeps the loop in one place.
-# It is not faster than looping in each backend: the cost is dominated
-# by the per-call overhead inside the backends themselves.
+# more than one draw at a time, so the loop below is unavoidable.
 #
 # `grad_fun` takes a single unconstrained parameter vector and returns a
 # numeric vector of the same length. Rows for which it fails, or for
@@ -93,8 +89,8 @@
   )
   first_error <- NULL
   for (i in seq_len(nrow(draws))) {
-    # A failure here is a property of the draw (e.g. the gradient is not
-    # defined there), so the row is left as NA and the fit continues.
+    # A failure is a property of the draw, so the row is left as NA and
+    # the fit continues.
     g <- tryCatch(
       as.numeric(grad_fun(draws[i, ])),
       error = function(e) {
@@ -107,8 +103,7 @@
     if (is.null(g)) {
       next
     }
-    # A wrong length, by contrast, is structural and would silently
-    # corrupt the proposal fit, so it is fatal.
+    # A wrong length is structural and would silently corrupt the fit.
     if (length(g) != p) {
       stop(
         sprintf(
@@ -147,14 +142,8 @@
   # grad_log_prob() is exposed by cmdstanr's init_model_methods(). Call
   # it once here so that users do not have to do so themselves, and so
   # that a model whose methods cannot be exposed at all (e.g. a
-  # pre-compiled executable) is reported once, up front, rather than as
-  # a failure at every draw.
+  # pre-compiled executable) is reported once.
   #
-  # Note that this does not save any work in the loop: cmdstanr's
-  # $grad_log_prob() calls init_model_methods() again on every call, and
-  # that repeated check, not the gradient itself, is most of the cost
-  # per draw. Avoiding it would mean reaching into cmdstanr's private
-  # model-methods environment, which is not part of its API.
   ok <- tryCatch(
     {
       suppressMessages(samples$init_model_methods())

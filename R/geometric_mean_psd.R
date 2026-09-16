@@ -8,30 +8,18 @@
 ## inverse covariance of the scores; the helper here is the
 ## bridge-sampling analogue used for `proposal_fit = "hybrid"`.
 ##
-## The geometric mean is the (affine-invariant Fisher-Rao)
-## Riemannian midpoint of A and B on the positive-definite cone.
-## It coincides with the arithmetic mean (1-a) A + a B at a = 0.5
-## when A and B commute (e.g. when both equal the true Sigma for a
-## Gaussian target), and behaves more gracefully than the arithmetic
-## mean when A and B disagree in their orientation or scale.
-##
-## Implementation: symmetric eigendecomposition of A, then of the
-## inner sandwich M = A^{-1/2} B A^{-1/2}, with PSD clipping on tiny
-## (round-off) negative eigenvalues. On failure (rank-deficient A,
-## non-finite outputs) the function falls back to the arithmetic
-## mean 0.5 (A + B) with a single warning and returns it tagged so
-## callers can record the fallback path.
+## The geometric mean is the Riemannian midpoint of A and B on the
+## positive-definite cone under the affine-invariant metric, and
+## coincides with 0.5 (A + B) when A and B commute.
 ##
 ## Arguments:
-##   A, B: p x p symmetric matrices, assumed positive semi-definite.
-##         A and B should already be nearPD-corrected by the caller
-##         when they are sample/score covariance estimates.
-##   eps:  relative tolerance for clipping tiny negative eigenvalues
-##         introduced by round-off (default sqrt(.Machine$double.eps)).
+##   A, B: p x p symmetric positive semi-definite matrices, already
+##         nearPD-corrected by the caller.
 ##
-## Returns: a p x p symmetric matrix; attribute "fallback" is TRUE
-##   when the arithmetic-mean fallback path was taken.
-.geometric_mean_psd <- function(A, B, eps = sqrt(.Machine$double.eps)) {
+## Returns: a p x p symmetric matrix. On failure (rank-deficient A,
+##   non-finite output) returns the arithmetic mean 0.5 (A + B) with a
+##   warning and the attribute "fallback" set to TRUE.
+.geometric_mean_psd <- function(A, B) {
   if (!is.matrix(A) || !is.matrix(B))
     stop(".geometric_mean_psd(): A and B must be matrices.", call. = FALSE)
   if (!identical(dim(A), dim(B)) || nrow(A) != ncol(A))
@@ -57,13 +45,10 @@
   if (is.null(eigA) || any(!is.finite(eigA$values)))
     return(arithmetic_fallback("eigendecomposition of A failed"))
 
-  ## Clip tiny negative eigenvalues from round-off. We do NOT bail
-  ## out on small positive eigenvalues: the caller pre-regularises
-  ## A via Matrix::nearPD(), so A is PD by construction; small
-  ## eigenvalues are real and the geometric mean is mathematically
-  ## well-defined. The post-hoc non-finite check below catches any
-  ## genuine numerical failure (e.g. exact zeros via the pseudo-
-  ## inverse guard on invsL).
+  ## Clip negative eigenvalues from round-off. Small positive ones are
+  ## kept: the caller pre-regularises A with nearPD(), so the geometric
+  ## mean is well defined, and the non-finite check below catches any
+  ## genuine numerical failure.
   lam <- eigA$values
   lam_max <- max(abs(lam))
   if (lam_max <= 0)
@@ -84,9 +69,7 @@
   if (is.null(eigM) || any(!is.finite(eigM$values)))
     return(arithmetic_fallback("eigendecomposition of A^{-1/2} B A^{-1/2} failed"))
 
-  ## Same policy on the inner sandwich M: clip round-off negatives,
-  ## otherwise trust the eigendecomposition. The post-hoc non-finite
-  ## check below catches genuine numerical failures.
+  ## Same for the inner sandwich M.
   mu <- eigM$values
   mu_max <- max(abs(mu))
   if (mu_max <= 0)

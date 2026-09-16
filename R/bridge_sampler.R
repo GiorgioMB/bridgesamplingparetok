@@ -680,11 +680,9 @@ bridge_sampler.matrix <- function(
   theta_t <- tmp$theta_t
   transTypes <- tmp$transTypes
 
-  # Validate the gradients against the transformation. The chain-rule
-  # correction for a non-identity transformation is not implemented, so
-  # the gradients are only usable when every parameter is unbounded
-  # (i.e. lb = -Inf and ub = Inf, as for draws on Stan's unconstrained
-  # scale).
+  # The chain-rule correction for a non-identity transformation is not
+  # implemented, so the gradients are only usable when every parameter
+  # is unbounded.
   use_gradients <- !is.null(gradients) && proposal_fit != "sample"
   if (use_gradients) {
     if (!all(transTypes == "unbounded")) {

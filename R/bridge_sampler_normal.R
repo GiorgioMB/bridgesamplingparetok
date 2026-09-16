@@ -27,8 +27,7 @@
   tol1,
   tol2,
   gradients_4_fit = NULL, # optional n_fit x p matrix of posterior scores
-  # s(theta) = grad log p(theta) at the rows of
-  # samples_4_fit
+  # grad log p(theta) at the rows of samples_4_fit
   proposal_fit = c("sample", "hybrid")
 ) {
   proposal_fit <- match.arg(proposal_fit)
@@ -59,10 +58,9 @@
   }
 
   # combiner records how V_sample and V_score were combined:
-  #   "none"      : proposal_fit = "sample" (V = V_sample)
-  #   "geometric" : proposal_fit = "hybrid" (V = V_sample # V_score)
-  #   "geometric_fallback_arithmetic" : the "hybrid" path took the PSD
-  #                 fallback inside .geometric_mean_psd()
+  #   "none"      : V = V_sample
+  #   "geometric" : V = V_sample # V_score
+  #   "geometric_fallback_arithmetic" : .geometric_mean_psd() fell back
   proposal_fit_info <- list(
     proposal_fit = proposal_fit,
     combiner = NA_character_,
@@ -70,9 +68,9 @@
   )
 
   if (use_gradients) {
-    # Score-matching estimate of the inverse covariance using *centred*
-    # scores (s_i - bar s)(s_i - bar s)^T. The uncentred form retains an
-    # O(bar s bar s^T) finite-sample bias even though E_pi[s] = 0.
+    # Score-matching estimate of the inverse covariance. The scores are
+    # centred: the uncentred form retains an O(bar s bar s^T) bias in
+    # finite samples even though E_pi[s] = 0.
     finite_rows <- apply(is.finite(gradients_4_fit), 1, all)
     if (sum(finite_rows) < ncol(gradients_4_fit) + 1L) {
       warning(
@@ -111,12 +109,8 @@
   }
 
   if (use_gradients) {
-    # Matrix geometric mean of V_sample and V_score: the dense
-    # Fisher-divergence-optimal combiner of Seyboldt, Carlson and
-    # Carpenter (2026). It has no free weight; the geometric mean is
-    # uniquely determined by the two positive-definite inputs. We
-    # pre-nearPD V_sample here so that .geometric_mean_psd() sees two
-    # positive-definite matrices (V_score is already nearPD'd above).
+    # .geometric_mean_psd() expects positive-definite inputs; V_score is
+    # already nearPD'd above, V_sample is not.
     V_sample_pd <- as.matrix(nearPD(V_sample)$mat)
     V_tmp <- .geometric_mean_psd(V_sample_pd, V_score)
     proposal_fit_info$combiner <- if (isTRUE(attr(V_tmp, "fallback"))) {
