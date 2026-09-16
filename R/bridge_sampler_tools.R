@@ -139,11 +139,7 @@
   if (proposal_fit == "sample") {
     return(NULL)
   }
-  # grad_log_prob() is exposed by cmdstanr's init_model_methods(). Call
-  # it once here so that users do not have to do so themselves, and so
-  # that a model whose methods cannot be exposed at all (e.g. a
-  # pre-compiled executable) is reported once.
-  #
+  # grad_log_prob() is exposed by cmdstanr's init_model_methods().
   ok <- tryCatch(
     {
       suppressMessages(samples$init_model_methods())

@@ -73,8 +73,8 @@
 #'  console? Default is \code{FALSE}.
 #'@param proposal_fit character string determining how the covariance matrix of
 #'  the multivariate normal proposal is estimated. \code{"sample"} (the
-#'  default) uses the sample covariance matrix of the draws, i.e. the classic
-#'  behaviour. \code{"hybrid"} combines the sample covariance matrix with a
+#'  default) uses the sample covariance matrix of the draws.
+#'  \code{"hybrid"} combines the sample covariance matrix with a
 #'  score-matching estimate obtained from the posterior gradients, as described
 #'  in \code{Details}. \code{"hybrid"} requires gradients and is only
 #'  implemented for \code{method = "normal"}; if gradients are unavailable the
@@ -102,7 +102,7 @@
 #'
 #'  With \code{proposal_fit = "hybrid"} the covariance matrix of the normal
 #'  proposal is not the sample covariance matrix \eqn{\hat\Sigma_n} alone.
-#'  A second estimate is obtained by score matching (Hyvärinen, 2005) from the
+#'  A second estimate is obtained by score matching from the
 #'  posterior gradients \eqn{s_i = \nabla \log p(\theta_i)} evaluated at the
 #'  draws used to fit the proposal,
 #'  \deqn{\hat\Sigma_{score} = \left( n^{-1} \sum_i (s_i - \bar s)(s_i - \bar
@@ -110,18 +110,11 @@
 #'  mean \eqn{\hat\Sigma_n \# \hat\Sigma_{score} = \hat\Sigma_n^{1/2}
 #'  (\hat\Sigma_n^{-1/2} \hat\Sigma_{score} \hat\Sigma_n^{-1/2})^{1/2}
 #'  \hat\Sigma_n^{1/2}}, which is the dense Fisher-divergence-optimal combiner
-#'  of Seyboldt et al. (2026). The geometric mean has no free weight; it is
-#'  uniquely determined by the two inputs, and it equals \eqn{\hat\Sigma_n}
-#'  whenever the two estimates agree. Because the two estimates have largely
+#'  of Seyboldt et al. (2026). Because the two estimates have largely
 #'  independent errors, the combination is typically a better estimate of the
 #'  posterior covariance matrix than either one, which mainly helps when the
 #'  number of parameters is not small relative to the number of draws used to
 #'  fit the proposal.
-#'
-#'  Only the proposal density \eqn{g} changes; the bridge identity and the
-#'  iterative scheme are untouched, so the estimate stays consistent whatever
-#'  the covariance matrix is. How the combination was performed is reported in
-#'  the \code{proposal_fit_info} component of the returned object.
 #'
 #'  Note that for the \code{matrix} method, the lower and upper bound of a
 #'  parameter cannot be a function of the bounds of another parameter.
@@ -226,10 +219,6 @@
 #'  Sampling. \emph{Psychometrika}, 84(1), 261–284.
 #'  \doi{10.1007/s11336-018-9648-3}
 #'
-#'  Hyvärinen, A. (2005). Estimation of non-normalized statistical models by
-#'  score matching. \emph{Journal of Machine Learning Research, 6}, 695-709.
-#'  \url{https://jmlr.org/papers/v6/hyvarinen05a.html}
-#'
 #'  Meng, X.-L., & Wong, W. H. (1996). Simulating ratios of normalizing
 #'  constants via a simple identity: A theoretical exploration. \emph{Statistica
 #'  Sinica, 6}, 831-860.
@@ -239,9 +228,9 @@
 #'  Computational and Graphical Statistics, 11(3)}, 552-586.
 #'  \doi{10.1198/106186002457}
 #'
-#'  Micaletto, G., & Vehtari, A. (2025). Monte Carlo standard errors for bridge
-#'  sampling marginal likelihood estimation. \emph{arXiv preprint},
-#'  arXiv:2508.14487. \url{https://arxiv.org/abs/2508.14487}
+#'  Micaletto, G., & Vehtari, A. (2025). Bridge sampling diagnostics.
+#'  \emph{arXiv preprint}, arXiv:2508.14487.
+#'  \url{https://arxiv.org/abs/2508.14487}
 #'
 #'  Overstall, A. M., & Forster, J. J. (2010). Default Bayesian model
 #'  determination methods for generalised linear mixed models.
@@ -250,6 +239,9 @@
 #'
 #'  Seyboldt, A., Carlson, C., & Carpenter, B. (2026). Preconditioning
 #'  Hamiltonian Monte Carlo by minimizing Fisher divergence.
+#'  \emph{arXiv preprint}, arXiv:2603.18845.
+#'  \url{https://arxiv.org/abs/2603.18845}
+#'
 #'@example examples/example.bridge_sampler.R
 #'
 #'@seealso \code{\link{bf}} allows the user to calculate Bayes factors and
