@@ -57,9 +57,6 @@
   if (is.na(out)) {
     out <- -Inf
   }
-  result <- data.frame(matrix(s.row, nrow = 1))
-  result$log_posterior <- out
-
   return(out)
 }
 
