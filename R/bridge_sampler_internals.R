@@ -265,45 +265,9 @@
   out
 }
 
-.pareto_k_diagnostic <- function(numi, deni) {
-  ## Check if parallel is present
-  if (!requireNamespace("parallel", quietly = TRUE)) {
-    stop("The parallel package is required but not installed.")
-  }
-  ## Convert brob objects to numeric
-  numi_numeric <- as.numeric(numi)
-  deni_numeric <- as.numeric(deni)
-  inv_deni_numeric <- 1 / deni_numeric
-  ## Run diagnostic calculations in parallel for both numi and deni
-  results <- lapply(list(numi_numeric, deni_numeric, inv_deni_numeric), .compute_diagnostic)
 
-  ## Name the results for clarity
-  names(results) <- c("numi", "deni", "inv_deni")
-  
-  ## Return the results
-  return(results)
-}
-
-.compute_diagnostic <- function(weights) {
-  ##Check that the posterior package is there, and load it if not present
-  if (!requireNamespace("posterior", quietly = TRUE)) {
-    stop("The posterior package is required but not installed.")
-  }
-  ## Attempt to Fit the tail of a Generalized Pareto Distribution
-  tryCatch({
-    diag <- posterior::pareto_diags(weights, tail = 'right', r_eff = 1)
-    ## Return the diagnostics data
-    return(diag)
-  }, error = function(e) {
-    ## Return NA if an error occurs
-    warning("An error occurred during GPD fitting: ", conditionMessage(e))
-    return(NA)
-  })
-}
-
-
-.run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L, pareto_smoothing_last,
-                                  method, maxiter, silent, pareto_smoothing_all,
+.run.iterative.scheme <- function(q11, q12, q21, q22, r0, tol, L,
+                                  method, maxiter, silent,
                                   criterion, neff, return_always, verbose, 
                                   use_ess = FALSE, calculate_covariance = FALSE) {
   ### run iterative updating scheme (using "optimal" bridge function,
@@ -370,23 +334,6 @@
       warning("Infinite value in iterative scheme, returning NA.\n Try rerunning with more samples.", call. = FALSE)
       return(list(logml = NA, niter = i))
     }
-    ##Do pareto smoothing 
-    if (pareto_smoothing_all == TRUE) {
-      is_deni_constant <- posterior:::is_constant(as.numeric(deni))
-      is_numi_constant <- posterior:::is_constant(as.numeric(numi))
-      
-      # Check if either condition is TRUE and raise an error with a specific message
-      if (is_deni_constant || is_numi_constant) {
-        if (is_deni_constant) {
-          warning("Denominator is constant, Pareto smoothing can't be done")
-        } else {
-          warning("Numerator is constant, Pareto smoothing can't be done")
-        }
-      } else {
-        numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
-        deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
-      }
-    }
     mean_numi <- mean(as.numeric(numi))
     mean_deni <- mean(as.numeric(deni))
     var_numi <- var(as.numeric(numi))
@@ -415,33 +362,14 @@
     var_logml <- log(1 + var_r / r^2)
     std_logml <- sqrt(var_logml)
   }
-  if (pareto_smoothing_last == TRUE && pareto_smoothing_all == FALSE) {
-    numi <- as.numeric(posterior::pareto_smooth(as.numeric(numi), tail = "right", r_eff = 1))
-    deni <- as.numeric(posterior::pareto_smooth(as.numeric(deni), tail = "right", r_eff = 1))
-    mean_numi <- mean(as.numeric(numi))
-    mean_deni <- mean(as.numeric(deni))
-    r <- mean_numi/mean_deni
-    logml <- log(r) + lstar
-    if (calculate_covariance == TRUE){
-      var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2 - 2*cov_numi_deni/(mean_numi*mean_deni))
-    } else {
-      var_r <- (mean_numi^2)/(mean_deni^2)*(var_numi/(mean_numi)^2 + var_deni/mean_deni^2)
-    }
-    var_r <- var_r / length(numi)
-    var_logml <- log(1 + var_r / r^2)
-    std_logml <- sqrt(var_logml)
-  }
   if (i >= maxiter) {
     if (return_always == TRUE){
-      pareto_k <- .pareto_k_diagnostic(numi, deni)
-      return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_logml = std_logml))
+      return(list(logml = logml, niter = i-1, numi = numi, deni = deni, r_vals = r_vals, std_logml = std_logml))
     } else {
-      pareto_k <- list(numi = NA, deni = NA, inv_deni = NA)
-      return(list(logml = NA, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, r_vals = r_vals, std_logml = std_logml))
+      return(list(logml = NA, niter = i-1, numi = numi, deni = deni, r_vals = r_vals, std_logml = std_logml))
     }
   }
   
-  pareto_k <- .pareto_k_diagnostic(numi, deni)
-  return(list(logml = logml, niter = i-1, numi = numi, deni = deni, pareto_k = pareto_k, std_logml = std_logml))
+  return(list(logml = logml, niter = i-1, numi = numi, deni = deni, std_logml = std_logml))
 
 }
