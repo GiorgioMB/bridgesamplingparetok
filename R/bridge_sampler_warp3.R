@@ -25,8 +25,23 @@
   use_ess,
   r0,
   tol1,
-  tol2
+  tol2,
+  # Score-matching proposal-fit arguments that bridge_sampler.matrix()
+  # always passes through. warp3 fits its own affine transformation and
+  # ignores them; they are listed here only so that R does not raise an
+  # "unused arguments" error.
+  gradients_4_fit = NULL,
+  proposal_fit = c("sample", "hybrid")
 ) {
+  proposal_fit <- match.arg(proposal_fit)
+  if (proposal_fit != "sample") {
+    warning(
+      "proposal_fit = 'hybrid' is only implemented for method = 'normal'; ",
+      "warp3 uses the sample covariance.",
+      call. = FALSE
+    )
+  }
+
   if (is.null(neff)) {
     neff <- nrow(samples_4_iter)
   }

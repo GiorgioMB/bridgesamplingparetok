@@ -220,13 +220,22 @@ bridge_sampler.CmdStanMCMC <- function(
   maxiter = 1000,
   silent = FALSE,
   verbose = FALSE,
+  proposal_fit = c("sample", "hybrid"),
   ...
 ) {
+  proposal_fit <- match.arg(proposal_fit)
+
   draws <- samples$unconstrain_draws(format = "matrix")
   parameters <- colnames(draws)
   lb <- rep(-Inf, length(parameters))
   ub <- rep(Inf, length(parameters))
   names(lb) <- names(ub) <- parameters
+
+  gradients <- .cmdstan_gradients(samples, draws, proposal_fit)
+  if (is.null(gradients)) {
+    proposal_fit <- "sample"
+  }
+
   bridge_out <- bridge_sampler.matrix(
     samples = draws,
     ...,
@@ -240,7 +249,9 @@ bridge_sampler.CmdStanMCMC <- function(
     cores = cores,
     data = samples,
     use_neff = use_neff,
-    verbose = verbose
+    verbose = verbose,
+    gradients = gradients,
+    proposal_fit = proposal_fit
   )
 
   return(bridge_out)
@@ -258,8 +269,11 @@ bridge_sampler.stanfit <- function(
   maxiter = 1000,
   silent = FALSE,
   verbose = FALSE,
+  proposal_fit = c("sample", "hybrid"),
   ...
 ) {
+  proposal_fit <- match.arg(proposal_fit)
+
   # cores > 1 only for unix:
   if (!(.Platform$OS.type == "unix") & (cores != 1)) {
     warning(
@@ -328,6 +342,16 @@ bridge_sampler.stanfit <- function(
   colnames(samples_4_iter) <- paste0("trans_", parameters)
   colnames(samples_4_fit) <- paste0("trans_", parameters)
 
+  # posterior scores at the draws used to fit the proposal
+  gradients_4_fit <- .rstan_gradients(
+    stanfit_model,
+    samples_4_fit,
+    proposal_fit
+  )
+  if (is.null(gradients_4_fit)) {
+    proposal_fit <- "sample"
+  }
+
   # run bridge sampling
   if (cores == 1) {
     bridge_output <- do.call(
@@ -351,7 +375,9 @@ bridge_sampler.stanfit <- function(
         verbose = verbose,
         r0 = 0.5,
         tol1 = 1e-10,
-        tol2 = 1e-4
+        tol2 = 1e-4,
+        gradients_4_fit = gradients_4_fit,
+        proposal_fit = proposal_fit
       )
     )
   } else {
@@ -378,7 +404,9 @@ bridge_sampler.stanfit <- function(
         verbose = verbose,
         r0 = 0.5,
         tol1 = 1e-10,
-        tol2 = 1e-4
+        tol2 = 1e-4,
+        gradients_4_fit = gradients_4_fit,
+        proposal_fit = proposal_fit
       )
     )
   }
@@ -559,8 +587,12 @@ bridge_sampler.matrix <- function(
   maxiter = 1000,
   param_types = rep("real", ncol(samples)),
   silent = FALSE,
-  verbose = FALSE
+  verbose = FALSE,
+  gradients = NULL,
+  proposal_fit = c("sample", "hybrid")
 ) {
+  proposal_fit <- match.arg(proposal_fit)
+
   # see Meng & Wong (1996), equation 4.1
 
   # Check simplex computation
@@ -589,11 +621,43 @@ bridge_sampler.matrix <- function(
   theta_t <- tmp$theta_t
   transTypes <- tmp$transTypes
 
+  # Validate the gradients against the transformation. The chain-rule
+  # correction for a non-identity transformation is not implemented, so
+  # the gradients are only usable when every parameter is unbounded
+  # (i.e. lb = -Inf and ub = Inf, as for draws on Stan's unconstrained
+  # scale).
+  use_gradients <- !is.null(gradients) && proposal_fit != "sample"
+  if (use_gradients) {
+    if (!all(transTypes == "unbounded")) {
+      warning(
+        "proposal_fit = 'hybrid' with bounded parameters is not implemented ",
+        "(it requires a Jacobian correction of the gradients); ",
+        "falling back to the sample covariance.",
+        call. = FALSE
+      )
+      use_gradients <- FALSE
+    } else if (
+      nrow(gradients) != nrow(theta_t) || ncol(gradients) != ncol(theta_t)
+    ) {
+      warning(
+        "gradients dimensions do not match samples; ",
+        "falling back to the sample covariance.",
+        call. = FALSE
+      )
+      use_gradients <- FALSE
+    }
+  }
+
   # split samples for proposal/iterative scheme
   nr <- nrow(samples)
   samples4fit_index <- seq_len(nr) %in% seq_len(round(nr / 2)) # split samples in two parts
   samples_4_fit <- theta_t[samples4fit_index, , drop = FALSE]
   samples_4_iter <- theta_t[!samples4fit_index, , drop = FALSE]
+  gradients_4_fit <- if (use_gradients) {
+    gradients[samples4fit_index, , drop = FALSE]
+  } else {
+    NULL
+  }
 
   # compute effective sample size
   if (use_neff) {
@@ -636,7 +700,9 @@ bridge_sampler.matrix <- function(
       verbose = verbose,
       r0 = 0.5,
       tol1 = 1e-10,
-      tol2 = 1e-4
+      tol2 = 1e-4,
+      gradients_4_fit = gradients_4_fit,
+      proposal_fit = proposal_fit
     )
   )
   return(out)

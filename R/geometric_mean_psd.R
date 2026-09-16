@@ -6,7 +6,7 @@
 ## dense Fisher-divergence-optimal preconditioner is the matrix
 ## geometric mean of the sample covariance of the draws and the
 ## inverse covariance of the scores; the helper here is the
-## bridge-sampling analogue used for `proposal_fit = "hybrid_geom"`.
+## bridge-sampling analogue used for `proposal_fit = "hybrid"`.
 ##
 ## The geometric mean is the (affine-invariant Fisher-Rao)
 ## Riemannian midpoint of A and B on the positive-definite cone.
