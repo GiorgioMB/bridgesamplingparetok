@@ -1,7 +1,7 @@
-# bridgesampling 1.2-2 (2026-08-12)
+# bridgesampling (development version)
 
-* `bridge_sampler()` with `proposal_fit = "hybrid"` now accepts `alpha_score = NULL`, triggering the closed-form Ledoit-Wolf optimal mixing weight $a^\ast = (V_n - C_{n,{\rm score}}) / \gamma_{\rm frob}$ to be computed per fit (Ledoit & Wolf 2004). The chosen alpha and its plug-in breakdown (`alpha_star`, `alpha_star_scalar`, `V_n`, `C_n_score`, `gamma_frob`) are returned in `out$proposal_fit_info` on every gradient-using call, offering the optimal value as a free diagnostic for runs using a fixed alpha.
-* The score-matching covariance estimator utilizes centred scores $\Sigma_{\rm score}^{-1} = n^{-1} \sum_i (s_i - \bar s)(s_i - \bar s)^\top$, removing the $\mathcal O(\bar{s} \bar{s}^\top)$ finite-sample bias present in the previous estimator (despite $\mathbb E_\pi[s] = 0$ in the population) and implements the score-matching estimator of Hyvärinen (2005). The effect on `logml` is $\mathcal O(1/n)$ for typical posteriors.
+* `bridge_sampler()` gains `proposal_fit`. With `proposal_fit = "hybrid"`, the covariance matrix of the normal proposal is the matrix geometric mean of the sample covariance matrix and a score-matching estimate built from the posterior gradients, rather than the sample covariance matrix alone. Gradients are obtained automatically for `stanfit` and `CmdStanMCMC` objects, and can be supplied via the new `gradients` argument of the `matrix` method. The default `proposal_fit = "sample"` is the previous behaviour.
+
 # bridgesampling 1.2-1 (2025-11-18)
 
 * Added CmdStanR method and corresponding tests (thanks to @GiorgioMB and @avehtari #44).
