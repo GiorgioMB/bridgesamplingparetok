@@ -23,8 +23,6 @@
   silent,
   verbose,
   r0,
-  pareto_smoothing_all,
-  pareto_smoothing_last,
   tol1,
   tol2,
   return_always,
@@ -204,16 +202,13 @@
   logml <- numeric(repetitions)
   niter <- numeric(repetitions)
   std_logmls <- numeric(repetitions)
-  pareto_k_numi <- list()
-  pareto_k_deni <- list()
-  pareto_k_inv_deni <- list()
   numi <- list()
   deni <- list()
   # run iterative updating scheme to compute log of marginal likelihood
   for (i in seq_len(repetitions)) {
     tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]], use_ess = use_ess,
-                                 r0 = r0, tol = tol1, L = L, method = "warp3", pareto_smoothing_all = pareto_smoothing_all,
-                                 maxiter = maxiter, silent = silent, pareto_smoothing_last = pareto_smoothing_all, verbose = verbose,
+                                 r0 = r0, tol = tol1, L = L, method = "warp3",
+                                 maxiter = maxiter, silent = silent, verbose = verbose,
                                  criterion = "r", neff = neff, return_always=return_always, calculate_covariance = calculate_covariance)
     if (is.na(tmp$logml) & !is.null(tmp$r_vals)) {
       warning("logml could not be estimated within maxiter, rerunning with adjusted starting value. \nEstimate might be more variable than usual.", call. = FALSE)
@@ -221,8 +216,8 @@
       # use geometric mean as starting value
       r0_2 <- sqrt(tmp$r_vals[[lr - 1]] * tmp$r_vals[[lr]])
       tmp <- .run.iterative.scheme(q11 = q11, q12 = q12, q21 = q21[[i]], q22 = q22[[i]], use_ess = use_ess,
-                                   r0 = r0_2, tol = tol2, L = L, method = "warp3", pareto_smoothing_last = pareto_smoothing_last,
-                                   maxiter = maxiter, silent = silent, pareto_smoothing_all = pareto_smoothing_all, verbose = verbose,
+                                   r0 = r0_2, tol = tol2, L = L, method = "warp3", 
+                                   maxiter = maxiter, silent = silent, verbose = verbose,
                                    criterion = "logml", neff = neff, return_always=return_always, calculate_covariance = calculate_covariance)
       tmp$niter <- maxiter + tmp$niter
     }
@@ -232,21 +227,6 @@
     numi[[i]] <- tmp$numi
     deni[[i]] <- tmp$deni
     std_logmls[i] <- tmp$std_logml
-    if("pareto_k" %in% names(tmp)) {
-      if(verbose){
-        print(tmp$pareto_k)
-      }
-      pareto_k_numi[[i]] <- tmp$pareto_k$numi
-      pareto_k_deni[[i]] <- tmp$pareto_k$deni
-      pareto_k_inv_deni[[i]] <- tmp$pareto_k$inv_deni
-    } else {
-      if(verbose){
-        print("There was an error computing the pareto_k diagnostic")
-      }
-      pareto_k_numi[[i]] <- NA
-      pareto_k_deni[[i]] <- NA
-      pareto_k_inv_deni[[i]] <- NA
-    }
     
     if (niter[i] == maxiter)
       warning("logml could not be estimated within maxiter.", call. = FALSE)
@@ -256,15 +236,11 @@
     out <- list(logml = logml, niter = niter, method = "warp3", q11 = q11,
                 q12 = q12, q21 = q21[[1]], q22 = q22[[1]],
                 numi = numi, deni = deni,
-                pareto_k_numi = pareto_k_numi,
-                pareto_k_deni = pareto_k_deni, pareto_k_inv_deni = pareto_k_inv_deni, 
                 mcse_logml = std_logmls)
     class(out) <- "bridge"
   } else if (repetitions > 1) {
     out <- list(logml = logml, niter = niter, method = "warp3", repetitions = repetitions,
-                numi = numi, deni = deni,
-                pareto_k_numi = pareto_k_numi, pareto_k_deni = pareto_k_deni,
-                pareto_k_inv_deni = pareto_k_inv_deni, mcse_logml = std_logmls)
+                numi = numi, deni = deni, mcse_logml = std_logmls)
     class(out) <- "bridge_list"
   }
 
