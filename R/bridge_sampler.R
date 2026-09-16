@@ -261,54 +261,45 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
     dim(upars) <- c(1, dim(upars))
   }
   nr <- dim(upars)[2]
-  result <- list()
-  # Generate permutations
-  permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), 2, 1)
-  counter <- 1
-  for (perm in permutations) {
-    if (verbose == TRUE) {
-      cat("Starting permutation number:", counter, "\n")
-    }
-    counter <- counter + 1
-    samples4fit_index <- perm[[1]]
-    samples_4_fit <- apply(upars[, samples4fit_index, , drop = FALSE], 1, rbind)
+  split_point <- ceiling(nr / 2)
+  samples4fit_index <- seq_len(split_point)
+  samples_4_fit <- apply(upars[, samples4fit_index, , drop = FALSE], 1, rbind)
+  samples_4_iter_stan <- upars[, seq(split_point + 1, nr), , drop = FALSE]
+  samples_4_iter_tmp <- vector("list", dim(upars)[3])
+  for (i in seq_along(samples_4_iter_tmp)) {
+    samples_4_iter_tmp[[i]] <- coda::as.mcmc(t(samples_4_iter_stan[, , i]))
+  }
+  samples_4_iter_tmp <- coda::as.mcmc.list(samples_4_iter_tmp)
+  
+  if (use_neff) {
+    neff <- tryCatch(median(coda::effectiveSize(samples_4_iter_tmp)), error = function(e) {
+      warning("effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
+      return(NULL)
+    })
+  } else {
+    neff <- NULL
+  }
 
-    samples_4_iter_stan <- upars[, perm[[2]], , drop = FALSE]
-    samples_4_iter_tmp <- vector("list", dim(upars)[3])
-    for (i in seq_along(samples_4_iter_tmp)) {
-      samples_4_iter_tmp[[i]] <- coda::as.mcmc(t(samples_4_iter_stan[, , i]))
-    }
-    samples_4_iter_tmp <- coda::as.mcmc.list(samples_4_iter_tmp)
+  samples_4_iter <- apply(samples_4_iter_stan, 1, rbind)
 
-    if (use_neff) {
-      neff <- tryCatch(median(coda::effectiveSize(samples_4_iter_tmp)), error = function(e) {
-        warning("effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
-        return(NULL)
-      })
-    } else {
-      neff <- NULL
-    }
+  parameters <- paste0("x", (seq_len(dim(upars)[1])))
 
-    samples_4_iter <- apply(samples_4_iter_stan, 1, rbind)
+  transTypes <- rep("unbounded", length(parameters))
+  names(transTypes) <- parameters
 
-    parameters <- paste0("x", (seq_len(dim(upars)[1])))
+  # prepare lb and ub
+  lb <- rep(-Inf, length(parameters))
+  ub <- rep(Inf, length(parameters))
+  names(lb) <- names(ub) <- parameters
 
-    transTypes <- rep("unbounded", length(parameters))
-    names(transTypes) <- parameters
-
-    # prepare lb and ub
-    lb <- rep(-Inf, length(parameters))
-    ub <- rep(Inf, length(parameters))
-    names(lb) <- names(ub) <- parameters
-
-    colnames(samples_4_iter) <- paste0("trans_", parameters)
-    colnames(samples_4_fit) <- paste0("trans_", parameters)
-    # run bridge sampling
-    if (!is.na(seed)) {
-       set.seed(seed)
-    }
-    if (cores == 1) {
-      bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
+  colnames(samples_4_iter) <- paste0("trans_", parameters)
+  colnames(samples_4_fit) <- paste0("trans_", parameters)
+  # run bridge sampling
+  if (!is.na(seed)) {
+      set.seed(seed)
+  }
+  if (cores == 1) {
+    bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                                args = list(samples_4_fit = samples_4_fit,
                                            samples_4_iter = samples_4_iter,
                                            neff = neff, calculate_covariance = calculate_covariance,
@@ -321,8 +312,8 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
                                            packages = "rstan", maxiter = maxiter, silent = silent,
                                            verbose = verbose, return_always = return_always,
                                            r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
-    } else {
-      bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
+  } else {
+    bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                                args = list(samples_4_fit = samples_4_fit,
                                            samples_4_iter = samples_4_iter,
                                            neff = neff, keep_log_eval = keep_log_eval,
@@ -335,13 +326,11 @@ bridge_sampler.stanfit <- function(samples = NULL, stanfit_model = samples, keep
                                            cores = cores, packages = "rstan", maxiter = maxiter,
                                            silent = silent, verbose = verbose, calculate_covariance = calculate_covariance,
                                            r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
-    }
-    result <- append(result, list(bridge_output))
   }
   if (!keep_log_eval && file.exists("rstan_log_eval.csv")) {
     file.remove("rstan_log_eval.csv")
   }
-  return(result)
+  return(list(bridge_output))
 }
 
 #' @rdname bridge_sampler
@@ -357,50 +346,45 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., 
   if (is.na(seed) & verbose) {
        warning("Not setting the seed will yield different results when compared to the original bridgesampling")
     }
-  permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), 2, 1)
-  result <- list()
-  counter <- 1
-  for (perm in permutations) {
-    if (verbose == TRUE) {
-      cat("Starting permutation number:", counter, "\n")
-    }
-    counter <- counter + 1
-    samples4fit_index <- perm[[1]] 
-    samples_4_fit_tmp <- samples[samples4fit_index,,drop=FALSE]
-    samples_4_fit_tmp <- do.call("rbind", samples_4_fit_tmp)
+  split_point <- ceiling(nr / 2)
+  samples4fit_index <- seq_len(split_point)
+
+  samples_4_fit_tmp <- samples[samples4fit_index,,drop=FALSE]
+  samples_4_fit_tmp <- do.call("rbind", samples_4_fit_tmp)
     
-     # check lb and ub
-    if (!is.numeric(lb))
-      stop("lb needs to be numeric", call. = FALSE)
-    if (!is.numeric(ub))
-      stop("ub needs to be numeric", call. = FALSE)
-    if (!all(colnames(samples_4_fit_tmp) %in% names(lb)))
-      stop("lb does not contain all parameters.", call. = FALSE)
-    if (!all(colnames(samples_4_fit_tmp) %in% names(ub)))
-      stop("ub does not contain all parameters.", call. = FALSE)
-    # transform parameters to real line
-    tmp <- .transform2Real(samples_4_fit_tmp, lb, ub)
-    samples_4_fit <- tmp$theta_t
-    transTypes <- tmp$transTypes
-    samples_4_iter_tmp <- lapply(samples[perm[[2]],,drop=FALSE],
-                                 function(x) .transform2Real(x, lb = lb, ub = ub)$theta_t)
+    # check lb and ub
+  if (!is.numeric(lb))
+    stop("lb needs to be numeric", call. = FALSE)
+  if (!is.numeric(ub))
+    stop("ub needs to be numeric", call. = FALSE)
+  if (!all(colnames(samples_4_fit_tmp) %in% names(lb)))
+    stop("lb does not contain all parameters.", call. = FALSE)
+  if (!all(colnames(samples_4_fit_tmp) %in% names(ub)))
+    stop("ub does not contain all parameters.", call. = FALSE)
+  # transform parameters to real line
+  tmp <- .transform2Real(samples_4_fit_tmp, lb, ub)
+  samples_4_fit <- tmp$theta_t
+  transTypes <- tmp$transTypes
+  
+  samples_4_iter_tmp <- lapply(samples[seq(split_point + 1, nr),,drop=FALSE],
+                                function(x) .transform2Real(x, lb = lb, ub = ub)$theta_t)
     # compute effective sample size
-    if (use_neff) {
-      samples_4_iter_tmp <- coda::mcmc.list(lapply(samples_4_iter_tmp, coda::mcmc))
-      neff <- tryCatch(median(coda::effectiveSize(samples_4_iter_tmp)), error = function(e) {
-         warning("effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
-         return(NULL)
-      })
-    } else {
-      neff <- NULL
-    }
-    # convert to matrix
-    samples_4_iter <- do.call("rbind", samples_4_iter_tmp)
-    # run bridge sampling
-    if (!is.na(seed)) {
-       set.seed(seed)
-    }
-    bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
+  if (use_neff) {
+    samples_4_iter_tmp <- coda::mcmc.list(lapply(samples_4_iter_tmp, coda::mcmc))
+    neff <- tryCatch(median(coda::effectiveSize(samples_4_iter_tmp)), error = function(e) {
+        warning("effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
+        return(NULL)
+    })
+  } else {
+    neff <- NULL
+  }
+  # convert to matrix
+  samples_4_iter <- do.call("rbind", samples_4_iter_tmp)
+  # run bridge sampling
+  if (!is.na(seed)) {
+      set.seed(seed)
+  }
+  bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                              args = list(samples_4_fit = samples_4_fit,
                                          samples_4_iter = samples_4_iter, 
                                          neff = neff, log_posterior = log_posterior,
@@ -414,17 +398,15 @@ bridge_sampler.mcmc.list <- function(samples = NULL, log_posterior = NULL, ..., 
                                          silent = silent, verbose = verbose, 
                                          return_always = return_always,
                                          r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
-    result <- append(result, list(bridge_output))
-  }
-  return(result)
+  return(list(bridge_output))
 }
 
 
 #' @rdname bridge_sampler
 #' @export
 bridge_sampler.mcmc <- function(samples = NULL, log_posterior = NULL, ...,
-                                data = NULL, lb = NULL, ub = NULL, total_perms = 1,
-                                method = "normal",
+                                data = NULL, lb = NULL, ub = NULL,
+                                method = "normal", repetitions = 1,
                                 cores = 1, use_neff = TRUE,
                                 packages = NULL, varlist = NULL,
                                 envir = .GlobalEnv, rcppFile = NULL, use_ess = FALSE,
@@ -488,33 +470,26 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ...,
 
   # split samples for proposal/iterative scheme
   nr <- nrow(samples)
-  permutations <- .generate_permutations(matrix(1, nrow=1, ncol=nr), 2, 1)
-  result <- list()
-  counter <- 1
-  for (perm in permutations) {
-     if (verbose == TRUE) {
-       cat("Starting permutation number:", counter, "\n")
-     }
-     counter <- counter + 1
-     samples4fit_index <- perm[[1]]
-     samples_4_fit <- theta_t[samples4fit_index, ,drop = FALSE]
-     samples4iter_index <- perm[[2]]
-     samples_4_iter <- theta_t[samples4iter_index, , drop = FALSE]
+  split_point <- ceiling(nr / 2)
+  samples4fit_index <- seq_len(split_point)
+  samples_4_fit <- theta_t[samples4fit_index, ,drop = FALSE]
+  samples4iter_index <- seq(split_point + 1, nr)
+  samples_4_iter <- theta_t[samples4iter_index, , drop = FALSE]
    
-     # compute effective sample size
-     if (use_neff) {
-       neff <- tryCatch(median(coda::effectiveSize(coda::mcmc(samples_4_iter))),
-                        error = function(e) {
-                          warning("effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
-                          return(NULL)
-                        })
-     } else {
-       neff <- NULL
-     }
-     if (!is.na(seed)) {
-       set.seed(seed)
-     }
-     bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
+  # compute effective sample size
+  if (use_neff) {
+    neff <- tryCatch(median(coda::effectiveSize(coda::mcmc(samples_4_iter))),
+                    error = function(e) {
+                      warning("effective sample size cannot be calculated, has been replaced by number of samples.", call. = FALSE)
+                      return(NULL)
+                    })
+  } else {
+    neff <- NULL
+  }
+  if (!is.na(seed)) {
+    set.seed(seed)
+  }
+  bridge_output <- do.call(what = paste0(".bridge.sampler.", method),
                     args = list(samples_4_fit = samples_4_fit,
                                 samples_4_iter = samples_4_iter,
                                 neff = neff, return_always = return_always,
@@ -528,11 +503,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ...,
                                 rcppFile = rcppFile, maxiter = maxiter,
                                 silent = silent, verbose = verbose, calculate_covariance = calculate_covariance,
                                 r0 = 0.5, tol1 = 1e-10, tol2 = 1e-4))
-      result <- append(result, list(bridge_output))
-    
-                                  
-  }
-  return(result)
+  return(list(bridge_output))
 }
 
 #' @rdname bridge_sampler
@@ -540,7 +511,7 @@ bridge_sampler.matrix <- function(samples = NULL, log_posterior = NULL, ...,
 #' @importFrom utils read.csv
 bridge_sampler.stanreg <-
   function(samples, repetitions = 1, method = "normal", cores = 1,
-           use_neff = TRUE, maxiter = 1000, silent = FALSE,
+           use_neff = TRUE, maxiter = 1000, silent = FALSE, use_ess,
            calculate_covariance = FALSE, verbose = FALSE, return_always = FALSE, seed = NA, ...) {
     
     df <- eval(samples$call$diagnostic_file)
