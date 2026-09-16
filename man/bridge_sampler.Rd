@@ -13,83 +13,54 @@
 \alias{bridge_sampler.MCMC_refClass}
 \title{Log Marginal Likelihood via Bridge Sampling}
 \usage{
-bridge_sampler(samples, num_splits, ...)
+bridge_sampler(samples, ...)
 
 \method{bridge_sampler}{CmdStanMCMC}(
   samples = NULL,
   repetitions = 1,
   method = "normal",
   cores = 1,
-  keep_log_eval = FALSE,
   use_neff = TRUE,
   maxiter = 1000,
   silent = FALSE,
-  num_splits = 2,
-  calculate_covariance = FALSE,
-  total_perms = 1,
   verbose = FALSE,
-  return_always = FALSE,
-  seed = NA,
-  pareto_smoothing_all = FALSE,
-  pareto_smoothing_last = FALSE,
-  use_ess = FALSE,
-  proposal_fit = "sample",
-  alpha_score = 0.5,
-  iter_subset = NULL,
+  proposal_fit = c("sample", "hybrid"),
   ...
 )
 
 \method{bridge_sampler}{stanfit}(
   samples = NULL,
   stanfit_model = samples,
-  keep_log_eval = FALSE,
   repetitions = 1,
   method = "normal",
   cores = 1,
-  calculate_covariance = FALSE,
   use_neff = TRUE,
   maxiter = 1000,
   silent = FALSE,
-  num_splits = 2,
-  total_perms = 1,
   verbose = FALSE,
-  return_always = FALSE,
-  seed = NA,
-  pareto_smoothing_all = FALSE,
-  pareto_smoothing_last = FALSE,
-  use_ess = FALSE,
-  proposal_fit = "sample",
-  alpha_score = 0.5,
+  proposal_fit = c("sample", "hybrid"),
   ...
 )
 
 \method{bridge_sampler}{mcmc.list}(
   samples = NULL,
   log_posterior = NULL,
-  num_splits = 2,
-  total_perms = 1,
   ...,
   data = NULL,
   lb = NULL,
   ub = NULL,
   repetitions = 1,
-  pareto_smoothing_all = FALSE,
   param_types = rep("real", ncol(samples[[1]])),
-  pareto_smoothing_last = FALSE,
   method = "normal",
   cores = 1,
   use_neff = TRUE,
-  use_ess = FALSE,
   packages = NULL,
   varlist = NULL,
   envir = .GlobalEnv,
   rcppFile = NULL,
   maxiter = 1000,
   silent = FALSE,
-  calculate_covariance = FALSE,
-  verbose = FALSE,
-  return_always = FALSE,
-  seed = NA
+  verbose = FALSE
 )
 
 \method{bridge_sampler}{mcmc}(
@@ -99,34 +70,24 @@ bridge_sampler(samples, num_splits, ...)
   data = NULL,
   lb = NULL,
   ub = NULL,
-  total_perms = 1,
-  num_splits = 2,
   repetitions = 1,
   method = "normal",
   cores = 1,
   use_neff = TRUE,
-  pareto_smoothing_last = FALSE,
   packages = NULL,
   varlist = NULL,
-  pareto_smoothing_all = FALSE,
   envir = .GlobalEnv,
   rcppFile = NULL,
-  use_ess = FALSE,
   maxiter = 1000,
-  return_always = FALSE,
-  calculate_covariance = FALSE,
   param_types = rep("real", ncol(samples)),
   silent = FALSE,
-  verbose = FALSE,
-  seed = NA
+  verbose = FALSE
 )
 
 \method{bridge_sampler}{matrix}(
   samples = NULL,
   log_posterior = NULL,
   ...,
-  num_splits = 2,
-  total_perms = 1,
   data = NULL,
   lb = NULL,
   ub = NULL,
@@ -134,23 +95,16 @@ bridge_sampler(samples, num_splits, ...)
   method = "normal",
   cores = 1,
   use_neff = TRUE,
-  pareto_smoothing_all = FALSE,
   packages = NULL,
   varlist = NULL,
-  pareto_smoothing_last = FALSE,
   envir = .GlobalEnv,
   rcppFile = NULL,
   maxiter = 1000,
-  return_always = FALSE,
-  use_ess = FALSE,
   param_types = rep("real", ncol(samples)),
-  calculate_covariance = FALSE,
   silent = FALSE,
   verbose = FALSE,
-  seed = NA,
   gradients = NULL,
-  proposal_fit = "sample",
-  alpha_score = 0.5
+  proposal_fit = c("sample", "hybrid")
 )
 
 \method{bridge_sampler}{stanreg}(
@@ -158,18 +112,10 @@ bridge_sampler(samples, num_splits, ...)
   repetitions = 1,
   method = "normal",
   cores = 1,
-  num_splits = 2,
-  pareto_smoothing_all = FALSE,
   use_neff = TRUE,
   maxiter = 1000,
   silent = FALSE,
-  total_perms = 1,
-  pareto_smoothing_last = FALSE,
-  use_ess = FALSE,
-  calculate_covariance = FALSE,
   verbose = FALSE,
-  return_always = FALSE,
-  seed = NA,
   ...
 )
 
@@ -178,24 +124,16 @@ bridge_sampler(samples, num_splits, ...)
   log_posterior = NULL,
   ...,
   data = NULL,
-  num_splits = 2,
-  total_perms = 1,
   lb = NULL,
   ub = NULL,
   repetitions = 1,
-  use_ess = FALSE,
   method = "normal",
   cores = 1,
   use_neff = TRUE,
-  pareto_smoothing_last = FALSE,
   packages = NULL,
   varlist = NULL,
-  return_always = FALSE,
-  calculate_covariance = FALSE,
   envir = .GlobalEnv,
   rcppFile = NULL,
-  seed = NA,
-  pareto_smoothing_all = FALSE,
   maxiter = 1000,
   silent = FALSE,
   verbose = FALSE
@@ -206,24 +144,16 @@ bridge_sampler(samples, num_splits, ...)
   log_posterior = NULL,
   ...,
   data = NULL,
-  num_splits = 2,
-  total_perms = 1,
   lb = NULL,
   ub = NULL,
   repetitions = 1,
-  calculate_covariance = FALSE,
   method = "normal",
   cores = 1,
   use_neff = TRUE,
-  pareto_smoothing_last = FALSE,
   packages = NULL,
   varlist = NULL,
-  return_always = FALSE,
-  pareto_smoothing_all = FALSE,
   envir = .GlobalEnv,
   rcppFile = NULL,
-  seed = NA,
-  use_ess = FALSE,
   maxiter = 1000,
   silent = FALSE,
   verbose = FALSE
@@ -232,20 +162,12 @@ bridge_sampler(samples, num_splits, ...)
 \method{bridge_sampler}{MCMC_refClass}(
   samples,
   repetitions = 1,
-  num_splits = 2,
-  total_perms = 1,
   method = "normal",
-  use_ess = FALSE,
   cores = 1,
-  pareto_smoothing_all = FALSE,
   use_neff = TRUE,
   maxiter = 1000,
-  pareto_smoothing_last = FALSE,
   silent = FALSE,
-  seed = NA,
-  calculate_covariance = FALSE,
   verbose = FALSE,
-  return_always = FALSE,
   ...
 )
 }
@@ -287,6 +209,15 @@ iterations of the updating scheme to the console. Default is FALSE.}
 
 \item{verbose}{Boolean. Should internal debug information be printed to
 console? Default is \code{FALSE}.}
+
+\item{proposal_fit}{character string determining how the covariance matrix of
+the multivariate normal proposal is estimated. \code{"sample"} (the
+default) uses the sample covariance matrix of the draws, i.e. the classic
+behaviour. \code{"hybrid"} combines the sample covariance matrix with a
+score-matching estimate obtained from the posterior gradients, as described
+in \code{Details}. \code{"hybrid"} requires gradients and is only
+implemented for \code{method = "normal"}; if gradients are unavailable the
+sample covariance matrix is used and a warning is given.}
 
 \item{stanfit_model}{for the \code{stanfit} method, an additional object of
 class \code{"stanfit"} with the same model as \code{samples}, which will be
@@ -338,6 +269,15 @@ will be exported to the nodes). Default is \code{\link{.GlobalEnv}}.}
 \item{rcppFile}{in case \code{cores > 1} and \code{log_posterior} is an
 \code{Rcpp} function, \code{rcppFile} specifies the path to the cpp file
 (will be compiled on all cores).}
+
+\item{gradients}{for the \code{matrix} method, an optional matrix of
+posterior scores \eqn{s(\theta) = \nabla \log p(\theta)} with the same
+dimensions as \code{samples}, evaluated at the rows of \code{samples}. Only
+used when \code{proposal_fit = "hybrid"}, and only when all parameters are
+unbounded (i.e. \code{lb = -Inf} and \code{ub = Inf}), since the chain-rule
+correction of the gradients for a non-identity transformation is not
+implemented. The \code{stanfit} and \code{CmdStanMCMC} methods obtain the
+gradients automatically and do not take this argument.}
 }
 \value{
 If \code{repetitions = 1}, returns a list of class \code{"bridge"}
@@ -354,6 +294,15 @@ If \code{repetitions = 1}, returns a list of class \code{"bridge"}
    \item \code{q22}: log proposal evaluations for samples from the proposal.
    \item \code{mcse_logml}: Monte Carlo standard error of \code{logml}
          on the log-scale (Micaletto & Vehtari, 2025).
+   \item \code{proposal_fit_info}: for \code{method = "normal"}, a list
+         recording how the proposal covariance matrix was obtained:
+         \code{proposal_fit} (the requested value), \code{combiner}
+         (\code{"none"} if the sample covariance matrix was used,
+         \code{"geometric"} if the matrix geometric mean was used, and
+         \code{"geometric_fallback_arithmetic"} if the geometric mean could
+         not be formed and the arithmetic mean was used instead), and
+         \code{n_gradients_used} (the number of draws with finite
+         gradients).
  }
  If \code{repetitions > 1}, returns a list of class \code{"bridge_list"}
  with components:
@@ -366,6 +315,10 @@ If \code{repetitions = 1}, returns a list of class \code{"bridge"}
    \item \code{repetitions}: number of repetitions.
    \item \code{mcse_logml}: numeric vector of Monte Carlo standard errors
          on the log-scale (Micaletto & Vehtari, 2025), one per repetition.
+   \item \code{proposal_fit_info}: for \code{method = "normal"}, a list
+         recording how the proposal covariance matrix was obtained (see
+         above). The proposal is fitted once, so there is one such list
+         rather than one per repetition.
 }
 }
 \description{
@@ -384,6 +337,29 @@ Bridge sampling is implemented as described in Meng and Wong (1996,
  (Meng & Schilling, 2002) so that it has the same mean vector, covariance
  matrix, and skew as the samples. \code{method = "warp3"} takes approximately
  twice as long as \code{method = "normal"}.
+
+ With \code{proposal_fit = "hybrid"} the covariance matrix of the normal
+ proposal is not the sample covariance matrix \eqn{\hat\Sigma_n} alone.
+ A second estimate is obtained by score matching (Hyvärinen, 2005) from the
+ posterior gradients \eqn{s_i = \nabla \log p(\theta_i)} evaluated at the
+ draws used to fit the proposal,
+ \deqn{\hat\Sigma_{score} = \left( n^{-1} \sum_i (s_i - \bar s)(s_i - \bar
+ s)^\top \right)^{-1},} and the two are combined by their matrix geometric
+ mean \eqn{\hat\Sigma_n \# \hat\Sigma_{score} = \hat\Sigma_n^{1/2}
+ (\hat\Sigma_n^{-1/2} \hat\Sigma_{score} \hat\Sigma_n^{-1/2})^{1/2}
+ \hat\Sigma_n^{1/2}}, which is the dense Fisher-divergence-optimal combiner
+ of Seyboldt et al. (2026). The geometric mean has no free weight; it is
+ uniquely determined by the two inputs, and it equals \eqn{\hat\Sigma_n}
+ whenever the two estimates agree. Because the two estimates have largely
+ independent errors, the combination is typically a better estimate of the
+ posterior covariance matrix than either one, which mainly helps when the
+ number of parameters is not small relative to the number of draws used to
+ fit the proposal.
+
+ Only the proposal density \eqn{g} changes; the bridge identity and the
+ iterative scheme are untouched, so the estimate stays consistent whatever
+ the covariance matrix is. How the combination was performed is reported in
+ the \code{proposal_fit_info} component of the returned object.
 
  Note that for the \code{matrix} method, the lower and upper bound of a
  parameter cannot be a function of the bounds of another parameter.
@@ -659,6 +635,10 @@ Gronau, Q. F., Singmann, H., & Wagenmakers, E.-J. (2020). bridgesampling: An
  Sampling. \emph{Psychometrika}, 84(1), 261–284.
  \doi{10.1007/s11336-018-9648-3}
 
+ Hyvärinen, A. (2005). Estimation of non-normalized statistical models by
+ score matching. \emph{Journal of Machine Learning Research, 6}, 695-709.
+ \url{https://jmlr.org/papers/v6/hyvarinen05a.html}
+
  Meng, X.-L., & Wong, W. H. (1996). Simulating ratios of normalizing
  constants via a simple identity: A theoretical exploration. \emph{Statistica
  Sinica, 6}, 831-860.
@@ -676,6 +656,9 @@ Gronau, Q. F., Singmann, H., & Wagenmakers, E.-J. (2020). bridgesampling: An
  determination methods for generalised linear mixed models.
  \emph{Computational Statistics & Data Analysis, 54}, 3269-3288.
  \doi{10.1016/j.csda.2010.03.008}
+
+ Seyboldt, A., Carlson, C., & Carpenter, B. (2026). Preconditioning
+ Hamiltonian Monte Carlo by minimizing Fisher divergence.
 }
 \seealso{
 \code{\link{bf}} allows the user to calculate Bayes factors and
