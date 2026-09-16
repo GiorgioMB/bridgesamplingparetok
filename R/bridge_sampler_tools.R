@@ -71,7 +71,9 @@
 # of `draws`, which holds draws on the unconstrained scale. Returns an
 # nrow(draws) x ncol(draws) matrix, or NULL if `proposal_fit` does not
 # need gradients or they could not be computed (in which case the caller
-# falls back to the sample covariance).
+# falls back to the sample covariance). Rows whose gradient could not be
+# evaluated are returned as NA and dropped, with a warning, by
+# .bridge.sampler.normal().
 .cmdstan_gradients <- function(samples, draws, proposal_fit) {
   if (proposal_fit == "sample") {
     return(NULL)
@@ -120,7 +122,7 @@
       NULL
     }
   )
-  .warn_nonfinite_gradients(out)
+  out
 }
 
 # rstan counterpart of .cmdstan_gradients(). `upars` holds draws on the
@@ -161,24 +163,5 @@
       NULL
     }
   )
-  .warn_nonfinite_gradients(out)
-}
-
-.warn_nonfinite_gradients <- function(gm) {
-  if (is.null(gm)) {
-    return(NULL)
-  }
-  n_bad <- sum(!apply(is.finite(gm), 1, all))
-  if (n_bad > 0) {
-    warning(
-      sprintf(
-        "%d of %d draws produced non-finite gradients; ",
-        n_bad,
-        nrow(gm)
-      ),
-      "they are dropped from the score-matched proposal fit.",
-      call. = FALSE
-    )
-  }
-  gm
+  out
 }

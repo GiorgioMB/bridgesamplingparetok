@@ -87,6 +87,17 @@
       )
       use_gradients <- FALSE
     } else {
+      if (sum(finite_rows) < nrow(gradients_4_fit)) {
+        warning(
+          sprintf(
+            "%d of %d draws produced non-finite gradients; ",
+            sum(!finite_rows),
+            nrow(gradients_4_fit)
+          ),
+          "they are dropped from the score-matched proposal fit.",
+          call. = FALSE
+        )
+      }
       G <- gradients_4_fit[finite_rows, , drop = FALSE]
       G <- sweep(G, 2L, colMeans(G), check.margin = FALSE)
       Prec_score <- crossprod(G) / nrow(G)
