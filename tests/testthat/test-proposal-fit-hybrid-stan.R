@@ -9,7 +9,7 @@ test_that("CmdStanMCMC: proposal_fit = 'hybrid' uses the gradients", {
   if (!file.exists(cmdstanr::cmdstan_path())) {
     testthat::skip("CmdStan is not installed in the expected path for cmdstanr.")
   }
-  skip_if_rcppparallel_tbb_loaded()
+  skip_if_rstan_loaded()
 
   dat <- hybrid_stan_data()
   log_true <- hybrid_stan_logml(dat)
@@ -63,7 +63,7 @@ test_that("CmdStanMCMC: the default is unchanged by the new argument", {
   if (!file.exists(cmdstanr::cmdstan_path())) {
     testthat::skip("CmdStan is not installed in the expected path for cmdstanr.")
   }
-  skip_if_rcppparallel_tbb_loaded()
+  skip_if_rstan_loaded()
 
   dat <- hybrid_stan_data(J = 2L, N = 20L)
 

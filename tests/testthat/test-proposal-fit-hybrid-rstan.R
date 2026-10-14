@@ -6,7 +6,7 @@ test_that("stanfit: proposal_fit = 'hybrid' uses the gradients", {
   testthat::skip_on_cran()
   testthat::skip_on_os("windows")
   # before skip_if_not_installed(): that call loads rstan
-  skip_if_other_tbb_loaded()
+  skip_if_cmdstanr_methods_loaded()
   testthat::skip_if_not_installed("rstan")
 
   dat <- hybrid_stan_data()
