@@ -1,7 +1,4 @@
-# Shared by test-proposal-fit-hybrid-stan.R (cmdstanr) and
-# test-proposal-fit-hybrid-rstan.R (rstan). The two backends are in
-# separate files because they cannot be loaded in one R process (see
-# helper-stan-math.R).
+# Shared by the cmdstanr and rstan files test-proposal-fit-hybrid-*.R
 #
 # A conjugate model whose log marginal likelihood is available in closed
 # form. Each column of y is an independent group with its own mean, so
